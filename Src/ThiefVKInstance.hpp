@@ -6,12 +6,13 @@
 #include <tuple>
 
 enum class ThiefDeviceFeaturesFlags {
-    Present,
-    Geometry,
-    Tessalation,
-    Discrete
+    Geometry = 1,
+    Tessalation = 2,
+    Discrete = 4
 };
 
+int operator|(ThiefDeviceFeaturesFlags, ThiefDeviceFeaturesFlags);
+bool operator&(int, ThiefDeviceFeaturesFlags);
 
 class ThiefVKInstance {
 public:
