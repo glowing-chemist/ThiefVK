@@ -14,6 +14,11 @@
 
 ThiefVKInstance::ThiefVKInstance() {
 
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    mWindow = glfwCreateWindow(500, 500, "vulkan", nullptr, nullptr);
+
     vk::ApplicationInfo appInfo{};
     appInfo.setPApplicationName("ThiefQuango");
     appInfo.setApiVersion(VK_MAKE_VERSION(0, 1, 0));
@@ -31,6 +36,9 @@ ThiefVKInstance::ThiefVKInstance() {
 
     mInstance = vk::createInstance(instanceInfo);
 
+    VkSurfaceKHR surface;
+    glfwCreateWindowSurface(mInstance, mWindow, nullptr, &surface); // use glfw as is platform agnostic
+    mWindowSurface = surface;
 }
 
 
@@ -57,6 +65,21 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     size_t physicalDeviceIndex = std::distance(availableDevices.begin(), maxScoreeDeviceOffset);
     vk::PhysicalDevice chosenDevice = availableDevices[physicalDeviceIndex];
 
+    const auto[graphics, present] = getGraphicsAndPresentQueue(chosenDevice);
+
+}
+
+std::pair<int, int> ThiefVKInstance::getGraphicsAndPresentQueue(vk::PhysicalDevice& dev) {
+    int graphics = -1;
+    int present  = -1;
+
+    std::vector<vk::QueueFamilyProperties> queueProperties = dev.getQueueFamilyProperties();
+    for(auto i = 0; i < queueProperties.size(); i++) {
+        if(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) graphics = i;
+        if(dev.getSurfaceSupportKHR(present, mWindowSurface)) present = i;
+        if(graphics != -1 && present != -1) return {graphics, present};
+    }
+    return {graphics, present};
 }
 
 
