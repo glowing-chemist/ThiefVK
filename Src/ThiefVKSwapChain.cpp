@@ -58,7 +58,12 @@ ThiefVKSwapChain::ThiefVKSwapChain(vk::Device& Device, vk::PhysicalDevice physDe
     vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes);
     vk::Extent2D swapExtent = chooseSwapExtent(swapDetails.capabilities, window);
 
-    uint32_t images = swapDetails.capabilities.minImageCount + 1 > swapDetails.capabilities.maxImageCount ? swapDetails.capabilities.maxImageCount: swapDetails.capabilities.minImageCount + 1;
+    uint32_t images = 0;
+    if(swapDetails.capabilities.maxImageCount == 0) {
+        images = swapDetails.capabilities.minImageCount + 1;
+    } else {
+        images = swapDetails.capabilities.minImageCount + 1 > swapDetails.capabilities.maxImageCount ? swapDetails.capabilities.maxImageCount: swapDetails.capabilities.minImageCount + 1;
+    }
 
     vk::SwapchainCreateInfoKHR info{}; // fill out the format and presentation mode info
     info.setSurface(windowSurface);
@@ -87,10 +92,7 @@ ThiefVKSwapChain::ThiefVKSwapChain(vk::Device& Device, vk::PhysicalDevice physDe
 
     swapChain = Device.createSwapchainKHR(info);
 
-    uint32_t imageCount; // get references to the images in the swapChain
-    vkGetSwapchainImagesKHR(Device, swapChain, &imageCount, nullptr);
-    swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(Device, swapChain, &imageCount, swapChainImages.data());
+    swapChainImages = Device.getSwapchainImagesKHR(swapChain);
 
     swapChainExtent = swapExtent;
     swapChainFormat = swapFormat.format;

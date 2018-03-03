@@ -28,8 +28,8 @@ private:
     vk::Device* DevicePtr;
 
     vk::SwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    std::vector<VkImageView> swapChainImageViews;
+    std::vector<vk::Image> swapChainImages;
+    std::vector<vk::ImageView> swapChainImageViews;
     vk::Extent2D swapChainExtent;
     vk::Format swapChainFormat;
     std::vector<vk::Framebuffer> swapChainFrameBuffers;
