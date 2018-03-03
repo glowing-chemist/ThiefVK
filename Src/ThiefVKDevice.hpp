@@ -1,11 +1,16 @@
 #ifndef THIEFVKDEVICE_HPP
 #define THIEFVKDEVICE_HPP
 
+// system includes
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
 
+
+//local includes
+#include "ThiefVKSwapChain.hpp"
+
+// std library includes
 #include <array>
 #include <vector>
 #include <string>
@@ -58,11 +63,10 @@ struct modelInfo {
     std::string modelName;
 };
 
-// swapChain setup functions
-struct SwapChainSupportDetails { // represent swapchain capabilities
-    vk::SurfaceCapabilitiesKHR capabilities;
-    std::vector<vk::SurfaceFormatKHR> formats;
-    std::vector<vk::PresentModeKHR> presentModes;
+
+struct spotLight {
+    glm::vec3 pos;
+    glm::mat4 view;
 };
 
 class ThiefVKDevice {
@@ -73,12 +77,10 @@ public:
 
     void addModelVerticies(std::vector<Vertex>&, std::string);
     void addPointLight(glm::vec3&);
-    void addSpotLight(glm::mat4&);
+    void addSpotLight(spotLight&);
 
     void drawAndPresent();
 
-    void createSwapChain();
-    void createSwapChainImageViews();
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();
     void createGraphicsPipelines();
@@ -90,8 +92,6 @@ public:
 
 private:
     // private funcs
-    SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice);
-    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&);
 
     // private variables
     vk::SurfaceKHR mWindowSurface;
@@ -103,12 +103,7 @@ private:
     vk::Queue mGraphicsQueue;
     vk::Queue mPresentQueue;
 
-    vk::SwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    std::vector<VkImageView> swapChainImageViews;
-    vk::Extent2D swapChainExtent;
-    vk::Format swapChainFormat;
-    std::vector<vk::Framebuffer> swapChainFrameBuffers;
+    ThiefVKSwapChain mSwapChain;
 
     vk::RenderPass renderPass;
     vk::RenderPass finalRenderPass;
@@ -127,6 +122,9 @@ private:
 
     std::vector<Vertex> verticies;
     std::vector<modelInfo> vertexModelInfo;
+
+    std::vector<glm::vec3> pointLights;
+    std::vector<spotLight> spotLights;
 };
 
 #endif

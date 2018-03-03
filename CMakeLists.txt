@@ -6,6 +6,7 @@ set(SOURCE
 	"Src/ThiefVKDevice.cpp"
 	"Src/ThiefVKPipeLineManager.cpp"
 	"Src/ThiefVKEngine.cpp"
+        "Src/ThiefVKSwapChain.cpp"
 	)
 
 
