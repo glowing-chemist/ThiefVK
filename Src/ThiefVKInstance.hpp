@@ -24,6 +24,8 @@ public:
     ThiefVKInstance();
     ~ThiefVKInstance();
 
+    void addDebugCallback();
+
     std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(int DeviceFeatureFlags);
     GLFWwindow* getWindow() const;
     vk::SurfaceKHR getSurface() const;
@@ -31,6 +33,7 @@ public:
 private:
 
     vk::Instance mInstance;
+    vk::DebugReportCallbackEXT debugCallback;
     VkSurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
 };

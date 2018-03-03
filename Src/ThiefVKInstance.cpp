@@ -11,6 +11,23 @@
 // system includes
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
+    VkDebugReportFlagsEXT flags,
+    VkDebugReportObjectTypeEXT objType,
+    uint64_t obj,
+    size_t location,
+    int32_t code,
+    const char* layerPrefix,
+    const char* msg,
+    void* userData) {
+
+    std::cerr << "validation layer: " << msg << std::endl;
+
+    return VK_FALSE;
+
+}
 
 std::pair<int, int> getGraphicsAndPresentQueue(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev) {
     int graphics = -1;
@@ -48,6 +65,11 @@ ThiefVKInstance::ThiefVKInstance() {
     instanceInfo.setEnabledExtensionCount(numExtensions);
     instanceInfo.setPpEnabledExtensionNames(requiredExtensions);
     instanceInfo.setPApplicationInfo(&appInfo);
+#ifndef NDEBUG
+    const char* validationLayers = "VK_LAYER_LUNARG_standard_validation";
+    instanceInfo.setEnabledLayerCount(1);
+    instanceInfo.setPpEnabledLayerNames(&validationLayers);
+#endif
 
     mInstance = vk::createInstance(instanceInfo);
 
@@ -104,6 +126,11 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     deviceInfo.setQueueCreateInfoCount(uniqueQueues.size());
     deviceInfo.setPQueueCreateInfos(queueInfo.data());
     deviceInfo.setPEnabledFeatures(&physicalFeatures);
+#ifndef NDEBUG
+    const char* validationLayers = "VK_LAYER_LUNARG_standard_validation";
+    deviceInfo.setEnabledLayerCount(1);
+    deviceInfo.setPpEnabledLayerNames(&validationLayers);
+#endif
 
     vk::Device logicalDevice = physicalDevice.createDevice(deviceInfo);
 
@@ -111,10 +138,24 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
 }
 
 ThiefVKInstance::~ThiefVKInstance() {
-    mInstance.destroy();
     mInstance.destroySurfaceKHR(mWindowSurface);
+    mInstance.destroy();
     glfwDestroyWindow(mWindow);
     glfwTerminate();
+}
+
+void ThiefVKInstance::addDebugCallback() {
+    VkDebugReportCallbackCreateInfoEXT callbackCreateInfo{};
+    callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+    callbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+    callbackCreateInfo.pfnCallback = debugCallbackFunc;
+
+    auto* func = (PFN_vkCreateDebugReportCallbackEXT) mInstance.getProcAddr("vkCreateDebugReportCallbackEXT");
+    if(func != nullptr) {
+        auto* call = static_cast<VkDebugReportCallbackEXT>(debugCallback);
+        func(mInstance, &callbackCreateInfo, nullptr, &call);
+    }
+
 }
 
 GLFWwindow* ThiefVKInstance::getWindow() const {

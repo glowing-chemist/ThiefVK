@@ -2,6 +2,7 @@
 #include "ThiefVKInstance.hpp"
 
 #include <array>
+#include <iostream>
 
 // Vertex member functions
 vk::VertexInputBindingDescription Vertex::getBindingDesc() {
