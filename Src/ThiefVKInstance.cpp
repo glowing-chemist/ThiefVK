@@ -111,8 +111,19 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
 }
 
 ThiefVKInstance::~ThiefVKInstance() {
+    mInstance.destroy();
+    mInstance.destroySurfaceKHR(mWindowSurface);
     glfwDestroyWindow(mWindow);
     glfwTerminate();
+}
+
+GLFWwindow* ThiefVKInstance::getWindow() const {
+    return mWindow;
+}
+
+
+vk::SurfaceKHR ThiefVKInstance::getSurface() const {
+    return mWindowSurface;
 }
 
 

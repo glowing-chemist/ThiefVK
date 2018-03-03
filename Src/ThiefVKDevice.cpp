@@ -55,3 +55,7 @@ ThiefVKDevice::ThiefVKDevice(vk::PhysicalDevice physDev, vk::Device Dev, vk::Sur
     mPhysDev{physDev}, mDevice{Dev}, mWindowSurface{surface}, mWindow{window}, mSwapChain{Dev, physDev, surface, window} {}
 
 
+ThiefVKDevice::~ThiefVKDevice() {
+    mSwapChain.destroy(mDevice);
+    mDevice.destroy();
+}

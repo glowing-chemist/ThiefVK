@@ -25,6 +25,8 @@ public:
     ~ThiefVKInstance();
 
     std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(int DeviceFeatureFlags);
+    GLFWwindow* getWindow() const;
+    vk::SurfaceKHR getSurface() const;
 
 private:
 

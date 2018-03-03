@@ -14,8 +14,9 @@ struct SwapChainSupportDetails { // represent swapchain capabilities
 
 class ThiefVKSwapChain {
 public:
-    ThiefVKSwapChain(vk::Device Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window);
-    ~ThiefVKSwapChain();
+    ThiefVKSwapChain(vk::Device& Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window);
+
+    void destroy(vk::Device&);
 
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
@@ -23,6 +24,8 @@ private:
 
     void createSwapChainImageViews(vk::Device);
     void createSwpaChainFrameBuffers(vk::Device, vk::RenderPass renderPass);
+
+    vk::Device* DevicePtr;
 
     vk::SwapchainKHR swapChain;
     std::vector<VkImage> swapChainImages;

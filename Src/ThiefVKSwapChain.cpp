@@ -52,7 +52,7 @@ vk::Extent2D ThiefVKSwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR
     return vk::Extent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 }
 
-ThiefVKSwapChain::ThiefVKSwapChain(vk::Device Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window) {
+ThiefVKSwapChain::ThiefVKSwapChain(vk::Device& Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window) {
     SwapChainSupportDetails swapDetails = querySwapchainSupport(physDevice, windowSurface);
     vk::SurfaceFormatKHR swapFormat = chooseSurfaceFormat(swapDetails.formats);
     vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes);
@@ -96,6 +96,17 @@ ThiefVKSwapChain::ThiefVKSwapChain(vk::Device Device, vk::PhysicalDevice physDev
     swapChainFormat = swapFormat.format;
 
     createSwapChainImageViews(Device);
+}
+
+
+void ThiefVKSwapChain::destroy(vk::Device& dev) {
+    for(auto& frameBuffer: swapChainFrameBuffers) {
+        dev.destroyFramebuffer(frameBuffer);
+    }
+    for(auto& imageView : swapChainImageViews) {
+        dev.destroyImageView(imageView);
+    }
+    dev.destroySwapchainKHR(swapChain);
 }
 
 
