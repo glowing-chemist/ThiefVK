@@ -12,6 +12,19 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
 
+std::pair<int, int> getGraphicsAndPresentQueue(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev) {
+    int graphics = -1;
+    int present  = -1;
+
+    std::vector<vk::QueueFamilyProperties> queueProperties = dev.getQueueFamilyProperties();
+    for(auto i = 0; i < queueProperties.size(); i++) {
+        if(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) graphics = i;
+        if(dev.getSurfaceSupportKHR(i, windowSurface)) present = i;
+        if(graphics != -1 && present != -1) return {graphics, present};
+    }
+    return {graphics, present};
+}
+
 
 ThiefVKInstance::ThiefVKInstance() {
 
@@ -67,7 +80,7 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     size_t physicalDeviceIndex = std::distance(availableDevices.begin(), maxScoreeDeviceOffset);
     vk::PhysicalDevice physicalDevice = availableDevices[physicalDeviceIndex];
 
-    const auto[graphics, present] = getGraphicsAndPresentQueue(physicalDevice);
+    const auto[graphics, present] = getGraphicsAndPresentQueue(mWindowSurface, physicalDevice);
 
     float queuePriority = 1.0f;
 
@@ -101,20 +114,6 @@ ThiefVKInstance::~ThiefVKInstance() {
     glfwDestroyWindow(mWindow);
     glfwTerminate();
 }
-
-std::pair<int, int> ThiefVKInstance::getGraphicsAndPresentQueue(vk::PhysicalDevice& dev) {
-    int graphics = -1;
-    int present  = -1;
-
-    std::vector<vk::QueueFamilyProperties> queueProperties = dev.getQueueFamilyProperties();
-    for(auto i = 0; i < queueProperties.size(); i++) {
-        if(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) graphics = i;
-        if(dev.getSurfaceSupportKHR(i, mWindowSurface)) present = i;
-        if(graphics != -1 && present != -1) return {graphics, present};
-    }
-    return {graphics, present};
-}
-
 
 
 int operator|(ThiefDeviceFeaturesFlags lhs, ThiefDeviceFeaturesFlags rhs) {

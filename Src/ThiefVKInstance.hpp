@@ -17,13 +17,14 @@ int operator|(ThiefDeviceFeaturesFlags, ThiefDeviceFeaturesFlags);
 bool operator&(int, ThiefDeviceFeaturesFlags);
 
 
+std::pair<int, int> getGraphicsAndPresentQueue(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
+
 class ThiefVKInstance {
 public:
     ThiefVKInstance();
     ~ThiefVKInstance();
 
     std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(int DeviceFeatureFlags);
-    std::pair<int, int> getGraphicsAndPresentQueue(vk::PhysicalDevice& dev);
 
 private:
 

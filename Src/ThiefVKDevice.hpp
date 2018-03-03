@@ -2,6 +2,7 @@
 #define THIEFVKDEVICE_HPP
 
 #include <vulkan/vulkan.hpp>
+#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 
@@ -57,10 +58,17 @@ struct modelInfo {
     std::string modelName;
 };
 
+// swapChain setup functions
+struct SwapChainSupportDetails { // represent swapchain capabilities
+    vk::SurfaceCapabilitiesKHR capabilities;
+    std::vector<vk::SurfaceFormatKHR> formats;
+    std::vector<vk::PresentModeKHR> presentModes;
+};
+
 class ThiefVKDevice {
 
 public:
-    explicit ThiefVKDevice(vk::PhysicalDevice, vk::Device);
+    explicit ThiefVKDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
     ~ThiefVKDevice();
 
     void addModelVerticies(std::vector<Vertex>&, std::string);
@@ -81,7 +89,13 @@ public:
     void createSemaphores();
 
 private:
+    // private funcs
+    SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice);
+    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&);
 
+    // private variables
+    vk::SurfaceKHR mWindowSurface;
+    GLFWwindow* mWindow;
 
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
