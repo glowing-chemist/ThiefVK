@@ -19,7 +19,7 @@ ThiefVKInstance::ThiefVKInstance() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); // only resize explicitly
 
-    mWindow = glfwCreateWindow(500, 500, "vulkan", nullptr, nullptr);
+    mWindow = glfwCreateWindow(500, 500, "Necromancer", nullptr, nullptr);
 
     vk::ApplicationInfo appInfo{};
     appInfo.setPApplicationName("ThiefQuango");
