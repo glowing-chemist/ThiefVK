@@ -59,7 +59,7 @@ ThiefVKSwapChain::ThiefVKSwapChain(vk::Device& Device, vk::PhysicalDevice physDe
     vk::Extent2D swapExtent = chooseSwapExtent(swapDetails.capabilities, window);
 
     uint32_t images = 0;
-    if(swapDetails.capabilities.maxImageCount == 0) {
+    if(swapDetails.capabilities.maxImageCount == 0) { // some intel GPUs return max image count of 0 so work around this here
         images = swapDetails.capabilities.minImageCount + 1;
     } else {
         images = swapDetails.capabilities.minImageCount + 1 > swapDetails.capabilities.maxImageCount ? swapDetails.capabilities.maxImageCount: swapDetails.capabilities.minImageCount + 1;
