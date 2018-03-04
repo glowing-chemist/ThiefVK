@@ -60,3 +60,67 @@ ThiefVKDevice::~ThiefVKDevice() {
     mSwapChain.destroy(mDevice);
     mDevice.destroy();
 }
+
+
+void ThiefVKDevice::createRenderPasses() {
+
+    // Specify all attachments used in all subrenderpasses
+    vk::AttachmentDescription colourPassAttachment{}; // also used for the shadow mapping
+    colourPassAttachment.setFormat(vk::Format::eR8G8B8A8Srgb);
+    colourPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
+    colourPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
+    colourPassAttachment.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    colourPassAttachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::AttachmentDescription depthPassAttachment{};
+    depthPassAttachment.setFormat(vk::Format::eR32Sfloat); // store in each pixel a 32bit depth value
+    depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
+    depthPassAttachment.setInitialLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal); // wriet in a subpass then read in a subsequent one
+    depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+
+    vk::AttachmentDescription normalsPassAttachment{};
+    normalsPassAttachment.setFormat(vk::Format::eR8G8B8Snorm);
+    normalsPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare);
+    normalsPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
+    normalsPassAttachment.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    normalsPassAttachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal); // these will be used in the subsqeuent light renderpass
+
+    vk::AttachmentDescription swapChainImageAttachment{};
+    swapChainImageAttachment.setFormat(mSwapChain.getSwapChainImageFormat());
+    swapChainImageAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
+    swapChainImageAttachment.setStoreOp(vk::AttachmentStoreOp::eStore);
+    swapChainImageAttachment.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    swapChainImageAttachment.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+
+    // declare all subpasses
+    // we will have a subpass for depth, normals, colour.
+    // as these will remain constant regardless of the number of lights
+    // all written attachments will be used in a subsequent ligth renderPass
+
+
+}
+
+void ThiefVKDevice::createFrameBuffers() {
+
+}
+
+
+void ThiefVKDevice::createCommandPool() {
+
+}
+
+
+void ThiefVKDevice::createVertexBuffer() {
+
+}
+
+
+void ThiefVKDevice::createCommandBuffers() {
+
+}
+
+
+void ThiefVKDevice::createSemaphores() {
+
+}

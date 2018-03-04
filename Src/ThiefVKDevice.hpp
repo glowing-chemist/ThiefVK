@@ -45,6 +45,14 @@ struct ThiefVKImageTextutres {
     std::vector<vk::DeviceMemory> lightImageMemory;
 };
 
+struct ThiefVKRenderPasses{
+    vk::RenderPass colourPass;
+    vk::RenderPass depthPass;
+    vk::RenderPass normalsPass;
+    vk::RenderPass spotLightPass;
+    vk::RenderPass pointLightPass;
+};
+
 struct Vertex { // vertex struct representing vertex positions and texture coordinates
     glm::vec3 pos;
     glm::vec2 tex;
@@ -105,8 +113,8 @@ private:
 
     ThiefVKSwapChain mSwapChain;
 
-    vk::RenderPass renderPass;
-    vk::RenderPass finalRenderPass;
+    ThiefVKRenderPasses mRenderPasses;
+
     vk::PipelineLayout pipeLineLayout;
     vk::PipelineLayout finalPipLineLayout;
     ThiefVKPipeLines PipeLines;

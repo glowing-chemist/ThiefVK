@@ -112,6 +112,11 @@ void ThiefVKSwapChain::destroy(vk::Device& dev) {
 }
 
 
+vk::Format ThiefVKSwapChain::getSwapChainImageFormat() const {
+    return swapChainFormat;
+}
+
+
 void ThiefVKSwapChain::createSwapChainImageViews(vk::Device Device) {
     swapChainImageViews.resize(swapChainImages.size());
     for(size_t i = 0; i < swapChainImages.size(); i++) {

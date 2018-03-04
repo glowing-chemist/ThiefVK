@@ -18,6 +18,8 @@ public:
 
     void destroy(vk::Device&);
 
+    vk::Format getSwapChainImageFormat() const;
+
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);
