@@ -159,13 +159,25 @@ void ThiefVKDevice::createRenderPasses() {
     compositPassDesc.setColorAttachmentCount(1);
     compositPassDesc.setPColorAttachments(&colourCompositPassReference);
 
+
+    std::vector<vk::AttachmentReference> lightAttachments{};
+    for(int i = 0; i < spotLights.size(); ++i) {
+        lightAttachments.push_back(coloursubPassReference);
+    }
+
+    vk::SubpassDescription lightSubpass{};
+    lightSubpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    lightSubpass.setColorAttachmentCount(lightAttachments.size());
+    lightSubpass.setPColorAttachments(lightAttachments.data());
+
+
     // TODO specify the subpass dependancies
     std::vector<vk::AttachmentDescription> allAttachments{colourPassAttachment, depthPassAttachment, normalsPassAttachment, swapChainImageAttachment};
     for(int i = 0; i < spotLights.size(); ++i ) { // only support spot lights currently
         allAttachments.push_back(colourPassAttachment);
     }
 
-    std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, compositPassDesc};
+    std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, lightSubpass, compositPassDesc};
 
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.setAttachmentCount(allAttachments.size());
