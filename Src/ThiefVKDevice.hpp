@@ -132,7 +132,6 @@ private:
     std::vector<Vertex> verticies;
     std::vector<modelInfo> vertexModelInfo;
 
-    std::vector<glm::vec3> pointLights;
     std::vector<spotLight> spotLights;
 };
 
