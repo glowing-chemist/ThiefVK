@@ -46,11 +46,12 @@ struct ThiefVKImageTextutres {
 };
 
 struct ThiefVKRenderPasses{
-    vk::RenderPass colourPass;
-    vk::RenderPass depthPass;
-    vk::RenderPass normalsPass;
-    vk::RenderPass spotLightPass;
-    vk::RenderPass pointLightPass;
+    vk::SubpassDescription colourPass;
+    vk::SubpassDescription depthPass;
+    vk::SubpassDescription normalsPass;
+    vk::SubpassDescription compositePass;
+
+    vk::RenderPass RenderPass;
 };
 
 struct Vertex { // vertex struct representing vertex positions and texture coordinates

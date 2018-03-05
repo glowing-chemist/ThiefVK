@@ -58,6 +58,7 @@ ThiefVKDevice::ThiefVKDevice(vk::PhysicalDevice physDev, vk::Device Dev, vk::Sur
 
 ThiefVKDevice::~ThiefVKDevice() {
     mSwapChain.destroy(mDevice);
+    mDevice.destroyRenderPass(mRenderPasses.RenderPass);
     mDevice.destroy();
 }
 
@@ -69,36 +70,110 @@ void ThiefVKDevice::createRenderPasses() {
     colourPassAttachment.setFormat(vk::Format::eR8G8B8A8Srgb);
     colourPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
     colourPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
+    colourPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    colourPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     colourPassAttachment.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal);
     colourPassAttachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::AttachmentReference coloursubPassReference{};
+    coloursubPassReference.setAttachment(0);
+    coloursubPassReference.setLayout(vk::ImageLayout::eGeneral); // as these will be read and written to
+
 
     vk::AttachmentDescription depthPassAttachment{};
     depthPassAttachment.setFormat(vk::Format::eR32Sfloat); // store in each pixel a 32bit depth value
     depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
+    depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     depthPassAttachment.setInitialLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal); // wriet in a subpass then read in a subsequent one
     depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+
+    vk::AttachmentReference depthsubPassReference{};
+    depthsubPassReference.setAttachment(1);
+    depthsubPassReference.setLayout(vk::ImageLayout::eGeneral);
+
 
     vk::AttachmentDescription normalsPassAttachment{};
     normalsPassAttachment.setFormat(vk::Format::eR8G8B8Snorm);
     normalsPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare);
     normalsPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
+    normalsPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    normalsPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     normalsPassAttachment.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal);
     normalsPassAttachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal); // these will be used in the subsqeuent light renderpass
 
+    vk::AttachmentReference normalssubPassReference{};
+    normalssubPassReference.setAttachment(2);
+    normalssubPassReference.setLayout(vk::ImageLayout::eGeneral);
+
+    // specify the subpass descriptions
+    vk::SubpassDescription colourPassDesc{};
+    colourPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    colourPassDesc.setColorAttachmentCount(1);
+    colourPassDesc.setPColorAttachments(&coloursubPassReference);
+
+    vk::SubpassDescription depthPassDesc{};
+    depthPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    depthPassDesc.setPDepthStencilAttachment(&depthsubPassReference);
+
+    vk::SubpassDescription normalsPassDesc{};
+    normalsPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    normalsPassDesc.setColorAttachmentCount(1);
+    normalsPassDesc.setPColorAttachments(&normalssubPassReference);
+
+    mRenderPasses.colourPass    = colourPassDesc;
+    mRenderPasses.depthPass     = depthPassDesc;
+    mRenderPasses.normalsPass   = normalsPassDesc;
+
+
+    // create the light and composite subPasses
     vk::AttachmentDescription swapChainImageAttachment{};
     swapChainImageAttachment.setFormat(mSwapChain.getSwapChainImageFormat());
     swapChainImageAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
     swapChainImageAttachment.setStoreOp(vk::AttachmentStoreOp::eStore);
+    swapChainImageAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    swapChainImageAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     swapChainImageAttachment.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal);
     swapChainImageAttachment.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 
-    // declare all subpasses
-    // we will have a subpass for depth, normals, colour.
-    // as these will remain constant regardless of the number of lights
-    // all written attachments will be used in a subsequent ligth renderPass
+    vk::AttachmentReference colourCompositPassReference{};
+    colourCompositPassReference.setAttachment(3);
+    colourCompositPassReference.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
+    // calculate and add the light attachment desc
+    std::vector<vk::AttachmentReference> spotLightattachmentRefs{coloursubPassReference, depthsubPassReference, normalssubPassReference};
+    for(int i = 0; i < spotLights.size(); ++i)
+    {
+        vk::AttachmentReference lightRef{};
+        lightRef.setAttachment(i + 4);
+        lightRef.setLayout(vk::ImageLayout::eGeneral);
 
+        spotLightattachmentRefs.push_back(lightRef);
+    }
+
+    vk::SubpassDescription compositPassDesc{};
+    compositPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    compositPassDesc.setInputAttachmentCount(spotLightattachmentRefs.size());
+    compositPassDesc.setPInputAttachments(spotLightattachmentRefs.data());
+    compositPassDesc.setColorAttachmentCount(1);
+    compositPassDesc.setPColorAttachments(&colourCompositPassReference);
+
+    // TODO specify the subpass dependancies
+    std::vector<vk::AttachmentDescription> allAttachments{colourPassAttachment, depthPassAttachment, normalsPassAttachment, swapChainImageAttachment};
+    for(int i = 0; i < spotLights.size(); ++i ) { // only support spot lights currently
+        allAttachments.push_back(colourPassAttachment);
+    }
+
+    std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, compositPassDesc};
+
+    vk::RenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.setAttachmentCount(allAttachments.size());
+    renderPassInfo.setPAttachments(allAttachments.data());
+    renderPassInfo.setSubpassCount(allSubpasses.size());
+    renderPassInfo.setPSubpasses(allSubpasses.data());
+
+    mRenderPasses.RenderPass = mDevice.createRenderPass(renderPassInfo);
 }
 
 void ThiefVKDevice::createFrameBuffers() {
