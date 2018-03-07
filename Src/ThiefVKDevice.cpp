@@ -174,28 +174,32 @@ void ThiefVKDevice::createRenderPasses() {
     colourToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     colourToCompositeDepen.setDstSubpass(4);
     colourToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
-    colourToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+    colourToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+    colourToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
     vk::SubpassDependency depthToCompositeDepen{};
     depthToCompositeDepen.setSrcSubpass(1);
     depthToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     depthToCompositeDepen.setDstSubpass(4);
     depthToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
-    depthToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+    depthToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+    depthToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
     vk::SubpassDependency normalsToCompositeDepen{};
     normalsToCompositeDepen.setSrcSubpass(2);
     normalsToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     normalsToCompositeDepen.setDstSubpass(4);
     normalsToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
-    normalsToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+    normalsToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+    normalsToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
     vk::SubpassDependency lightToCompositeDepen{};
     lightToCompositeDepen.setSrcSubpass(3);
     lightToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     lightToCompositeDepen.setDstSubpass(4);
     lightToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
-    lightToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+    lightToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+    lightToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
     std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, lightSubpass, compositPassDesc};
     std::vector<vk::SubpassDependency>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, depthToCompositeDepen, normalsToCompositeDepen, lightToCompositeDepen};
@@ -217,7 +221,12 @@ void ThiefVKDevice::createFrameBuffers() {
 
 
 void ThiefVKDevice::createCommandPool() {
+    auto [graphicsQueueIndex, presentQueueIndex] = getGraphicsAndPresentQueue(mWindowSurface, mPhysDev);
 
+    vk::CommandPoolCreateInfo poolInfo{};
+    poolInfo.setQueueFamilyIndex(graphicsQueueIndex);
+
+    graphicsCommandPool = mDevice.createCommandPool(poolInfo);
 }
 
 
