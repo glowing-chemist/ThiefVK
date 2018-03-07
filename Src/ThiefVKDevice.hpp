@@ -58,13 +58,9 @@ struct Vertex { // vertex struct representing vertex positions and texture coord
     glm::vec3 pos;
     glm::vec2 tex;
 
-    glm::vec3 transCom1; // 3 vectors that will be used as a transformation matrix
-    glm::vec3 transCom2;
-    glm::vec3 transCom3;
-
     static vk::VertexInputBindingDescription getBindingDesc();
 
-    static std::array<vk::VertexInputAttributeDescription, 5> getAttribDesc();
+    static std::array<vk::VertexInputAttributeDescription, 2> getAttribDesc();
 };
 
 struct modelInfo {
