@@ -153,19 +153,60 @@ void ThiefVKDevice::createRenderPasses() {
     lightSubpass.setPColorAttachments(lightAttachments.data());
 
 
-    // TODO specify the subpass dependancies
     std::vector<vk::AttachmentDescription> allAttachments{colourPassAttachment, depthPassAttachment, normalsPassAttachment, swapChainImageAttachment};
     for(int i = 0; i < spotLights.size(); ++i ) { // only support spot lights currently
         allAttachments.push_back(colourPassAttachment);
     }
 
+    // Subpass dependancies
+    // The only dependancies are between all the passes and the final pass
+    // as only the final passes uses resourecs from the otheres
+
+    vk::SubpassDependency implicitFirstDepen{};
+    implicitFirstDepen.setSrcSubpass(VK_SUBPASS_EXTERNAL);
+    implicitFirstDepen.setDstSubpass(0);
+    implicitFirstDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    implicitFirstDepen.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    implicitFirstDepen.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+
+    vk::SubpassDependency colourToCompositeDepen{};
+    colourToCompositeDepen.setSrcSubpass(0);
+    colourToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    colourToCompositeDepen.setDstSubpass(4);
+    colourToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
+    colourToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+
+    vk::SubpassDependency depthToCompositeDepen{};
+    depthToCompositeDepen.setSrcSubpass(1);
+    depthToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    depthToCompositeDepen.setDstSubpass(4);
+    depthToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
+    depthToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+
+    vk::SubpassDependency normalsToCompositeDepen{};
+    normalsToCompositeDepen.setSrcSubpass(2);
+    normalsToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    normalsToCompositeDepen.setDstSubpass(4);
+    normalsToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
+    normalsToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+
+    vk::SubpassDependency lightToCompositeDepen{};
+    lightToCompositeDepen.setSrcSubpass(3);
+    lightToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    lightToCompositeDepen.setDstSubpass(4);
+    lightToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
+    lightToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+
     std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, lightSubpass, compositPassDesc};
+    std::vector<vk::SubpassDependency>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, depthToCompositeDepen, normalsToCompositeDepen, lightToCompositeDepen};
 
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.setAttachmentCount(allAttachments.size());
     renderPassInfo.setPAttachments(allAttachments.data());
     renderPassInfo.setSubpassCount(allSubpasses.size());
     renderPassInfo.setPSubpasses(allSubpasses.data());
+    renderPassInfo.setDependencyCount(allSubpassDependancies.size());
+    renderPassInfo.setPDependencies(allSubpassDependancies.data());
 
     mRenderPasses.RenderPass = mDevice.createRenderPass(renderPassInfo);
 }
