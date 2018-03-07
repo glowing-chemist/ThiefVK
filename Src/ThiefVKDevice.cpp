@@ -35,7 +35,14 @@ std::array<vk::VertexInputAttributeDescription, 2> Vertex::getAttribDesc() {
 // ThiefVKDeviceMemberFunctions
 
 ThiefVKDevice::ThiefVKDevice(vk::PhysicalDevice physDev, vk::Device Dev, vk::SurfaceKHR surface, GLFWwindow * window) :
-    mPhysDev{physDev}, mDevice{Dev}, mWindowSurface{surface}, mWindow{window}, mSwapChain{Dev, physDev, surface, window} {}
+    mPhysDev{physDev}, mDevice{Dev}, mWindowSurface{surface}, mWindow{window}, mSwapChain{Dev, physDev, surface, window}
+{
+    auto [graphicsQueueIndex, presentQueueIndex] = getGraphicsAndPresentQueue(mWindowSurface, mPhysDev);
+
+    mGraphicsQueue = mDevice.getQueue(graphicsQueueIndex, 0);
+    mPresentQueue  = mDevice.getQueue(presentQueueIndex, 0);
+
+}
 
 
 ThiefVKDevice::~ThiefVKDevice() {
