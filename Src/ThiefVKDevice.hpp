@@ -14,6 +14,7 @@
 #include <array>
 #include <vector>
 #include <string>
+#include <tuple>
 
 struct ThiefVKPipeLines {
     vk::Pipeline colourPipeline;
@@ -77,7 +78,7 @@ struct spotLight {
 class ThiefVKDevice {
 
 public:
-    explicit ThiefVKDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
+    explicit ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device>, vk::SurfaceKHR, GLFWwindow*);
     ~ThiefVKDevice();
 
     void addModelVerticies(std::vector<Vertex>&, std::string);
