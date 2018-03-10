@@ -143,7 +143,7 @@ void ThiefVKMemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pool
 
 
 Allocation ThiefVKMemoryManager::AttemptToAllocate(uint64_t size, bool hostMappable) {
-    auto memPools = hostMappable ? deviceLocalPools : hostMappablePools;
+    auto& memPools = hostMappable ? deviceLocalPools : hostMappablePools;
 
     uint32_t poolNum = 0;
     for(auto& pool : memPools) {
