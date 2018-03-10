@@ -16,4 +16,8 @@ void ThiefVKEngine::Init() {
     Instance.addDebugCallback();
 #endif
     Device.createRenderPasses();
+
+    auto [physDev, Dev] = Device.getDeviceHandles();
+    ThiefVKMemoryManager memoryManager(physDev, Dev);
+    MemoryManager = memoryManager;
 }
