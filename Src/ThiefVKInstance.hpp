@@ -26,7 +26,7 @@ public:
 
     void addDebugCallback();
 
-    std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(int DeviceFeatureFlags);
+    std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(int DeviceFeatureFlags = 0);
     GLFWwindow* getWindow() const;
     vk::SurfaceKHR getSurface() const;
 
