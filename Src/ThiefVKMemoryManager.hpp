@@ -45,6 +45,9 @@ private:
     void MergeFreeDeiveLocalPools();
     void MergeFreeHostPools();
 
+    void AllocateDevicePool();
+    void AllocateHostMappablePool();
+
     std::vector<vk::DeviceMemory> deviceMemoryBackers;
     std::vector<PoolFramganet*>   deviceLocalPools;
     std::vector<PoolFramganet*>   hostLocalPool;
