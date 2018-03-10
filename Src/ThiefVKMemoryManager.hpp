@@ -23,7 +23,8 @@ private:
     uint64_t offset;
     uint32_t pool; // for if we end up allocating more than one pool
     PoolFramganet* allocatedPool;
-    bool DeviceLocal;
+    bool deviceLocal;
+    bool mappedToHost;
 };
 
 // This class will be used for keeping track of GPU allocations for buffers and
@@ -47,6 +48,9 @@ private:
 
     void AllocateDevicePool();
     void AllocateHostMappablePool();
+
+    void FreeDevicePools();
+    void FreeHostMappablePools();
 
     std::vector<vk::DeviceMemory> deviceMemoryBackers;
     std::vector<PoolFramganet*>   deviceLocalPools;
