@@ -4,6 +4,8 @@
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 
+struct ThiefVKRenderPasses;
+
 // swapChain setup functions
 struct SwapChainSupportDetails { // represent swapchain capabilities
     vk::SurfaceCapabilitiesKHR capabilities;
@@ -20,12 +22,13 @@ public:
 
     vk::Format getSwapChainImageFormat() const;
 
+    void createSwpaChainFrameBuffers(vk::Device&, ThiefVKRenderPasses& renderPass, uint32_t spotLights);
+
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);
 
     void createSwapChainImageViews(vk::Device);
-    void createSwpaChainFrameBuffers(vk::Device, vk::RenderPass renderPass);
 
     vk::Device* DevicePtr;
 

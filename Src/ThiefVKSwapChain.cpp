@@ -1,5 +1,6 @@
 #include "ThiefVKSwapChain.hpp"
 #include "ThiefVKInstance.hpp"
+#include "ThiefVKDevice.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -134,15 +135,15 @@ void ThiefVKSwapChain::createSwapChainImageViews(vk::Device Device) {
 }
 
 
-void ThiefVKSwapChain::createSwpaChainFrameBuffers(vk::Device Device, vk::RenderPass renderPass) {
+void ThiefVKSwapChain::createSwpaChainFrameBuffers(vk::Device& Device, ThiefVKRenderPasses &renderPass, uint32_t spotLights) {
     swapChainFrameBuffers.resize(swapChainImageViews.size());
 
-    for(int i = 0; i < swapChainFrameBuffers.size(); i++) {
+    for(uint32_t i = 0; i < swapChainFrameBuffers.size(); i++) {
         vk::ImageView attachments = swapChainImageViews[i];
 
-        vk::FramebufferCreateInfo frameBufferInfo{};
-        frameBufferInfo.setRenderPass(renderPass);
-        frameBufferInfo.setAttachmentCount(1);
+        vk::FramebufferCreateInfo frameBufferInfo{}; // we need to allocate all our images before trying to fix this
+        frameBufferInfo.setRenderPass(renderPass.RenderPass);
+        frameBufferInfo.setAttachmentCount(renderPass.attatchments.size());
         frameBufferInfo.setPAttachments(&attachments);
         frameBufferInfo.setWidth(swapChainExtent.width);
         frameBufferInfo.setHeight(swapChainExtent.height);
@@ -150,4 +151,5 @@ void ThiefVKSwapChain::createSwpaChainFrameBuffers(vk::Device Device, vk::Render
 
         swapChainFrameBuffers[i] = Device.createFramebuffer(frameBufferInfo);
     }
+    std::cerr << "created " << swapChainFrameBuffers.size() << " frame buffers \n";
 }
