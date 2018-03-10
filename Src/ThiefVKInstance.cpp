@@ -34,7 +34,7 @@ std::pair<int, int> getGraphicsAndPresentQueue(vk::SurfaceKHR windowSurface, vk:
     int present  = -1;
 
     std::vector<vk::QueueFamilyProperties> queueProperties = dev.getQueueFamilyProperties();
-    for(auto i = 0; i < queueProperties.size(); i++) {
+    for(uint32_t i = 0; i < queueProperties.size(); i++) {
         if(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) graphics = i;
         if(dev.getSurfaceSupportKHR(i, windowSurface)) present = i;
         if(graphics != -1 && present != -1) return {graphics, present};
@@ -87,7 +87,7 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     auto availableDevices = mInstance.enumeratePhysicalDevices();
     std::vector<int> deviceScores(availableDevices.size());
 
-    for(int i = 0; i < availableDevices.size(); i++) {
+    for(uint32_t i = 0; i < availableDevices.size(); i++) {
         vk::PhysicalDeviceProperties properties = availableDevices[i].getProperties();
         vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
 

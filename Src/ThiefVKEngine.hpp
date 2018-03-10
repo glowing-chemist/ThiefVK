@@ -3,6 +3,7 @@
 
 #include "ThiefVKInstance.hpp"
 #include "ThiefVKDevice.hpp"
+#include "ThiefVKMemoryManager.hpp"
 
 class ThiefVKEngine {
 
@@ -15,6 +16,7 @@ public:
 private:
     ThiefVKInstance Instance;
     ThiefVKDevice Device;
+    ThiefVKMemoryManager MemoryManager;
 };
 
 
