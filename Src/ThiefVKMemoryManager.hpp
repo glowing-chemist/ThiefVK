@@ -21,7 +21,6 @@ private:
     uint64_t size;
     uint64_t offset;
     uint32_t pool; // for if we end up allocating more than one pool
-    std::list<PoolFramganet>::iterator allocatedPool;
     bool deviceLocal;
     bool mappedToHost;
 };
@@ -34,7 +33,7 @@ class ThiefVKMemoryManager {
 
 public:
     ThiefVKMemoryManager() = default; // constructor that doens't allocate pools
-    explicit ThiefVKMemoryManager(vk::PhysicalDevice &, vk::Device &); // one that does
+    explicit ThiefVKMemoryManager(vk::PhysicalDevice* , vk::Device* ); // one that does
     ~ThiefVKMemoryManager();
 
     Allocation Allocate(uint64_t size, bool deviceLocal);
@@ -45,6 +44,8 @@ private:
     void MergeFreeDeiveLocalPools();
     void MergeFreeHostPools();
 
+    Allocation AttemptToAllocate(uint64_t size, bool deviceLocal);
+
     void AllocateDevicePool();
     void AllocateHostMappablePool();
 
@@ -52,6 +53,7 @@ private:
     void FreeHostMappablePools();
 
     std::vector<vk::DeviceMemory> deviceMemoryBackers;
+    std::vector<vk::DeviceMemory> hostMappableMemoryBackers;
     std::vector<std::list<PoolFramganet>>   deviceLocalPools;
     std::vector<std::list<PoolFramganet>>   hostMappablePools;
 
