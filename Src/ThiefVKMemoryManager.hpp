@@ -6,8 +6,9 @@
 #include <vector>
 #include <list>
 
-struct PoolFramganet {
+struct PoolFragment {
     friend class ThiefVKMemoryManager; // to allow this to be an opaque handle that only the memory manager can use
+    friend bool operator==(const PoolFragment&, const PoolFragment&);
 private:
     uint64_t offset;
     uint64_t size;
@@ -22,7 +23,7 @@ private:
     uint64_t offset;
     uint32_t pool; // for if we end up allocating more than one pool
     bool deviceLocal;
-    bool mappedToHost;
+    bool hostMappable;
 };
 
 // This class will be used for keeping track of GPU allocations for buffers and
@@ -39,10 +40,12 @@ public:
     Allocation Allocate(uint64_t size, bool deviceLocal);
     void       Free(Allocation alloc);
 
+    void       MapImage(vk::Image& image, Allocation alloc);
+    void       MapBuffer(vk::Buffer& buffer, Allocation alloc);
+
 private:
     void MergeFreePools();
-    void MergeFreeDeiveLocalPools();
-    void MergeFreeHostPools();
+    void MergePool(std::vector<std::list<PoolFragment>>& pools);
 
     Allocation AttemptToAllocate(uint64_t size, bool deviceLocal);
 
@@ -54,8 +57,8 @@ private:
 
     std::vector<vk::DeviceMemory> deviceMemoryBackers;
     std::vector<vk::DeviceMemory> hostMappableMemoryBackers;
-    std::vector<std::list<PoolFramganet>>   deviceLocalPools;
-    std::vector<std::list<PoolFramganet>>   hostMappablePools;
+    std::vector<std::list<PoolFragment>>   deviceLocalPools;
+    std::vector<std::list<PoolFragment>>   hostMappablePools;
 
     vk::PhysicalDevice* PhysDev; // handles so we can allocate more memory withou having
     vk::Device*         Device;  // to call out to the main device instance

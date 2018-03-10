@@ -6,6 +6,15 @@
 #include <list>
 #include <iostream>
 
+
+bool operator==(const PoolFragment& lhs, const PoolFragment& rhs) {
+    return lhs.DeviceLocal == rhs.DeviceLocal
+            && lhs.free == rhs.free
+            && lhs.offset == rhs.offset
+            && lhs.size == rhs.size;
+}
+
+
 ThiefVKMemoryManager::ThiefVKMemoryManager(vk::PhysicalDevice* physDev, vk::Device *Dev) : PhysDev{physDev}, Device{Dev} {
     AllocateDevicePool();
     AllocateHostMappablePool();
@@ -48,7 +57,7 @@ void ThiefVKMemoryManager::AllocateDevicePool() {
 
     deviceMemoryBackers.push_back(Device->allocateMemory(allocInfo));
 
-    std::list<PoolFramganet> fragmentList(16);
+    std::list<PoolFragment> fragmentList(16);
     uint64_t offset = 0;
     for(auto& frag : fragmentList) {
         frag.free = true;
@@ -83,7 +92,7 @@ void ThiefVKMemoryManager::AllocateHostMappablePool() {
 
     hostMappableMemoryBackers.push_back(Device->allocateMemory(allocInfo));
 
-    std::list<PoolFramganet> fragmentList(16);
+    std::list<PoolFragment> fragmentList(16);
     uint64_t offset = 0;
     for(auto& frag : fragmentList) {
         frag.free = true;
@@ -113,39 +122,56 @@ void ThiefVKMemoryManager::FreeHostMappablePools() {
 
 
 void ThiefVKMemoryManager::MergeFreePools() {
-    MergeFreePools();
-    MergeFreeHostPools();
+    MergePool(deviceLocalPools);
+    MergePool(hostMappablePools);
 }
 
 
-void ThiefVKMemoryManager::MergeFreeDeiveLocalPools() {
-
+void ThiefVKMemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { // this is expensive on a a list so only call when really needed
+    for(auto& pool : pools) {
+        for(auto fragIter = pool.begin(); fragIter != --pool.end(); ++fragIter) {
+            PoolFragment frag = *fragIter;
+            auto fragIterClone = fragIter;
+            PoolFragment nextFrag = *(++fragIterClone);
+            if(frag.free && nextFrag.free) {
+                frag.size += nextFrag.size;
+                pool.remove(nextFrag);
+            }
+        }
+    }
 }
 
 
-void ThiefVKMemoryManager::MergeFreeHostPools() {
+Allocation ThiefVKMemoryManager::AttemptToAllocate(uint64_t size, bool hostMappable) {
+    auto memPools = hostMappable ? deviceLocalPools : hostMappablePools;
 
-}
-
-
-Allocation ThiefVKMemoryManager::AttemptToAllocate(uint64_t size, bool deviceLocal) {
-    auto memPool = deviceLocal ? deviceLocalPools : hostMappablePools;
-
-    uint32_t pool = 0;
-    for(auto& pools : memPool) {
-        for(auto& frag : pools) {
+    uint32_t poolNum = 0;
+    for(auto& pool : memPools) {
+        for(auto fragIter = pool.begin(); fragIter != pool.end(); ++fragIter) {
+            PoolFragment frag = *fragIter;
             if(frag.free && frag.size >= size) {
                 Allocation alloc;
                 alloc.offset = frag.offset;
-                alloc.mappedToHost = false;
+                alloc.hostMappable = hostMappable;
                 alloc.deviceLocal = true;
-                alloc.pool = pool;
+                alloc.pool = poolNum;
                 alloc.size = size;
+
+                if(size < (frag.size / 2)) { // we'd be wasting more than half the frag, so split it up
+                    PoolFragment fragToInsert;
+                    fragToInsert.DeviceLocal = true;
+                    fragToInsert.free = true;
+                    fragToInsert.offset = frag.offset + size;
+                    fragToInsert.size = frag.size - size;
+
+                    frag.size = size;
+                    pool.insert(fragIter, fragToInsert);
+                }
 
                 return alloc;
             }
         }
-        ++pool;
+        ++poolNum;
     }
     Allocation alloc;
     alloc.size = 0; // signify that the allocation failed
@@ -153,22 +179,43 @@ Allocation ThiefVKMemoryManager::AttemptToAllocate(uint64_t size, bool deviceLoc
 }
 
 
-Allocation ThiefVKMemoryManager::Allocate(uint64_t size, bool deviceLocal) {
+Allocation ThiefVKMemoryManager::Allocate(uint64_t size, bool hostMappable) {
 
-    Allocation alloc = AttemptToAllocate(size, deviceLocal);
+    Allocation alloc = AttemptToAllocate(size, hostMappable);
     if(alloc.size != 0) return alloc;
-    MergeFreePools(); // if we failed to allocat, perform a defrag of the pools and try again.
-    alloc = AttemptToAllocate(size, deviceLocal);
+
+    MergeFreePools(); // if we failed to allocate, perform a defrag of the pools and try again.
+    alloc = AttemptToAllocate(size, hostMappable);
     if(alloc.size != 0) return alloc;
-    if(deviceLocal) {
+
+    if(hostMappable) {
         AllocateDevicePool();
     } else {
         AllocateHostMappablePool();
     }
-    return AttemptToAllocate(size, deviceLocal); // should succedd or we are out of memory :(
+    return AttemptToAllocate(size, hostMappable); // should succeed or we are out of memory :(
 }
 
 
 void ThiefVKMemoryManager::Free(Allocation alloc) {
+    auto& pools = alloc.hostMappable ? hostMappablePools : deviceLocalPools ;
+    auto& pool  = pools[alloc.pool];
 
+    for(auto& frag : pool) {
+        if(alloc.offset == frag.offset) frag.free = true;
+    }
+}
+
+
+void ThiefVKMemoryManager::MapBuffer(vk::Buffer &buffer, Allocation alloc) {
+    std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers ;
+
+    Device->bindBufferMemory(buffer, pools[alloc.pool], alloc.offset);
+}
+
+
+void ThiefVKMemoryManager::MapImage(vk::Image &image, Allocation alloc) {
+    std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers ;
+
+    Device->bindImageMemory(image, pools[alloc.pool], alloc.offset);
 }
