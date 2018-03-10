@@ -13,8 +13,8 @@ public:
     void Init();
 
 private:
-    ThiefVKDevice Device;
     ThiefVKInstance Instance;
+    ThiefVKDevice Device;
 };
 
 
