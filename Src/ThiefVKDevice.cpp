@@ -52,6 +52,11 @@ ThiefVKDevice::~ThiefVKDevice() {
 }
 
 
+std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
+        return std::pair<vk::PhysicalDevice*, vk::Device*>(&mPhysDev, &mDevice);
+}
+
+
 void ThiefVKDevice::createRenderPasses() {
 
     // Specify all attachments used in all subrenderpasses
@@ -132,7 +137,7 @@ void ThiefVKDevice::createRenderPasses() {
 
     // calculate and add the light attachment desc
     std::vector<vk::AttachmentReference> spotLightattachmentRefs{coloursubPassReference, depthsubPassReference, normalssubPassReference};
-    for(int i = 0; i < spotLights.size(); ++i)
+    for(uint32_t i = 0; i < spotLights.size(); ++i)
     {
         vk::AttachmentReference lightRef{};
         lightRef.setAttachment(i + 4);
@@ -150,7 +155,7 @@ void ThiefVKDevice::createRenderPasses() {
 
 
     std::vector<vk::AttachmentReference> lightAttachments{};
-    for(int i = 0; i < spotLights.size(); ++i) {
+    for(uint32_t i = 0; i < spotLights.size(); ++i) {
         lightAttachments.push_back(coloursubPassReference);
     }
 
@@ -161,9 +166,11 @@ void ThiefVKDevice::createRenderPasses() {
 
 
     std::vector<vk::AttachmentDescription> allAttachments{colourPassAttachment, depthPassAttachment, normalsPassAttachment, swapChainImageAttachment};
-    for(int i = 0; i < spotLights.size(); ++i ) { // only support spot lights currently
+    for(uint32_t i = 0; i < spotLights.size(); ++i ) { // only support spot lights currently
         allAttachments.push_back(colourPassAttachment);
     }
+
+    mRenderPasses.attatchments = allAttachments;
 
     // Subpass dependancies
     // The only dependancies are between all the passes and the final pass
@@ -223,7 +230,7 @@ void ThiefVKDevice::createRenderPasses() {
 }
 
 void ThiefVKDevice::createFrameBuffers() {
-
+    mSwapChain.createSwpaChainFrameBuffers(mDevice, mRenderPasses, spotLights.size());
 }
 
 

@@ -47,6 +47,7 @@ struct ThiefVKImageTextutres {
 };
 
 struct ThiefVKRenderPasses{
+    std::vector<vk::AttachmentDescription> attatchments;
     vk::SubpassDescription colourPass;
     vk::SubpassDescription depthPass;
     vk::SubpassDescription normalsPass;
@@ -81,6 +82,8 @@ public:
     explicit ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device>, vk::SurfaceKHR, GLFWwindow*);
     ~ThiefVKDevice();
 
+    std::pair<vk::PhysicalDevice*, vk::Device*> getDeviceHandles();
+
     void addModelVerticies(std::vector<Vertex>&, std::string);
     void addPointLight(glm::vec3&);
     void addSpotLight(spotLight&);
@@ -100,11 +103,11 @@ private:
     // private funcs
 
     // private variables
-    vk::SurfaceKHR mWindowSurface;
-    GLFWwindow* mWindow;
-
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
+
+    vk::SurfaceKHR mWindowSurface;
+    GLFWwindow* mWindow;
 
     vk::Queue mGraphicsQueue;
     vk::Queue mPresentQueue;
