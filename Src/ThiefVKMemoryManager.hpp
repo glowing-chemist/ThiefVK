@@ -35,13 +35,14 @@ class ThiefVKMemoryManager {
 public:
     ThiefVKMemoryManager() = default; // constructor that doens't allocate pools
     explicit ThiefVKMemoryManager(vk::PhysicalDevice* , vk::Device* ); // one that does
-    ~ThiefVKMemoryManager();
 
     Allocation Allocate(uint64_t size, bool deviceLocal);
     void       Free(Allocation alloc);
 
     void       MapImage(vk::Image& image, Allocation alloc);
     void       MapBuffer(vk::Buffer& buffer, Allocation alloc);
+
+    void       Destroy();
 
 private:
     void MergeFreePools();

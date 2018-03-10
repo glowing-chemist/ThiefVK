@@ -9,7 +9,7 @@ class ThiefVKEngine {
 
 public:
     ThiefVKEngine();
-    ~ThiefVKEngine() = default;
+    ~ThiefVKEngine();
 
     void Init();
 

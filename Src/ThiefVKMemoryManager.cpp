@@ -21,7 +21,7 @@ ThiefVKMemoryManager::ThiefVKMemoryManager(vk::PhysicalDevice* physDev, vk::Devi
 }
 
 
-ThiefVKMemoryManager::~ThiefVKMemoryManager() {
+void ThiefVKMemoryManager::Destroy() {
     FreeDevicePools();
     FreeHostMappablePools();
 }

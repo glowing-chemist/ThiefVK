@@ -11,6 +11,12 @@ ThiefVKEngine::ThiefVKEngine() : Instance{ThiefVKInstance()},
                                                       , Instance.getSurface(), Instance.getWindow())} {}
 
 
+ThiefVKEngine::~ThiefVKEngine() {
+    MemoryManager.Destroy(); // to ensure we deallocat all our memory before we destroy the device and instance
+}
+
+
+
 void ThiefVKEngine::Init() {
 #ifndef NDEBUG
     Instance.addDebugCallback();
