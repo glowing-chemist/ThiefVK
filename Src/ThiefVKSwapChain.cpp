@@ -118,7 +118,7 @@ vk::Format ThiefVKSwapChain::getSwapChainImageFormat() const {
 }
 
 
-void ThiefVKSwapChain::createSwapChainImageViews(vk::Device Device) {
+void ThiefVKSwapChain::createSwapChainImageViews(vk::Device &Device) {
     swapChainImageViews.resize(swapChainImages.size());
     for(size_t i = 0; i < swapChainImages.size(); i++) {
         vk::ImageViewCreateInfo info{};

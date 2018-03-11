@@ -28,9 +28,7 @@ private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);
 
-    void createSwapChainImageViews(vk::Device);
-
-    vk::Device* DevicePtr;
+    void createSwapChainImageViews(vk::Device&);
 
     vk::SwapchainKHR swapChain;
     std::vector<vk::Image> swapChainImages;
