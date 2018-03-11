@@ -77,8 +77,7 @@ void ThiefVKMemoryManager::AllocateHostMappablePool() {
 
     int deviceLocalPoolIndex = -1;
     for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
-        if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
-           && (memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent)
+        if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent)
            && (memProps.memoryTypes[i]).propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
         {
             deviceLocalPoolIndex = i; // just find the find pool that is device local
