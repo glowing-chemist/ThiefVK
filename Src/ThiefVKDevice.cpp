@@ -42,10 +42,14 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
     mGraphicsQueue = mDevice.getQueue(graphicsQueueIndex, 0);
     mPresentQueue  = mDevice.getQueue(presentQueueIndex, 0);
 
+   ThiefVKMemoryManager memoryManager(&mPhysDev, &mDevice);
+   MemoryManager = memoryManager;
+
 }
 
 
 ThiefVKDevice::~ThiefVKDevice() {
+    MemoryManager.Destroy();
     mSwapChain.destroy(mDevice);
     mDevice.destroyRenderPass(mRenderPasses.RenderPass);
     mDevice.destroy();

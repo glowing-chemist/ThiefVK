@@ -12,7 +12,6 @@ ThiefVKEngine::ThiefVKEngine() : Instance{ThiefVKInstance()},
 
 
 ThiefVKEngine::~ThiefVKEngine() {
-    MemoryManager.Destroy(); // to ensure we deallocat all our memory before we destroy the device and instance
 }
 
 
@@ -22,8 +21,4 @@ void ThiefVKEngine::Init() {
     Instance.addDebugCallback();
 #endif
     Device.createRenderPasses();
-
-    auto [physDev, Dev] = Device.getDeviceHandles();
-    ThiefVKMemoryManager memoryManager(physDev, Dev);
-    MemoryManager = memoryManager;
 }

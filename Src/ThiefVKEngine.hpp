@@ -16,7 +16,6 @@ public:
 private:
     ThiefVKInstance Instance;
     ThiefVKDevice Device;
-    ThiefVKMemoryManager MemoryManager;
 };
 
 

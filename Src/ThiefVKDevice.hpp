@@ -9,6 +9,7 @@
 
 //local includes
 #include "ThiefVKSwapChain.hpp"
+#include "ThiefVKMemoryManager.hpp"
 
 // std library includes
 #include <array>
@@ -105,6 +106,8 @@ private:
     // private variables
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
+
+    ThiefVKMemoryManager MemoryManager;
 
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
