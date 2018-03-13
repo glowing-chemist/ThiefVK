@@ -28,23 +28,19 @@ struct ThiefVKPipeLines {
 struct ThiefVKImageTextutres {
     vk::Image colourImage;
     vk::ImageView colourImageView;
-    vk::Framebuffer colourFrameBuffer;
-    vk::DeviceMemory colourMemory;
+    Allocation colourImageMemory;
 
     vk::Image depthImage;
     vk::ImageView depthImageView;
-    vk::Framebuffer depthImageFrameBuffer;
-    vk::DeviceMemory depthMemory;
+    Allocation depthImageMemory;
 
     vk::Image normalsImage;
     vk::ImageView normalsImageView;
-    vk::Framebuffer normalsImageFrameBuffer;
-    vk::DeviceMemory normalsMemory;
+    Allocation normalsImageMemory;
 
     std::vector<vk::Image> lighImages;
     std::vector<vk::ImageView> lighImageViews;
-    std::vector<vk::Framebuffer> lightImageFrameBufers;
-    std::vector<vk::DeviceMemory> lightImageMemory;
+    std::vector<Allocation> lightImageMemory;
 };
 
 struct ThiefVKRenderPasses{
@@ -86,10 +82,11 @@ public:
     std::pair<vk::PhysicalDevice*, vk::Device*> getDeviceHandles();
 
     void addModelVerticies(std::vector<Vertex>&, std::string);
-    void addPointLight(glm::vec3&);
     void addSpotLight(spotLight&);
 
-    void drawAndPresent();
+    std::pair<vk::Image, Allocation> createColourImage(const unsigned int width, const unsigned int height);
+    std::pair<vk::Image, Allocation> createDepthImage(const unsigned int width, const unsigned int height);
+    std::pair<vk::Image, Allocation> createNormalsImage(const unsigned int width, const unsigned int height);
 
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();
@@ -102,6 +99,9 @@ public:
 
 private:
     // private funcs
+    void DestroyAllImageTextures();
+    void DestroyImageView(vk::ImageView& view);
+    void DestroyImage(vk::Image&, Allocation);
 
     // private variables
     vk::PhysicalDevice mPhysDev;
@@ -130,7 +130,7 @@ private:
     vk::Buffer vertexBuffer;
     vk::DeviceMemory vertexBufferMemory;
 
-    ThiefVKImageTextutres deferedTextures;
+    std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
 
     std::vector<Vertex> verticies;
     std::vector<modelInfo> vertexModelInfo;

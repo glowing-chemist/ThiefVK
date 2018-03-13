@@ -24,6 +24,9 @@ public:
 
     void createSwpaChainFrameBuffers(vk::Device&, ThiefVKRenderPasses& renderPass, uint32_t spotLights);
 
+    unsigned int getSwapChainImageWidth() const;
+    unsigned int getSwapChainImageHeight() const;
+
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);

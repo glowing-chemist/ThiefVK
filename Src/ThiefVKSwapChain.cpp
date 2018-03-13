@@ -27,6 +27,16 @@ vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>
     return formats[0]; // if not pick the first format
 }
 
+unsigned int ThiefVKSwapChain::getSwapChainImageWidth() const {
+    return swapChainExtent.width;
+}
+
+
+unsigned int ThiefVKSwapChain::getSwapChainImageHeight() const {
+    return swapChainExtent.height;
+}
+
+
 SwapChainSupportDetails ThiefVKSwapChain::querySwapchainSupport(vk::PhysicalDevice dev, vk::SurfaceKHR surface) {
     SwapChainSupportDetails details;
 

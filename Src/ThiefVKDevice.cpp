@@ -49,6 +49,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 
 
 ThiefVKDevice::~ThiefVKDevice() {
+    DestroyAllImageTextures();
     MemoryManager.Destroy();
     mSwapChain.destroy(mDevice);
     mDevice.destroyRenderPass(mRenderPasses.RenderPass);
@@ -58,6 +59,176 @@ ThiefVKDevice::~ThiefVKDevice() {
 
 std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
         return std::pair<vk::PhysicalDevice*, vk::Device*>(&mPhysDev, &mDevice);
+}
+
+
+std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const unsigned int width, const unsigned int height) {
+    vk::ImageCreateInfo imageInfo{};
+    imageInfo.setExtent({width, height, 1});
+    imageInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
+    imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
+    imageInfo.setImageType(vk::ImageType::e2D);
+    imageInfo.setMipLevels(1);
+    imageInfo.setArrayLayers(1);
+    imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+
+    vk::Image image = mDevice.createImage(imageInfo);
+    vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
+
+    Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment, false); // we don't need to be able to map the image
+
+    return {image, imageMemory};
+}
+
+
+std::pair<vk::Image, Allocation> ThiefVKDevice::createDepthImage(const unsigned int width, const unsigned int height) {
+    vk::ImageCreateInfo imageInfo{};
+    imageInfo.setExtent({width, height, 1});
+    imageInfo.setFormat(vk::Format::eR32Sfloat);
+    imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
+    imageInfo.setImageType(vk::ImageType::e2D);
+    imageInfo.setMipLevels(1);
+    imageInfo.setArrayLayers(1);
+    imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+
+    vk::Image image = mDevice.createImage(imageInfo);
+    vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
+
+    Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment,  false); // we don't need to be able to map the image
+
+    return {image, imageMemory};
+}
+
+
+std::pair<vk::Image, Allocation> ThiefVKDevice::createNormalsImage(const unsigned int width, const unsigned int height) {
+    vk::ImageCreateInfo imageInfo{};
+    imageInfo.setExtent({width, height, 1});
+    imageInfo.setFormat(vk::Format::eR8G8B8A8Sint);
+    imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
+    imageInfo.setImageType(vk::ImageType::e2D);
+    imageInfo.setMipLevels(1);
+    imageInfo.setArrayLayers(1);
+    imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+
+    vk::Image image = mDevice.createImage(imageInfo);
+    vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
+
+    Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment,  false); // we don't need to be able to map the image
+
+    return {image, imageMemory};
+}
+
+
+void ThiefVKDevice::DestroyImageView(vk::ImageView& view) {
+    mDevice.destroyImageView(view);
+}
+
+
+void ThiefVKDevice::DestroyImage(vk::Image& image, Allocation imageMem) {
+    mDevice.destroyImage(image);
+    MemoryManager.Free(imageMem);
+}
+
+
+void ThiefVKDevice::DestroyAllImageTextures() {
+    for(auto& images : deferedTextures) {
+        DestroyImageView(images.colourImageView);
+        DestroyImage(images.colourImage, images.colourImageMemory);
+        DestroyImageView(images.depthImageView);
+        DestroyImage(images.depthImage, images.depthImageMemory);
+        DestroyImageView(images.normalsImageView);
+        DestroyImage(images.normalsImage, images.normalsImageMemory);
+
+        for(unsigned int i = 0; i < images.lighImages.size(); ++i) {
+            DestroyImageView(images.lighImageViews[i]);
+            DestroyImage(images.lighImages[i], images.lightImageMemory[i]);
+        }
+    }
+}
+
+
+void ThiefVKDevice::createDeferedRenderTargetImageViews() {
+    auto [colourImage, colourMemory]   = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+    auto [depthImage , depthMemory]    = createDepthImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+    auto [normalsImage, normalsMemory] = createNormalsImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+
+    // Bind the memory to the images
+    MemoryManager.BindImage(colourImage, colourMemory);
+    MemoryManager.BindImage(depthImage, depthMemory);
+    MemoryManager.BindImage(normalsImage, normalsMemory);
+
+    std::vector<vk::Image> lightImages(spotLights.size());
+    std::vector<Allocation> lightImageMemory(spotLights.size());
+
+    for(unsigned int i = 0; i < spotLights.size(); ++i) {
+        auto [lightImage, lightMemory] = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+        lightImages.push_back(lightImage);
+        lightImageMemory.push_back(lightMemory);
+
+        MemoryManager.BindImage(lightImage, lightMemory);
+    }
+                
+    vk::ImageViewCreateInfo colourViewInfo{};
+    colourViewInfo.setImage(colourImage);
+    colourViewInfo.setViewType(vk::ImageViewType::e2D);
+    colourViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
+    colourViewInfo.setComponents(vk::ComponentMapping()); // set swizzle components to identity
+    colourViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+    vk::ImageViewCreateInfo depthViewInfo{};
+    depthViewInfo.setImage(depthImage);
+    depthViewInfo.setViewType(vk::ImageViewType::e2D);
+    depthViewInfo.setFormat(vk::Format::eR32Sfloat);
+    depthViewInfo.setComponents(vk::ComponentMapping());
+    depthViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+    vk::ImageViewCreateInfo normalsViewInfo{};
+    normalsViewInfo.setImage(normalsImage);
+    normalsViewInfo.setViewType(vk::ImageViewType::e2D);
+    normalsViewInfo.setFormat(vk::Format::eR8G8B8A8Sint);
+    normalsViewInfo.setComponents(vk::ComponentMapping());
+    normalsViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+    std::vector<vk::ImageViewCreateInfo> lighViewCreateInfo(spotLights.size());
+    for(unsigned int i = 0; i < spotLights.size(); ++i) {
+        vk::ImageViewCreateInfo lightViewInfo{};
+        lightViewInfo.setImage(colourImage);
+        lightViewInfo.setViewType(vk::ImageViewType::e2D);
+        lightViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
+        lightViewInfo.setComponents(vk::ComponentMapping());
+        lightViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+        lighViewCreateInfo.push_back(lightViewInfo);
+    }
+
+    vk::ImageView colourImageView  = mDevice.createImageView(colourViewInfo);
+    vk::ImageView depthImageView   = mDevice.createImageView(depthViewInfo);
+    vk::ImageView normalsImageView = mDevice.createImageView(normalsViewInfo);
+
+    std::vector<vk::ImageView> lightsImageViews(spotLights.size());
+    for(unsigned int i = 0; i < spotLights.size(); ++i) {
+        lightsImageViews[i] = mDevice.createImageView(lighViewCreateInfo[i]);
+    }
+
+    ThiefVKImageTextutres Result{};
+
+    Result.colourImage          = colourImage;
+    Result.colourImageView      = colourImageView;
+    Result.colourImageMemory    = colourMemory;
+
+    Result.depthImage           = depthImage;
+    Result.depthImageView       = depthImageView;
+    Result.depthImageMemory     = depthMemory;
+
+    Result.normalsImage         = normalsImage;
+    Result.normalsImageView     = normalsImageView;
+    Result.normalsImageMemory   = normalsMemory;
+
+    Result.lighImages           = lightImages;
+    Result.lighImageViews       = lightsImageViews;
+    Result.lightImageMemory     = lightImageMemory;
+
+    deferedTextures.push_back(Result);
 }
 
 
@@ -93,7 +264,7 @@ void ThiefVKDevice::createRenderPasses() {
 
 
     vk::AttachmentDescription normalsPassAttachment{};
-    normalsPassAttachment.setFormat(vk::Format::eR8G8B8Snorm);
+    normalsPassAttachment.setFormat(vk::Format::eR8G8B8A8Sint);
     normalsPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare);
     normalsPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
     normalsPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);

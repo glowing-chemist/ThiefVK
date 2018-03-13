@@ -21,4 +21,5 @@ void ThiefVKEngine::Init() {
     Instance.addDebugCallback();
 #endif
     Device.createRenderPasses();
+    Device.createDeferedRenderTargetImageViews();
 }
