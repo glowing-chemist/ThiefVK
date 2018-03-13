@@ -69,6 +69,10 @@ void ThiefVKMemoryManager::AllocateDevicePool() {
     }
 
     deviceLocalPools.push_back(fragmentList);
+
+#ifndef NDEBUG
+    std::cerr << "Allocated a memory pool \n";
+#endif
 }
 
 
@@ -103,6 +107,10 @@ void ThiefVKMemoryManager::AllocateHostMappablePool() {
     }
 
     hostMappablePools.push_back(fragmentList);
+
+#ifndef NDEBUG
+    std::cerr << "Allocated a host mappable memory pool \n";
+#endif
 }
 
 
