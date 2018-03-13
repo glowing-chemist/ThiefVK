@@ -148,87 +148,89 @@ void ThiefVKDevice::DestroyAllImageTextures() {
 
 
 void ThiefVKDevice::createDeferedRenderTargetImageViews() {
-    auto [colourImage, colourMemory]   = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
-    auto [depthImage , depthMemory]    = createDepthImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
-    auto [normalsImage, normalsMemory] = createNormalsImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
-
-    // Bind the memory to the images
-    MemoryManager.BindImage(colourImage, colourMemory);
-    MemoryManager.BindImage(depthImage, depthMemory);
-    MemoryManager.BindImage(normalsImage, normalsMemory);
-
-    std::vector<vk::Image> lightImages(spotLights.size());
-    std::vector<Allocation> lightImageMemory(spotLights.size());
-
-    for(unsigned int i = 0; i < spotLights.size(); ++i) {
-        auto [lightImage, lightMemory] = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
-        lightImages.push_back(lightImage);
-        lightImageMemory.push_back(lightMemory);
-
-        MemoryManager.BindImage(lightImage, lightMemory);
-    }
-                
-    vk::ImageViewCreateInfo colourViewInfo{};
-    colourViewInfo.setImage(colourImage);
-    colourViewInfo.setViewType(vk::ImageViewType::e2D);
-    colourViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
-    colourViewInfo.setComponents(vk::ComponentMapping()); // set swizzle components to identity
-    colourViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-
-    vk::ImageViewCreateInfo depthViewInfo{};
-    depthViewInfo.setImage(depthImage);
-    depthViewInfo.setViewType(vk::ImageViewType::e2D);
-    depthViewInfo.setFormat(vk::Format::eR32Sfloat);
-    depthViewInfo.setComponents(vk::ComponentMapping());
-    depthViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-
-    vk::ImageViewCreateInfo normalsViewInfo{};
-    normalsViewInfo.setImage(normalsImage);
-    normalsViewInfo.setViewType(vk::ImageViewType::e2D);
-    normalsViewInfo.setFormat(vk::Format::eR8G8B8A8Sint);
-    normalsViewInfo.setComponents(vk::ComponentMapping());
-    normalsViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-
-    std::vector<vk::ImageViewCreateInfo> lighViewCreateInfo(spotLights.size());
-    for(unsigned int i = 0; i < spotLights.size(); ++i) {
-        vk::ImageViewCreateInfo lightViewInfo{};
-        lightViewInfo.setImage(colourImage);
-        lightViewInfo.setViewType(vk::ImageViewType::e2D);
-        lightViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
-        lightViewInfo.setComponents(vk::ComponentMapping());
-        lightViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-
-        lighViewCreateInfo.push_back(lightViewInfo);
-    }
-
-    vk::ImageView colourImageView  = mDevice.createImageView(colourViewInfo);
-    vk::ImageView depthImageView   = mDevice.createImageView(depthViewInfo);
-    vk::ImageView normalsImageView = mDevice.createImageView(normalsViewInfo);
-
-    std::vector<vk::ImageView> lightsImageViews(spotLights.size());
-    for(unsigned int i = 0; i < spotLights.size(); ++i) {
-        lightsImageViews[i] = mDevice.createImageView(lighViewCreateInfo[i]);
-    }
-
     ThiefVKImageTextutres Result{};
 
-    Result.colourImage          = colourImage;
-    Result.colourImageView      = colourImageView;
-    Result.colourImageMemory    = colourMemory;
+    for(unsigned int swapImageCount = 0; swapImageCount < mSwapChain.getNumberOfSwapChainImages(); ++swapImageCount) {
+        auto [colourImage, colourMemory]   = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+        auto [depthImage , depthMemory]    = createDepthImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+        auto [normalsImage, normalsMemory] = createNormalsImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
-    Result.depthImage           = depthImage;
-    Result.depthImageView       = depthImageView;
-    Result.depthImageMemory     = depthMemory;
+        // Bind the memory to the images
+        MemoryManager.BindImage(colourImage, colourMemory);
+        MemoryManager.BindImage(depthImage, depthMemory);
+        MemoryManager.BindImage(normalsImage, normalsMemory);
 
-    Result.normalsImage         = normalsImage;
-    Result.normalsImageView     = normalsImageView;
-    Result.normalsImageMemory   = normalsMemory;
+        std::vector<vk::Image> lightImages(spotLights.size());
+        std::vector<Allocation> lightImageMemory(spotLights.size());
 
-    Result.lighImages           = lightImages;
-    Result.lighImageViews       = lightsImageViews;
-    Result.lightImageMemory     = lightImageMemory;
+        for(unsigned int i = 0; i < spotLights.size(); ++i) {
+            auto [lightImage, lightMemory] = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+            lightImages.push_back(lightImage);
+            lightImageMemory.push_back(lightMemory);
 
-    deferedTextures.push_back(Result);
+            MemoryManager.BindImage(lightImage, lightMemory);
+        }
+                
+        vk::ImageViewCreateInfo colourViewInfo{};
+        colourViewInfo.setImage(colourImage);
+        colourViewInfo.setViewType(vk::ImageViewType::e2D);
+        colourViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
+        colourViewInfo.setComponents(vk::ComponentMapping()); // set swizzle components to identity
+        colourViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+        vk::ImageViewCreateInfo depthViewInfo{};
+        depthViewInfo.setImage(depthImage);
+        depthViewInfo.setViewType(vk::ImageViewType::e2D);
+        depthViewInfo.setFormat(vk::Format::eR32Sfloat);
+        depthViewInfo.setComponents(vk::ComponentMapping());
+        depthViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+        vk::ImageViewCreateInfo normalsViewInfo{};
+        normalsViewInfo.setImage(normalsImage);
+        normalsViewInfo.setViewType(vk::ImageViewType::e2D);
+        normalsViewInfo.setFormat(vk::Format::eR8G8B8A8Sint);
+        normalsViewInfo.setComponents(vk::ComponentMapping());
+        normalsViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+        std::vector<vk::ImageViewCreateInfo> lighViewCreateInfo(spotLights.size());
+        for(unsigned int i = 0; i < spotLights.size(); ++i) {
+            vk::ImageViewCreateInfo lightViewInfo{};
+            lightViewInfo.setImage(colourImage);
+            lightViewInfo.setViewType(vk::ImageViewType::e2D);
+            lightViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
+            lightViewInfo.setComponents(vk::ComponentMapping());
+            lightViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+            lighViewCreateInfo.push_back(lightViewInfo);
+        }
+
+        vk::ImageView colourImageView  = mDevice.createImageView(colourViewInfo);
+        vk::ImageView depthImageView   = mDevice.createImageView(depthViewInfo);
+        vk::ImageView normalsImageView = mDevice.createImageView(normalsViewInfo);
+
+        std::vector<vk::ImageView> lightsImageViews(spotLights.size());
+        for(unsigned int i = 0; i < spotLights.size(); ++i) {
+            lightsImageViews[i] = mDevice.createImageView(lighViewCreateInfo[i]);
+        }
+
+        Result.colourImage          = colourImage;
+        Result.colourImageView      = colourImageView;
+        Result.colourImageMemory    = colourMemory;
+
+        Result.depthImage           = depthImage;
+        Result.depthImageView       = depthImageView;
+        Result.depthImageMemory     = depthMemory;
+
+        Result.normalsImage         = normalsImage;
+        Result.normalsImageView     = normalsImageView;
+        Result.normalsImageMemory   = normalsMemory;
+
+        Result.lighImages           = lightImages;
+        Result.lighImageViews       = lightsImageViews;
+        Result.lightImageMemory     = lightImageMemory;
+
+        deferedTextures.push_back(Result);
+    }
 }
 
 

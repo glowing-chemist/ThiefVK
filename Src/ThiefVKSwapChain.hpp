@@ -27,6 +27,8 @@ public:
     unsigned int getSwapChainImageWidth() const;
     unsigned int getSwapChainImageHeight() const;
 
+    unsigned int getNumberOfSwapChainImages() const;
+
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);

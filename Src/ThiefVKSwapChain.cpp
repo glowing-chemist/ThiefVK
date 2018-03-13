@@ -37,6 +37,11 @@ unsigned int ThiefVKSwapChain::getSwapChainImageHeight() const {
 }
 
 
+unsigned int ThiefVKSwapChain::getNumberOfSwapChainImages() const {
+    return swapChainImages.size();
+}
+
+
 SwapChainSupportDetails ThiefVKSwapChain::querySwapchainSupport(vk::PhysicalDevice dev, vk::SurfaceKHR surface) {
     SwapChainSupportDetails details;
 
