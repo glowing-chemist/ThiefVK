@@ -14,14 +14,14 @@
 #include <vulkan/vulkan.h>
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
-    VkDebugReportFlagsEXT flags,
-    VkDebugReportObjectTypeEXT objType,
-    uint64_t obj,
-    size_t location,
-    int32_t code,
-    const char* layerPrefix,
+    VkDebugReportFlagsEXT,
+    VkDebugReportObjectTypeEXT,
+    uint64_t,
+    size_t,
+    int32_t,
+    const char*,
     const char* msg,
-    void* userData) {
+    void*) {
 
     std::cerr << "validation layer: " << msg << std::endl;
 
