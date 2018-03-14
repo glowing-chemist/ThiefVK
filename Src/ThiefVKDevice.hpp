@@ -103,6 +103,8 @@ private:
     void DestroyImageView(vk::ImageView& view);
     void DestroyImage(vk::Image&, Allocation);
 
+    void DestroyFrameBuffers();
+
     // private variables
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
@@ -131,6 +133,7 @@ private:
     vk::DeviceMemory vertexBufferMemory;
 
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
+    std::vector<vk::Framebuffer> frameBuffers;
 
     std::vector<Vertex> verticies;
     std::vector<modelInfo> vertexModelInfo;

@@ -22,12 +22,12 @@ public:
 
     vk::Format getSwapChainImageFormat() const;
 
-    void createSwpaChainFrameBuffers(vk::Device&, ThiefVKRenderPasses& renderPass, uint32_t spotLights);
-
     unsigned int getSwapChainImageWidth() const;
     unsigned int getSwapChainImageHeight() const;
 
     unsigned int getNumberOfSwapChainImages() const;
+
+    const vk::ImageView& getImageView(const size_t) const;
 
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
@@ -40,7 +40,6 @@ private:
     std::vector<vk::ImageView> swapChainImageViews;
     vk::Extent2D swapChainExtent;
     vk::Format swapChainFormat;
-    std::vector<vk::Framebuffer> swapChainFrameBuffers;
 };
 
 #endif

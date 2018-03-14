@@ -49,6 +49,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 
 
 ThiefVKDevice::~ThiefVKDevice() {
+    DestroyFrameBuffers();
     DestroyAllImageTextures();
     MemoryManager.Destroy();
     mSwapChain.destroy(mDevice);
@@ -70,6 +71,7 @@ std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const unsigned
     imageInfo.setImageType(vk::ImageType::e2D);
     imageInfo.setMipLevels(1);
     imageInfo.setArrayLayers(1);
+    imageInfo.setTiling(vk::ImageTiling::eOptimal);
     imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 
     vk::Image image = mDevice.createImage(imageInfo);
@@ -84,12 +86,13 @@ std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const unsigned
 std::pair<vk::Image, Allocation> ThiefVKDevice::createDepthImage(const unsigned int width, const unsigned int height) {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.setExtent({width, height, 1});
-    imageInfo.setFormat(vk::Format::eR32Sfloat);
+    imageInfo.setFormat(vk::Format::eD32Sfloat);
     imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
     imageInfo.setImageType(vk::ImageType::e2D);
     imageInfo.setMipLevels(1);
     imageInfo.setArrayLayers(1);
-    imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+    imageInfo.setTiling(vk::ImageTiling::eOptimal);
+    imageInfo.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 
     vk::Image image = mDevice.createImage(imageInfo);
     vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
@@ -108,6 +111,7 @@ std::pair<vk::Image, Allocation> ThiefVKDevice::createNormalsImage(const unsigne
     imageInfo.setImageType(vk::ImageType::e2D);
     imageInfo.setMipLevels(1);
     imageInfo.setArrayLayers(1);
+    imageInfo.setTiling(vk::ImageTiling::eOptimal);
     imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 
     vk::Image image = mDevice.createImage(imageInfo);
@@ -181,9 +185,9 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
         vk::ImageViewCreateInfo depthViewInfo{};
         depthViewInfo.setImage(depthImage);
         depthViewInfo.setViewType(vk::ImageViewType::e2D);
-        depthViewInfo.setFormat(vk::Format::eR32Sfloat);
+        depthViewInfo.setFormat(vk::Format::eD32Sfloat);
         depthViewInfo.setComponents(vk::ComponentMapping());
-        depthViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+        depthViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
 
         vk::ImageViewCreateInfo normalsViewInfo{};
         normalsViewInfo.setImage(normalsImage);
@@ -252,7 +256,7 @@ void ThiefVKDevice::createRenderPasses() {
 
 
     vk::AttachmentDescription depthPassAttachment{};
-    depthPassAttachment.setFormat(vk::Format::eR32Sfloat); // store in each pixel a 32bit depth value
+    depthPassAttachment.setFormat(vk::Format::eD32Sfloat); // store in each pixel a 32bit depth value
     depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
@@ -277,6 +281,10 @@ void ThiefVKDevice::createRenderPasses() {
     vk::AttachmentReference normalssubPassReference{};
     normalssubPassReference.setAttachment(2);
     normalssubPassReference.setLayout(vk::ImageLayout::eGeneral);
+
+    vk::AttachmentReference swapChainAttatchmentreference{};
+    swapChainAttatchmentreference.setAttachment(3);
+    swapChainAttatchmentreference.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
     // specify the subpass descriptions
     vk::SubpassDescription colourPassDesc{};
@@ -328,7 +336,7 @@ void ThiefVKDevice::createRenderPasses() {
     compositPassDesc.setInputAttachmentCount(spotLightattachmentRefs.size());
     compositPassDesc.setPInputAttachments(spotLightattachmentRefs.data());
     compositPassDesc.setColorAttachmentCount(1);
-    compositPassDesc.setPColorAttachments(&colourCompositPassReference);
+    compositPassDesc.setPColorAttachments(&swapChainAttatchmentreference);
 
 
     std::vector<vk::AttachmentReference> lightAttachments{};
@@ -406,8 +414,40 @@ void ThiefVKDevice::createRenderPasses() {
     mRenderPasses.RenderPass = mDevice.createRenderPass(renderPassInfo);
 }
 
+
 void ThiefVKDevice::createFrameBuffers() {
-    mSwapChain.createSwpaChainFrameBuffers(mDevice, mRenderPasses, spotLights.size());
+    frameBuffers.resize(mSwapChain.getNumberOfSwapChainImages());
+
+    for(uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); i++) {
+        const vk::ImageView& swapChainImage = mSwapChain.getImageView(i);
+
+        std::vector<vk::ImageView> frameBufferAttatchments{deferedTextures[i].colourImageView
+                                                          , deferedTextures[i].depthImageView
+                                                          , deferedTextures[i].normalsImageView
+                                                          , swapChainImage };
+
+        for(const auto& lightImageViews : deferedTextures[i].lighImageViews) {
+            frameBufferAttatchments.push_back(lightImageViews);
+        }
+
+        vk::FramebufferCreateInfo frameBufferInfo{}; // we need to allocate all our images before trying to fix this
+        frameBufferInfo.setRenderPass(mRenderPasses.RenderPass);
+        frameBufferInfo.setAttachmentCount(frameBufferAttatchments.size());
+        frameBufferInfo.setPAttachments(frameBufferAttatchments.data());
+        frameBufferInfo.setWidth(mSwapChain.getSwapChainImageWidth());
+        frameBufferInfo.setHeight(mSwapChain.getSwapChainImageHeight());
+        frameBufferInfo.setLayers(1);
+
+        frameBuffers[i] = mDevice.createFramebuffer(frameBufferInfo);
+    }
+    std::cerr << "created " << frameBuffers.size() << " frame buffers \n";
+}
+
+
+void ThiefVKDevice::DestroyFrameBuffers() {
+    for(auto& frameBuffer : frameBuffers) {
+        mDevice.destroyFramebuffer(frameBuffer);
+    }
 }
 
 

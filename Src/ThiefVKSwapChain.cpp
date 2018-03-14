@@ -118,9 +118,6 @@ ThiefVKSwapChain::ThiefVKSwapChain(vk::Device& Device, vk::PhysicalDevice physDe
 
 
 void ThiefVKSwapChain::destroy(vk::Device& dev) {
-    for(auto& frameBuffer: swapChainFrameBuffers) {
-        dev.destroyFramebuffer(frameBuffer);
-    }
     for(auto& imageView : swapChainImageViews) {
         dev.destroyImageView(imageView);
     }
@@ -150,21 +147,7 @@ void ThiefVKSwapChain::createSwapChainImageViews(vk::Device &Device) {
 }
 
 
-void ThiefVKSwapChain::createSwpaChainFrameBuffers(vk::Device& Device, ThiefVKRenderPasses &renderPass, uint32_t spotLights) {
-    swapChainFrameBuffers.resize(swapChainImageViews.size());
-
-    for(uint32_t i = 0; i < swapChainFrameBuffers.size(); i++) {
-        vk::ImageView attachments = swapChainImageViews[i];
-
-        vk::FramebufferCreateInfo frameBufferInfo{}; // we need to allocate all our images before trying to fix this
-        frameBufferInfo.setRenderPass(renderPass.RenderPass);
-        frameBufferInfo.setAttachmentCount(renderPass.attatchments.size());
-        frameBufferInfo.setPAttachments(&attachments);
-        frameBufferInfo.setWidth(swapChainExtent.width);
-        frameBufferInfo.setHeight(swapChainExtent.height);
-        frameBufferInfo.setLayers(1);
-
-        swapChainFrameBuffers[i] = Device.createFramebuffer(frameBufferInfo);
-    }
-    std::cerr << "created " << swapChainFrameBuffers.size() << " frame buffers \n";
+const vk::ImageView& ThiefVKSwapChain::getImageView(const size_t index) const {
+    return swapChainImageViews[index];
 }
+

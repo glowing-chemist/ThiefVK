@@ -22,4 +22,5 @@ void ThiefVKEngine::Init() {
 #endif
     Device.createRenderPasses();
     Device.createDeferedRenderTargetImageViews();
+    Device.createFrameBuffers();
 }
