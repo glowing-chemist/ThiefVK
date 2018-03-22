@@ -74,8 +74,8 @@ ThiefVKInstance::ThiefVKInstance() {
     mInstance = vk::createInstance(instanceInfo);
 
     VkSurfaceKHR surface;
-    glfwCreateWindowSurface(mInstance, mWindow, nullptr, &surface); // use glfw as is platform agnostic
-    mWindowSurface = surface;
+    glfwCreateWindowSurface(static_cast<VkInstance>(mInstance), mWindow, nullptr, &surface); // use glfw as is platform agnostic
+    mWindowSurface = vk::SurfaceKHR(surface);
 }
 
 
@@ -101,6 +101,8 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     auto maxScoreeDeviceOffset = std::max_element(availableDevices.begin(), availableDevices.end());
     size_t physicalDeviceIndex = std::distance(availableDevices.begin(), maxScoreeDeviceOffset);
     vk::PhysicalDevice physicalDevice = availableDevices[physicalDeviceIndex];
+
+	std::cout << "Device selected: " << physicalDevice.getProperties().deviceName << '\n';
 
     const auto[graphics, present] = getGraphicsAndPresentQueue(mWindowSurface, physicalDevice);
 
@@ -152,8 +154,8 @@ void ThiefVKInstance::addDebugCallback() {
 
     auto* func = (PFN_vkCreateDebugReportCallbackEXT) mInstance.getProcAddr("vkCreateDebugReportCallbackEXT");
     if(func != nullptr) {
-        auto* call = static_cast<VkDebugReportCallbackEXT>(debugCallback);
-        func(mInstance, &callbackCreateInfo, nullptr, &call);
+        auto call = static_cast<VkDebugReportCallbackEXT>(debugCallback);
+        func(static_cast<VkInstance>(mInstance), &callbackCreateInfo, nullptr, &call);
     }
 
 }
