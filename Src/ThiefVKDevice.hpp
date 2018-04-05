@@ -92,7 +92,7 @@ public:
     void createRenderPasses();
     void createGraphicsPipelines();
     void createFrameBuffers();
-    void createCommandPool();
+    void createCommandPools();
     void createVertexBuffer();
     void createCommandBuffers();
     void createSemaphores();
@@ -116,6 +116,7 @@ private:
 
     vk::Queue mGraphicsQueue;
     vk::Queue mPresentQueue;
+    vk::Queue mComputeQueue;
 
     ThiefVKSwapChain mSwapChain;
 
@@ -124,6 +125,10 @@ private:
     vk::PipelineLayout pipeLineLayout;
     vk::PipelineLayout finalPipLineLayout;
     ThiefVKPipeLines PipeLines;
+
+    vk::CommandPool computeCommandPool;
+    std::vector<vk::CommandBuffer> currentComputeCommandBuffers;
+    std::vector<vk::CommandBuffer> freeComputeCommanBuffers;
 
     vk::CommandPool graphicsCommandPool;
     std::vector<vk::CommandBuffer> currentFrameCommandBuffers;

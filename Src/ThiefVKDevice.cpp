@@ -37,14 +37,14 @@ std::array<vk::VertexInputAttributeDescription, 2> Vertex::getAttribDesc() {
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
     mPhysDev{std::get<0>(Devices)}, mDevice{std::get<1>(Devices)}, mWindowSurface{surface}, mWindow{window}, mSwapChain{mDevice, mPhysDev, surface, window}
 {
-    auto [graphicsQueueIndex, presentQueueIndex] = getGraphicsAndPresentQueue(mWindowSurface, mPhysDev);
+    const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, mPhysDev);
 
-    mGraphicsQueue = mDevice.getQueue(graphicsQueueIndex, 0);
-    mPresentQueue  = mDevice.getQueue(presentQueueIndex, 0);
+    mGraphicsQueue = mDevice.getQueue(queueIndices.GraphicsQueueIndex, 0);
+    mPresentQueue  = mDevice.getQueue(queueIndices.PresentQueueIndex, 0);
+    mComputeQueue  = mDevice.getQueue(queueIndices.ComputeQueueIndex, 0);
 
    ThiefVKMemoryManager memoryManager(&mPhysDev, &mDevice);
    MemoryManager = memoryManager;
-
 }
 
 
@@ -451,13 +451,16 @@ void ThiefVKDevice::DestroyFrameBuffers() {
 }
 
 
-void ThiefVKDevice::createCommandPool() {
-    auto [graphicsQueueIndex, presentQueueIndex] = getGraphicsAndPresentQueue(mWindowSurface, mPhysDev);
+void ThiefVKDevice::createCommandPools() {
+    const QueueIndicies queueIndicies = getAvailableQueues(mWindowSurface, mPhysDev);
 
-    vk::CommandPoolCreateInfo poolInfo{};
-    poolInfo.setQueueFamilyIndex(graphicsQueueIndex);
+    vk::CommandPoolCreateInfo graphicsPoolInfo{};
+    graphicsPoolInfo.setQueueFamilyIndex(queueIndicies.GraphicsQueueIndex);
+    graphicsCommandPool = mDevice.createCommandPool(graphicsPoolInfo);
 
-    graphicsCommandPool = mDevice.createCommandPool(poolInfo);
+    vk::CommandPoolCreateInfo computePoolInfo{};
+    computePoolInfo.setQueueFamilyIndex(queueIndicies.ComputeQueueIndex);
+    computeCommandPool = mDevice.createCommandPool(computePoolInfo);
 }
 
 

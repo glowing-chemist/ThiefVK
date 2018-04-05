@@ -29,17 +29,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
 
 }
 
-std::pair<int, int> getGraphicsAndPresentQueue(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev) {
+const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev) {
     int graphics = -1;
     int present  = -1;
+    int compute  = -1;
 
     std::vector<vk::QueueFamilyProperties> queueProperties = dev.getQueueFamilyProperties();
     for(uint32_t i = 0; i < queueProperties.size(); i++) {
         if(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) graphics = i;
+        if(queueProperties[i].queueFlags & vk::QueueFlagBits::eCompute) compute = i;
         if(dev.getSurfaceSupportKHR(i, windowSurface)) present = i;
-        if(graphics != -1 && present != -1) return {graphics, present};
+        if(graphics != -1 && present != -1 && compute != -1) return {graphics, present, compute};
     }
-    return {graphics, present};
+    return {graphics, present, compute};
 }
 
 
@@ -83,19 +85,22 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     bool GeometryWanted = DeviceFeatureFlags & ThiefDeviceFeaturesFlags::Geometry;
     bool TessWanted     = DeviceFeatureFlags & ThiefDeviceFeaturesFlags::Tessalation;
     bool DiscreteWanted = DeviceFeatureFlags & ThiefDeviceFeaturesFlags::Discrete;
+    bool ComputeWanted  = DeviceFeatureFlags & ThiefDeviceFeaturesFlags::Compute;
 
     auto availableDevices = mInstance.enumeratePhysicalDevices();
     std::vector<int> deviceScores(availableDevices.size());
 
     for(uint32_t i = 0; i < availableDevices.size(); i++) {
-        vk::PhysicalDeviceProperties properties = availableDevices[i].getProperties();
-        vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
+        const vk::PhysicalDeviceProperties properties = availableDevices[i].getProperties();
+        const vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
+        const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, availableDevices[i]);
 
         std::cout << "Device Found: " << properties.deviceName << '\n';
 
         if(GeometryWanted && features.geometryShader) deviceScores[i] += 1;
         if(TessWanted && features.tessellationShader) deviceScores[i] += 1;
         if(DiscreteWanted && properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) deviceScores[i] += 1;
+        if(ComputeWanted && (queueIndices.ComputeQueueIndex != -1)) deviceScores[i] += 1; // check if a compute queue is available
     }
 
     auto maxScoreeDeviceOffset = std::max_element(availableDevices.begin(), availableDevices.end());
@@ -104,11 +109,11 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
 
 	std::cout << "Device selected: " << physicalDevice.getProperties().deviceName << '\n';
 
-    const auto[graphics, present] = getGraphicsAndPresentQueue(mWindowSurface, physicalDevice);
+    const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, physicalDevice);
 
     float queuePriority = 1.0f;
 
-    std::set<int> uniqueQueues{graphics, present};
+    std::set<int> uniqueQueues{queueIndices.GraphicsQueueIndex, queueIndices.PresentQueueIndex, queueIndices.ComputeQueueIndex};
     std::vector<vk::DeviceQueueCreateInfo> queueInfo{};
     for(auto& queueIndex : uniqueQueues) {
         vk::DeviceQueueCreateInfo info{};

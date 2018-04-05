@@ -7,16 +7,6 @@
 
 #include <iostream>
 
-// basic struct to keep track of queuefamily indicies
-struct QueueFamilyIndices { // Helper struct to represent QueFamilies
-    int graphicsFamily = -1;
-    int presentFamily = -1;
-
-    bool isComplete() {
-        return graphicsFamily >= 0 && presentFamily >= 0;
-    }
-};
-
 vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats) {
     if(formats.size() == 1 && formats[0].format == vk::Format::eUndefined) { // indicates any format can be used, so pick the best
         vk::SurfaceFormatKHR form;
@@ -91,9 +81,9 @@ ThiefVKSwapChain::ThiefVKSwapChain(vk::Device& Device, vk::PhysicalDevice physDe
     info.setImageArrayLayers(1);
     info.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
 
-    const auto [graphicsQueueIndex, presentQueueIndex] = getGraphicsAndPresentQueue(windowSurface, physDevice); //select which queues the swap chain can be accessed by
-    if(graphicsQueueIndex != presentQueueIndex) {
-        uint32_t indices[2] = {static_cast<uint32_t>(graphicsQueueIndex), static_cast<uint32_t>(presentQueueIndex)};
+    const QueueIndicies queuIndicies = getAvailableQueues(windowSurface, physDevice); //select which queues the swap chain can be accessed by
+    if(queuIndicies.GraphicsQueueIndex != queuIndicies.PresentQueueIndex) {
+        uint32_t indices[2] = {static_cast<uint32_t>(queuIndicies.GraphicsQueueIndex), static_cast<uint32_t>(queuIndicies.PresentQueueIndex)};
         info.setImageSharingMode(vk::SharingMode::eConcurrent);
         info.setQueueFamilyIndexCount(2);
         info.setPQueueFamilyIndices(indices);

@@ -10,14 +10,21 @@
 enum class ThiefDeviceFeaturesFlags {
     Geometry = 1,
     Tessalation = 2,
-    Discrete = 4
+    Discrete = 4,
+    Compute = 8
 };
 
 int operator|(ThiefDeviceFeaturesFlags, ThiefDeviceFeaturesFlags);
 bool operator&(int, ThiefDeviceFeaturesFlags);
 
+struct QueueIndicies {
+    int GraphicsQueueIndex;
+    int PresentQueueIndex;
+    int ComputeQueueIndex;
+};
 
-std::pair<int, int> getGraphicsAndPresentQueue(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
+
+const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
 
 class ThiefVKInstance {
 public:
