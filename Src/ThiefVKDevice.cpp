@@ -470,7 +470,19 @@ void ThiefVKDevice::createVertexBuffer() {
 
 
 void ThiefVKDevice::createCommandBuffers() {
+	vk::CommandBufferAllocateInfo primaryAllocInfo{};
+	primaryAllocInfo.setCommandPool(graphicsCommandPool);
+	primaryAllocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
+	primaryAllocInfo.setCommandBufferCount(frameBuffers.size());
 
+	freePrimaryCommanBuffers =  mDevice.allocateCommandBuffers(primaryAllocInfo);
+
+	vk::CommandBufferAllocateInfo secondaryAllocInfo{};
+	secondaryAllocInfo.setCommandPool(graphicsCommandPool);
+	secondaryAllocInfo.setLevel(vk::CommandBufferLevel::eSecondary);
+	secondaryAllocInfo.setCommandBufferCount(frameBuffers.size() * 4); // one for colour, depth, normals and light
+
+	freeSecondaryCommanBuffers = mDevice.allocateCommandBuffers(secondaryAllocInfo);
 }
 
 
