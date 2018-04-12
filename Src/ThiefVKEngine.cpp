@@ -7,7 +7,8 @@
 ThiefVKEngine::ThiefVKEngine() : Instance{ThiefVKInstance()},
                                  Device{ThiefVKDevice(Instance.findSuitableDevices(
                                                                                    ThiefDeviceFeaturesFlags::Discrete
-                                                                                   | ThiefDeviceFeaturesFlags::Geometry )
+                                                                                   | ThiefDeviceFeaturesFlags::Geometry
+																				   | ThiefDeviceFeaturesFlags::Compute)
                                                       , Instance.getSurface(), Instance.getWindow())} {}
 
 
