@@ -484,7 +484,16 @@ vk::CommandBuffer ThiefVKDevice::beginSingleUseGraphicsCommandBuffer() {
 
 
 void ThiefVKDevice::endSingleUseGraphicsCommandBuffer(vk::CommandBuffer cmdBuffer) {
+	cmdBuffer.end();
 
+	vk::SubmitInfo submitInfo{};
+	submitInfo.setCommandBufferCount(1);
+	submitInfo.setPCommandBuffers(&cmdBuffer);
+	
+	mGraphicsQueue.submit(submitInfo, nullptr);
+	mGraphicsQueue.waitIdle();
+
+	mDevice.freeCommandBuffers(graphicsCommandPool, cmdBuffer);
 }
 
 
