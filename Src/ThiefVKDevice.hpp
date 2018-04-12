@@ -105,6 +105,9 @@ private:
 
     void DestroyFrameBuffers();
 
+    vk::CommandBuffer beginSingleUseGraphicsCommandBuffer();
+    void              endSingleUseGraphicsCommandBuffer(vk::CommandBuffer);
+
     // private variables
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;

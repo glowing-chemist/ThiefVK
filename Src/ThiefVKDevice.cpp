@@ -466,6 +466,28 @@ void ThiefVKDevice::createCommandPools() {
 }
 
 
+vk::CommandBuffer ThiefVKDevice::beginSingleUseGraphicsCommandBuffer() {
+    vk::CommandBufferAllocateInfo allocInfo{};
+    allocInfo.setCommandBufferCount(1);
+    allocInfo.setLevel(vk::CommandBufferLevel::ePrimary); // this will probablybe used for image format transitions
+    allocInfo.setCommandPool(graphicsCommandPool);
+
+    vk::CommandBuffer cmdBuffer = mDevice.allocateCommandBuffers(allocInfo)[0]; // we know we're only allocating one
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit); // just use once
+
+    cmdBuffer.begin(beginInfo);
+
+    return cmdBuffer;
+}
+
+
+void ThiefVKDevice::endSingleUseGraphicsCommandBuffer(vk::CommandBuffer cmdBuffer) {
+
+}
+
+
 void ThiefVKDevice::createVertexBuffer() {
 
 }
