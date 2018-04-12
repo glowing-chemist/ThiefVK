@@ -54,6 +54,8 @@ ThiefVKDevice::~ThiefVKDevice() {
     MemoryManager.Destroy();
     mSwapChain.destroy(mDevice);
     mDevice.destroyRenderPass(mRenderPasses.RenderPass);
+    mDevice.destroyCommandPool(graphicsCommandPool);
+    mDevice.destroyCommandPool(computeCommandPool);
     mDevice.destroy();
 }
 
