@@ -15,6 +15,7 @@ enum class ThiefDeviceFeaturesFlags {
 };
 
 int operator|(ThiefDeviceFeaturesFlags, ThiefDeviceFeaturesFlags);
+int operator|(int, ThiefDeviceFeaturesFlags);
 bool operator&(int, ThiefDeviceFeaturesFlags);
 
 struct QueueIndicies {

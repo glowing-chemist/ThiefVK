@@ -103,8 +103,8 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
         if(ComputeWanted && (queueIndices.ComputeQueueIndex != -1)) deviceScores[i] += 1; // check if a compute queue is available
     }
 
-    auto maxScoreeDeviceOffset = std::max_element(availableDevices.begin(), availableDevices.end());
-    size_t physicalDeviceIndex = std::distance(availableDevices.begin(), maxScoreeDeviceOffset);
+    auto maxScoreeDeviceOffset = std::max_element(deviceScores.begin(), deviceScores.end());
+    size_t physicalDeviceIndex = std::distance(deviceScores.begin(), maxScoreeDeviceOffset);
     vk::PhysicalDevice physicalDevice = availableDevices[physicalDeviceIndex];
 
 	std::cout << "Device selected: " << physicalDevice.getProperties().deviceName << '\n';
@@ -176,7 +176,12 @@ vk::SurfaceKHR ThiefVKInstance::getSurface() const {
 
 
 int operator|(ThiefDeviceFeaturesFlags lhs, ThiefDeviceFeaturesFlags rhs) {
-    return static_cast<int>(lhs) & static_cast<int>(rhs);
+    return static_cast<int>(lhs) | static_cast<int>(rhs);
+}
+
+
+int operator|(int lhs, ThiefDeviceFeaturesFlags rhs) {
+	return lhs | static_cast<int>(rhs);
 }
 
 
