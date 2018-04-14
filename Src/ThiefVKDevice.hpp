@@ -108,6 +108,10 @@ private:
     vk::CommandBuffer beginSingleUseGraphicsCommandBuffer();
     void              endSingleUseGraphicsCommandBuffer(vk::CommandBuffer);
 
+    void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+    void CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height);
+    void copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size);
+
     // private variables
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
@@ -139,8 +143,10 @@ private:
     std::vector<vk::CommandBuffer> freePrimaryCommanBuffers;
 	std::vector<vk::CommandBuffer> freeSecondaryCommanBuffers;
 
+    vk::CommandBuffer flushCommandBuffer;
+
     vk::Buffer vertexBuffer;
-    vk::DeviceMemory vertexBufferMemory;
+    Allocation vertexBufferMemory;
 
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
     std::vector<vk::Framebuffer> frameBuffers;

@@ -519,6 +519,61 @@ void ThiefVKDevice::createCommandBuffers() {
 }
 
 
+void ThiefVKDevice::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
+    vk::ImageMemoryBarrier memBarrier{};
+    memBarrier.setOldLayout(oldLayout);
+    memBarrier.setNewLayout(newLayout);
+
+    // we aren't transfering queue ownership
+    memBarrier.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+    memBarrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+
+    memBarrier.setImage(image);
+    memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+    vk::PipelineStageFlags sourceStage;
+    vk::PipelineStageFlags destinationStage;
+
+    if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
+        memBarrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+        destinationStage = vk::PipelineStageFlagBits::eTransfer;
+    } else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+        memBarrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        memBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eTransfer;
+        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+    }
+
+    flushCommandBuffer.pipelineBarrier(sourceStage, destinationStage, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &memBarrier);
+}
+
+
+void ThiefVKDevice::copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size) {
+    vk::BufferCopy copyInfo{};
+    copyInfo.setSize(size);
+
+    flushCommandBuffer.copyBuffer(SrcBuffer, DstBuffer, copyInfo); // record these commands in to the flush buffer that will get submitted before any draw calls are made
+}
+
+
+void ThiefVKDevice::CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height) {
+    vk::BufferImageCopy copyInfo{};
+    copyInfo.setBufferOffset(0);
+    copyInfo.setBufferImageHeight(0);
+    copyInfo.setBufferRowLength(0);
+
+    copyInfo.setImageSubresource({vk::ImageAspectFlagBits::eColor, 0, 0, 1});
+
+    copyInfo.setImageOffset({0, 0, 0}); // copy to the image starting at the start (0, 0, 0)
+    copyInfo.setImageExtent({width, height, 1});
+
+    flushCommandBuffer.copyBufferToImage(srcBuffer, dstImage, vk::ImageLayout::eTransferDstOptimal, copyInfo);
+}
+
+
 void ThiefVKDevice::createSemaphores() {
 
 }
