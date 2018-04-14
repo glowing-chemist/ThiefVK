@@ -45,7 +45,7 @@ void ThiefVKMemoryManager::AllocateDevicePool() {
             if(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
             {
                 std::cerr << "having to use host coherint memory, probably a integrated GPU  \n";
-                deviceLocalPoolIndex = i; // just find the find pool that is device local
+                deviceLocalPoolIndex = i; // just find the first pool that is device local
                 break;
             }
         }
