@@ -18,9 +18,6 @@ ThiefVKEngine::~ThiefVKEngine() {
 
 
 void ThiefVKEngine::Init() {
-#ifndef NDEBUG
-    Instance.addDebugCallback();
-#endif
     Device.createRenderPasses();
     Device.createDeferedRenderTargetImageViews();
     Device.createFrameBuffers();

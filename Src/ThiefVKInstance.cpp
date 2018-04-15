@@ -68,12 +68,28 @@ ThiefVKInstance::ThiefVKInstance() {
     instanceInfo.setPpEnabledExtensionNames(requiredExtensions);
     instanceInfo.setPApplicationInfo(&appInfo);
 #ifndef NDEBUG
+    const auto availableLayers = vk::enumerateInstanceLayerProperties();
+    bool validationLayersFound = false;
     const char* validationLayers = "VK_LAYER_LUNARG_standard_validation";
+
+    for(auto& layer : availableLayers) {
+        if(strcmp(layer.layerName, validationLayers) == 0) {
+            validationLayersFound = true;
+            break;
+        }
+    }
+    if(!validationLayersFound) throw std::runtime_error{"Running in debug but Lunarg validation layers not found"};
+
     instanceInfo.setEnabledLayerCount(1);
     instanceInfo.setPpEnabledLayerNames(&validationLayers);
 #endif
 
     mInstance = vk::createInstance(instanceInfo);
+
+#ifndef NDEBUG // add the debug callback as soon as possible
+    addDebugCallback();
+#endif
+
 
     VkSurfaceKHR surface;
     glfwCreateWindowSurface(static_cast<VkInstance>(mInstance), mWindow, nullptr, &surface); // use glfw as is platform agnostic
