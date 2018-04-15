@@ -10,19 +10,13 @@
 //local includes
 #include "ThiefVKSwapChain.hpp"
 #include "ThiefVKMemoryManager.hpp"
+#include "ThiefVKPipeLineManager.hpp"
 
 // std library includes
 #include <array>
 #include <vector>
 #include <string>
 #include <tuple>
-
-struct ThiefVKPipeLines {
-    vk::Pipeline colourPipeline;
-    vk::Pipeline normalsPipeline;
-    vk::Pipeline lighPipeline;
-    vk::Pipeline finalPipline;
-};
 
 
 struct ThiefVKImageTextutres {
@@ -116,6 +110,8 @@ private:
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
 
+    ThiefVKPipelineManager pipelineManager;
+
     ThiefVKMemoryManager MemoryManager;
 
     vk::SurfaceKHR mWindowSurface;
@@ -128,10 +124,6 @@ private:
     ThiefVKSwapChain mSwapChain;
 
     ThiefVKRenderPasses mRenderPasses;
-
-    vk::PipelineLayout pipeLineLayout;
-    vk::PipelineLayout finalPipLineLayout;
-    ThiefVKPipeLines PipeLines;
 
     vk::CommandPool computeCommandPool;
     std::vector<vk::CommandBuffer> currentComputeCommandBuffers;

@@ -35,7 +35,7 @@ std::array<vk::VertexInputAttributeDescription, 2> Vertex::getAttribDesc() {
 // ThiefVKDeviceMemberFunctions
 
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
-    mPhysDev{std::get<0>(Devices)}, mDevice{std::get<1>(Devices)}, mWindowSurface{surface}, mWindow{window}, mSwapChain{mDevice, mPhysDev, surface, window}
+    mPhysDev{std::get<0>(Devices)}, mDevice{std::get<1>(Devices)}, pipelineManager{mDevice},  mWindowSurface{surface}, mWindow{window}, mSwapChain{mDevice, mPhysDev, surface, window}
 {
     const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, mPhysDev);
 
@@ -51,6 +51,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 ThiefVKDevice::~ThiefVKDevice() {
     DestroyFrameBuffers();
     DestroyAllImageTextures();
+    pipelineManager.Destroy();
     MemoryManager.Destroy();
     mSwapChain.destroy(mDevice);
     mDevice.destroyRenderPass(mRenderPasses.RenderPass);
