@@ -51,6 +51,8 @@ void ThiefVKPipelineManager::Destroy() {
         dev.destroyPipelineLayout(pipeLine.second.mPipelineLayout);
         dev.destroyPipeline(pipeLine.second.mPipeLine);
     }
+    dev.destroyDescriptorPool(uniformBufferDescPool);
+    dev.destroyDescriptorPool(imageSamplerDescPool);
 }
 
 
