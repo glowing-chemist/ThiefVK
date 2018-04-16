@@ -31,7 +31,7 @@ struct ThiefVKPipelineDescription {
 
 class ThiefVKPipelineManager {
 public:
-    ThiefVKPipelineManager(vk::Device dev);
+    ThiefVKPipelineManager(vk::Device& dev);
     void Destroy();
 
     vk::Pipeline getPipeLine(ThiefVKPipelineDescription);

@@ -6,7 +6,7 @@
 #include <array>
 
 
-ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device dev)
+ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
     :dev{dev} {
 
     // crerate the descriptor set pools for uniform buffers and combined image samplers
@@ -23,7 +23,7 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device dev)
     vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
     uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size()); // two pools one for uniform buffers and one for combined image samplers
     uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
-    uniformBufferDescPoolInfo.setMaxSets(100);
+    uniformBufferDescPoolInfo.setMaxSets(10);
 
     DescPool = dev.createDescriptorPool(uniformBufferDescPoolInfo);
 
