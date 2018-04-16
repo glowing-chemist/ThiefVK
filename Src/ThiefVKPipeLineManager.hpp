@@ -39,8 +39,7 @@ private:
 
     // reference to device for creating shader modules and destroying pipelines
     vk::Device& dev;
-    vk::DescriptorPool uniformBufferDescPool;
-    vk::DescriptorPool imageSamplerDescPool;
+	vk::DescriptorPool DescPool;
 
     vk::ShaderModule createShaderModule(std::string path) const;
     vk::PipelineLayout createPipelineLayout(std::vector<vk::DescriptorSetLayout> descLayouts, ShaderName shader) const;

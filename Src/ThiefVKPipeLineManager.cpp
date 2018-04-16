@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <array>
 
 
 ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device dev)
@@ -13,23 +14,19 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device dev)
     uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBuffer);
     uniformBufferDescPoolSize.setDescriptorCount(5); // start with 5 we can allways allocate another pool if we later need more.
 
+	vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
+	imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
+	imageSamplerrDescPoolSize.setDescriptorCount(5); // start with 5 we can allways allocate another pool if we later need more.
+
+	std::array<vk::DescriptorPoolSize, 2> descPoolSizes{uniformBufferDescPoolSize, imageSamplerrDescPoolSize};
+
     vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
-    uniformBufferDescPoolInfo.setPoolSizeCount(1); // just one pool
-    uniformBufferDescPoolInfo.setPPoolSizes(&uniformBufferDescPoolSize);
-    uniformBufferDescPoolInfo.setMaxSets(5);
+    uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size()); // two pools one for uniform buffers and one for combined image samplers
+    uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
+    uniformBufferDescPoolInfo.setMaxSets(100);
 
-    uniformBufferDescPool = dev.createDescriptorPool(uniformBufferDescPoolInfo);
+    DescPool = dev.createDescriptorPool(uniformBufferDescPoolInfo);
 
-    vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
-    imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
-    imageSamplerrDescPoolSize.setDescriptorCount(5); // start with 5 we can allways allocate another pool if we later need more.
-
-    vk::DescriptorPoolCreateInfo imageSamplerDescPoolInfo{};
-    imageSamplerDescPoolInfo.setPoolSizeCount(1); // just one pool
-    imageSamplerDescPoolInfo.setPPoolSizes(&uniformBufferDescPoolSize);
-    imageSamplerDescPoolInfo.setMaxSets(5);
-
-    imageSamplerDescPool = dev.createDescriptorPool(imageSamplerDescPoolInfo);
 
     // Load up the shader spir-v from disk and create shader modules.
     shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransVert.spv");
@@ -51,13 +48,12 @@ void ThiefVKPipelineManager::Destroy() {
         dev.destroyPipelineLayout(pipeLine.second.mPipelineLayout);
         dev.destroyPipeline(pipeLine.second.mPipeLine);
     }
-    dev.destroyDescriptorPool(uniformBufferDescPool);
-    dev.destroyDescriptorPool(imageSamplerDescPool);
+    dev.destroyDescriptorPool(DescPool);
 }
 
 
 vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription description) {
-
+	return VK_NULL_HANDLE;
 }
 
 
