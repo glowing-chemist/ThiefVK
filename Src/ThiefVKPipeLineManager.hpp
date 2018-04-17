@@ -14,7 +14,9 @@ enum class ShaderName {
     LightVertex,
     LightFragment,
     NormalVertex,
-    NormalFragment
+    NormalFragment,
+    CompositeVertex,
+    CompositeFragment
 };
 
 struct ThiefVKPipelineDescription {
@@ -23,10 +25,13 @@ struct ThiefVKPipelineDescription {
 
     vk::RenderPass renderPass; // render pass the pipeline wil be used with
 
-    int renderTargetWidth; // -1 represents sizeof swap chain
-    int renderTargetHeight;
-    int renderTargetOffset;
+    uint32_t renderTargetWidth; // -1 represents sizeof swap chain
+    uint32_t renderTargetHeight;
+    int32_t renderTargetOffsetX;
+    int32_t renderTargetOffsetY;
 };
+
+bool operator<(const ThiefVKPipelineDescription&, const ThiefVKPipelineDescription&);
 
 
 class ThiefVKPipelineManager {
@@ -50,7 +55,7 @@ private:
     struct PipeLine {
         vk::Pipeline mPipeLine;
         vk::PipelineLayout mPipelineLayout;
-        vk::DescriptorSetLayout mDescLayout;
+        std::vector<vk::DescriptorSetLayout> mDescLayout;
     };
     std::map<ThiefVKPipelineDescription, PipeLine> pipeLineCache;
 };

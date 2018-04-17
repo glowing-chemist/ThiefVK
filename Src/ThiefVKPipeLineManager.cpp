@@ -1,4 +1,5 @@
 #include "ThiefVKPipeLineManager.hpp"
+#include "ThiefVKVertex.hpp"
 
 #include <string>
 #include <fstream>
@@ -29,7 +30,7 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
 
 
     // Load up the shader spir-v from disk and create shader modules.
-    shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransVert.spv");
+    /*shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransVert.spv");
     shaderModules[ShaderName::BasicColourFragment]  = createShaderModule("./Shaders/BasicFragment.spv");
     shaderModules[ShaderName::DepthVertex]        = createShaderModule("./Shaders/DepthVertex.spv");
     shaderModules[ShaderName::DepthFragment]        = createShaderModule("./Shaders/DepthFragment.spv");
@@ -37,7 +38,7 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
     shaderModules[ShaderName::LightFragment]        = createShaderModule("./Shaders/LightFragment.spv");
     shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/NormalVertex.spv");
     shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/NormalFragment.spv");
-}
+*/}
 
 
 void ThiefVKPipelineManager::Destroy() {
@@ -53,7 +54,115 @@ void ThiefVKPipelineManager::Destroy() {
 
 
 vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription description) {
-	return VK_NULL_HANDLE;
+
+    if(pipeLineCache[description].mPipeLine != vk::Pipeline{nullptr}) return pipeLineCache[description].mPipeLine;
+
+    vk::PipelineShaderStageCreateInfo vertexStage{};
+    vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
+    vertexStage.setPName("main"); //entry point of the shader
+    vertexStage.setModule(shaderModules[description.vertexShader]);
+
+    vk::PipelineShaderStageCreateInfo fragStage{};
+    fragStage.setStage(vk::ShaderStageFlagBits::eFragment);
+    fragStage.setPName("main");
+    fragStage.setModule(shaderModules[description.fragmentShader]);
+
+    vk::PipelineShaderStageCreateInfo shaderStages[2] = {vertexStage, fragStage};
+
+    auto bindingDesc = Vertex::getBindingDesc();
+    auto attribDesc  = Vertex::getAttribDesc();
+
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.setVertexAttributeDescriptionCount(attribDesc.size());
+    vertexInputInfo.setPVertexAttributeDescriptions(attribDesc.data());
+    vertexInputInfo.setVertexBindingDescriptionCount(1);
+    vertexInputInfo.setPVertexBindingDescriptions(&bindingDesc);
+
+    vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+    inputAssemblyInfo.setTopology(vk::PrimitiveTopology::eTriangleList);
+    inputAssemblyInfo.setPrimitiveRestartEnable(false);
+
+    vk::Extent2D extent{description.renderTargetHeight, description.renderTargetWidth};
+
+    vk::Viewport viewPort{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}; // render to all of the framebuffer
+
+    vk::Offset2D offset{description.renderTargetOffsetX, description.renderTargetOffsetY};
+
+    vk::Rect2D scissor{offset, extent};
+
+    vk::PipelineViewportStateCreateInfo viewPortInfo{};
+    viewPortInfo.setPScissors(&scissor);
+    viewPortInfo.setPViewports(&viewPort);
+    viewPortInfo.setScissorCount(1);
+    viewPortInfo.setViewportCount(1);
+
+    vk::PipelineRasterizationStateCreateInfo rastInfo{};
+    rastInfo.setRasterizerDiscardEnable(false);
+    rastInfo.setDepthBiasClamp(false);
+    rastInfo.setPolygonMode(vk::PolygonMode::eFill); // output filled in fragments
+    rastInfo.setLineWidth(1.0f);
+    rastInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back
+    rastInfo.setFrontFace(vk::FrontFace::eCounterClockwise);
+    rastInfo.setDepthBiasEnable(false);
+
+    vk::PipelineMultisampleStateCreateInfo multiSampInfo{};
+    multiSampInfo.setSampleShadingEnable(false);
+    multiSampInfo.setRasterizationSamples(vk::SampleCountFlagBits::e1);
+
+    vk::PipelineColorBlendAttachmentState colorAttachState{};
+    colorAttachState.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |  vk::ColorComponentFlagBits::eB |  vk::ColorComponentFlagBits::eA); // write to all color components
+    colorAttachState.setBlendEnable(false);
+
+    vk::PipelineColorBlendStateCreateInfo blendStateInfo{};
+    blendStateInfo.setLogicOpEnable(false);
+    blendStateInfo.setAttachmentCount(1);
+    blendStateInfo.setPAttachments(&colorAttachState);
+
+    std::vector<vk::DescriptorSetLayout> descSetLayouts = createDescriptorSetLayout(description.vertexShader);
+    vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.vertexShader);
+
+    uint32_t subpassIndex = 0;
+    switch (description.vertexShader) {
+    case ShaderName::BasicTransformVertex:
+        subpassIndex = 1;
+        break;
+    case ShaderName::DepthVertex:
+        subpassIndex = 2;
+        break;
+    case ShaderName::NormalVertex:
+        subpassIndex = 3;
+        break;
+    case ShaderName::LightVertex:
+        subpassIndex = 4;
+        break;
+    case ShaderName::CompositeVertex:
+        subpassIndex = 5;
+        break;
+    default:
+        break;
+    }
+
+    vk::GraphicsPipelineCreateInfo pipeLineCreateInfo{};
+    pipeLineCreateInfo.setStageCount(2); // vertex and fragment
+    pipeLineCreateInfo.setPStages(shaderStages);
+
+    pipeLineCreateInfo.setPVertexInputState(&vertexInputInfo);
+    pipeLineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
+    pipeLineCreateInfo.setPViewportState(&viewPortInfo);
+    pipeLineCreateInfo.setPRasterizationState(&rastInfo);
+    pipeLineCreateInfo.setPMultisampleState(&multiSampInfo);
+    pipeLineCreateInfo.setPColorBlendState(&blendStateInfo);
+
+    pipeLineCreateInfo.setLayout(pipelineLayout);
+    pipeLineCreateInfo.setRenderPass(description.renderPass);
+    pipeLineCreateInfo.setSubpass(subpassIndex); // index for subpass that this pipeline will be used in
+
+    vk::Pipeline pipeline = dev.createGraphicsPipeline(nullptr, pipeLineCreateInfo);
+
+    PipeLine piplineInfo{pipeline, pipelineLayout, descSetLayouts};
+    pipeLineCache[description] = piplineInfo;
+
+    return pipeline;
 }
 
 
@@ -109,4 +218,9 @@ std::vector<vk::DescriptorSetLayout> ThiefVKPipelineManager::createDescriptorSet
     }
 
     return descSets;
+}
+
+
+bool operator<(const ThiefVKPipelineDescription& lhs, const ThiefVKPipelineDescription& rhs) {
+    return static_cast<int>(lhs.fragmentShader) < static_cast<int>(rhs.fragmentShader);
 }
