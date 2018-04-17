@@ -11,6 +11,7 @@
 #include "ThiefVKSwapChain.hpp"
 #include "ThiefVKMemoryManager.hpp"
 #include "ThiefVKPipeLineManager.hpp"
+#include "ThiefVKVertex.hpp"
 
 // std library includes
 #include <array>
@@ -45,15 +46,6 @@ struct ThiefVKRenderPasses{
     vk::SubpassDescription compositePass;
 
     vk::RenderPass RenderPass;
-};
-
-struct Vertex { // vertex struct representing vertex positions and texture coordinates
-    glm::vec3 pos;
-    glm::vec2 tex;
-
-    static vk::VertexInputBindingDescription getBindingDesc();
-
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttribDesc();
 };
 
 struct modelInfo {
