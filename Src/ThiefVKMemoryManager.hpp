@@ -42,6 +42,9 @@ public:
     void       BindImage(vk::Image& image, Allocation alloc);
     void       BindBuffer(vk::Buffer& buffer, Allocation alloc);
 
+	void*	   MapAllocation(Allocation alloc);
+	void	   UnMapAllocation(Allocation alloc);
+
     void       Destroy();
 
 private:

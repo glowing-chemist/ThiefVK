@@ -231,3 +231,17 @@ void ThiefVKMemoryManager::BindImage(vk::Image &image, Allocation alloc) {
 
     Device->bindImageMemory(image, pools[alloc.pool], alloc.offset);
 }
+
+
+void* ThiefVKMemoryManager::MapAllocation(Allocation alloc) {
+	std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers;
+
+	return Device->mapMemory(pools[alloc.pool], alloc.offset, alloc.size);
+}
+
+
+void ThiefVKMemoryManager::UnMapAllocation(Allocation alloc) {
+	std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers;
+
+	Device->unmapMemory(pools[alloc.pool]);
+}
