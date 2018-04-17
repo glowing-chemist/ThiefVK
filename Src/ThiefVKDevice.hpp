@@ -48,9 +48,18 @@ struct ThiefVKRenderPasses{
     vk::RenderPass RenderPass;
 };
 
-struct modelInfo {
-    size_t modelBeginOffset;
-    std::string modelName;
+
+struct perFrameResources {
+    size_t submissionID;
+
+    std::vector<std::pair<vk::Buffer, Allocation>> stagingBuffers;
+    std::vector<std::pair<vk::Image, Allocation>> textureImages;
+
+    vk::Buffer vertexBuffer;
+    Allocation vertexBufferMemory;
+
+    vk::Buffer indexBuffer;
+    Allocation indexBufferMemory;
 };
 
 
@@ -69,6 +78,8 @@ public:
 
     void addModelVerticies(std::vector<Vertex>&, std::string);
     void addSpotLight(spotLight&);
+
+    void copyDataToVertexBuffer(const std::vector<Vertex>&vertexData);
 
     std::pair<vk::Image, Allocation> createColourImage(const unsigned int width, const unsigned int height);
     std::pair<vk::Image, Allocation> createDepthImage(const unsigned int width, const unsigned int height);
@@ -101,6 +112,9 @@ private:
     // private variables
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
+    size_t finishedSubmissionID; // to keep track of resources such as staging buffers and command buffers that are no
+                                 // longer needed and can be freed.
+    size_t currentFrameBufferIndex;
 
     ThiefVKPipelineManager pipelineManager;
 
@@ -128,15 +142,10 @@ private:
 	std::vector<vk::CommandBuffer> freeSecondaryCommanBuffers;
 
     vk::CommandBuffer flushCommandBuffer;
-
-    vk::Buffer vertexBuffer;
-    Allocation vertexBufferMemory;
+    std::vector<perFrameResources> frameResources;
 
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
     std::vector<vk::Framebuffer> frameBuffers;
-
-    std::vector<Vertex> verticies;
-    std::vector<modelInfo> vertexModelInfo;
 
     std::vector<spotLight> spotLights;
 };
