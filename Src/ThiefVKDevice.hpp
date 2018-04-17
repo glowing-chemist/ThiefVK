@@ -51,6 +51,7 @@ struct ThiefVKRenderPasses{
 
 struct perFrameResources {
     size_t submissionID;
+	vk::CommandBuffer flushCommandBuffer;
 
     std::vector<std::pair<vk::Buffer, Allocation>> stagingBuffers;
     std::vector<std::pair<vk::Image, Allocation>> textureImages;
@@ -141,7 +142,6 @@ private:
     std::vector<vk::CommandBuffer> freePrimaryCommanBuffers;
 	std::vector<vk::CommandBuffer> freeSecondaryCommanBuffers;
 
-    vk::CommandBuffer flushCommandBuffer;
     std::vector<perFrameResources> frameResources;
 
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images

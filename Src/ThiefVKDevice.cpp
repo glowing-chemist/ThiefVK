@@ -51,9 +51,15 @@ void ThiefVKDevice::copyDataToVertexBuffer(const std::vector<Vertex>& vertexData
     vk::Buffer stagingBuffer = mDevice.createBuffer(stagingBufferInfo);
     vk::MemoryRequirements stagingBufferMemReqs = mDevice.getBufferMemoryRequirements(stagingBuffer);
 
-
     Allocation stagingBufferMemory = MemoryManager.Allocate(vertexBufferSize, stagingBufferMemReqs.alignment, true); // allocate a chunk of host mappable
     MemoryManager.BindBuffer(stagingBuffer, stagingBufferMemory);
+
+	void* mappedStagingBuffer = MemoryManager.MapAllocation(stagingBufferMemory);
+	std::memcpy(mappedStagingBuffer, vertexData.data(), vertexData.size());
+	MemoryManager.UnMapAllocation(stagingBufferMemory);
+
+	copyBuffers(stagingBuffer, frameResources[currentFrameBufferIndex].vertexBuffer, vertexBufferSize); // record the copy command to the flush buffer
+	frameResources[currentFrameBufferIndex].stagingBuffers.push_back(std::make_pair(stagingBuffer, stagingBufferMemory));
 }
 
 
@@ -539,7 +545,7 @@ void ThiefVKDevice::transitionImageLayout(vk::Image image, vk::Format format, vk
         destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
     }
 
-    flushCommandBuffer.pipelineBarrier(sourceStage, destinationStage, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &memBarrier);
+    frameResources[currentFrameBufferIndex].flushCommandBuffer.pipelineBarrier(sourceStage, destinationStage, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &memBarrier);
 }
 
 
@@ -547,7 +553,7 @@ void ThiefVKDevice::copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::
     vk::BufferCopy copyInfo{};
     copyInfo.setSize(size);
 
-    flushCommandBuffer.copyBuffer(SrcBuffer, DstBuffer, copyInfo); // record these commands in to the flush buffer that will get submitted before any draw calls are made
+	frameResources[currentFrameBufferIndex].flushCommandBuffer.copyBuffer(SrcBuffer, DstBuffer, copyInfo); // record these commands in to the flush buffer that will get submitted before any draw calls are made
 }
 
 
@@ -562,7 +568,7 @@ void ThiefVKDevice::CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, 
     copyInfo.setImageOffset({0, 0, 0}); // copy to the image starting at the start (0, 0, 0)
     copyInfo.setImageExtent({width, height, 1});
 
-    flushCommandBuffer.copyBufferToImage(srcBuffer, dstImage, vk::ImageLayout::eTransferDstOptimal, copyInfo);
+	frameResources[currentFrameBufferIndex].flushCommandBuffer.copyBufferToImage(srcBuffer, dstImage, vk::ImageLayout::eTransferDstOptimal, copyInfo);
 }
 
 
