@@ -39,6 +39,24 @@ std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
 }
 
 
+void ThiefVKDevice::copyDataToVertexBuffer(const std::vector<Vertex>& vertexData) {
+
+    vk::DeviceSize vertexBufferSize = sizeof(Vertex) * vertexData.size();
+
+    vk::BufferCreateInfo stagingBufferInfo{};
+    stagingBufferInfo.setSize(vertexBufferSize);
+    stagingBufferInfo.setSharingMode(vk::SharingMode::eExclusive);
+    stagingBufferInfo.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
+
+    vk::Buffer stagingBuffer = mDevice.createBuffer(stagingBufferInfo);
+    vk::MemoryRequirements stagingBufferMemReqs = mDevice.getBufferMemoryRequirements(stagingBuffer);
+
+
+    Allocation stagingBufferMemory = MemoryManager.Allocate(vertexBufferSize, stagingBufferMemReqs.alignment, true); // allocate a chunk of host mappable
+    MemoryManager.BindBuffer(stagingBuffer, stagingBufferMemory);
+}
+
+
 std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const unsigned int width, const unsigned int height) {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.setExtent({width, height, 1});
