@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <limits>
 
 vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats) {
     if(formats.size() == 1 && formats[0].format == vk::Format::eUndefined) { // indicates any format can be used, so pick the best
@@ -141,3 +142,10 @@ const vk::ImageView& ThiefVKSwapChain::getImageView(const size_t index) const {
     return swapChainImageViews[index];
 }
 
+
+uint32_t ThiefVKSwapChain::getNextImageIndex(vk::Device& dev, vk::Semaphore& sem) const {
+	uint32_t imageIndex;
+	dev.acquireNextImageKHR(swapChain, std::numeric_limits<uint64_t>::max(), sem, nullptr, &imageIndex);
+	
+	return imageIndex;
+}

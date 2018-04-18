@@ -29,6 +29,8 @@ public:
 
     const vk::ImageView& getImageView(const size_t) const;
 
+	uint32_t getNextImageIndex(vk::Device&, vk::Semaphore&) const;
+
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);
