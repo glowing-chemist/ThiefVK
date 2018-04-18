@@ -69,6 +69,23 @@ struct spotLight {
     glm::mat4 view;
 };
 
+struct geometry {
+	size_t vertexOffset;
+	size_t numberOfVerticies;
+
+	glm::mat4 object; // These will be pushed to a uniform buffer
+	glm::mat4 camera;
+	glm::mat4 world;
+
+	std::string textureName;
+};
+
+struct SceneInfo {
+	std::vector<Vertex> vertexData;
+
+	std::vector<geometry> geometry;
+};
+
 class ThiefVKDevice {
 
 public:
@@ -77,7 +94,8 @@ public:
 
     std::pair<vk::PhysicalDevice*, vk::Device*> getDeviceHandles();
 
-    void addModelVerticies(std::vector<Vertex>&, std::string);
+	void drawScene(SceneInfo&);
+
     void addSpotLight(spotLight&);
 
     void copyDataToVertexBuffer(const std::vector<Vertex>&vertexData);
