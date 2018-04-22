@@ -83,7 +83,7 @@ struct geometry {
 struct SceneInfo {
 	std::vector<Vertex> vertexData;
 
-	std::vector<geometry> geometry;
+    	std::vector<geometry> geometries;
 };
 
 class ThiefVKDevice {
