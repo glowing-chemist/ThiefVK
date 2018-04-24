@@ -53,6 +53,9 @@ struct perFrameResources {
     size_t submissionID;
 	vk::CommandBuffer flushCommandBuffer;
 
+	vk::Semaphore swapChainImageAvailable;
+	vk::Semaphore imagePresented;
+
     std::vector<std::pair<vk::Buffer, Allocation>> stagingBuffers;
     std::vector<std::pair<vk::Image, Allocation>> textureImages;
 
@@ -99,6 +102,10 @@ public:
     void addSpotLight(spotLight&);
 
     void copyDataToVertexBuffer(const std::vector<Vertex>&vertexData);
+
+	void startFrame(); // these should be called in this order... duh!
+	void draw();
+	void endFrmae();
 
     std::pair<vk::Image, Allocation> createColourImage(const unsigned int width, const unsigned int height);
     std::pair<vk::Image, Allocation> createDepthImage(const unsigned int width, const unsigned int height);

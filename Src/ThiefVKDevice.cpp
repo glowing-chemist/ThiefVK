@@ -62,6 +62,29 @@ void ThiefVKDevice::copyDataToVertexBuffer(const std::vector<Vertex>& vertexData
 	frameResources[currentFrameBufferIndex].stagingBuffers.push_back(std::make_pair(stagingBuffer, stagingBufferMemory));
 }
 
+void ThiefVKDevice::startFrame() {
+	vk::SemaphoreCreateInfo semInfo{}; // will be set ince the swapchain image is available
+	vk::Semaphore swapChainImageAvailable = mDevice.createSemaphore(semInfo);
+
+	currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
+
+	vk::CommandBuffer flushBuffer = beginSingleUseGraphicsCommandBuffer();
+
+	frameResources[currentFrameBufferIndex].submissionID			= finishedSubmissionID; // set the minimum we need to start recording command buffers.
+	frameResources[currentFrameBufferIndex].swapChainImageAvailable = swapChainImageAvailable;
+	frameResources[currentFrameBufferIndex].flushCommandBuffer		= flushBuffer;
+}
+
+
+void ThiefVKDevice::draw() {
+	// TODO start recording out secondary command buffers
+}
+
+
+void ThiefVKDevice::endFrmae() {
+	finishedSubmissionID++;
+}
+
 
 std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const unsigned int width, const unsigned int height) {
     vk::ImageCreateInfo imageInfo{};
@@ -467,7 +490,7 @@ void ThiefVKDevice::createCommandPools() {
 vk::CommandBuffer ThiefVKDevice::beginSingleUseGraphicsCommandBuffer() {
     vk::CommandBufferAllocateInfo allocInfo{};
     allocInfo.setCommandBufferCount(1);
-    allocInfo.setLevel(vk::CommandBufferLevel::ePrimary); // this will probablybe used for image format transitions
+	allocInfo.setLevel(vk::CommandBufferLevel::ePrimary); // this will probably be used for image format transitions
     allocInfo.setCommandPool(graphicsCommandPool);
 
     vk::CommandBuffer cmdBuffer = mDevice.allocateCommandBuffers(allocInfo)[0]; // we know we're only allocating one
