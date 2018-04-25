@@ -117,7 +117,6 @@ public:
     void createFrameBuffers();
     void createCommandPools();
     void createVertexBuffer();
-    void createCommandBuffers();
     void createSemaphores();
 
 private:
@@ -162,10 +161,6 @@ private:
     std::vector<vk::CommandBuffer> freeComputeCommanBuffers;
 
     vk::CommandPool graphicsCommandPool;
-    std::vector<vk::CommandBuffer> primaryCommandBuffers;
-	std::vector<vk::CommandBuffer> secondaryCommandBuffers;
-    std::vector<vk::CommandBuffer> freePrimaryCommanBuffers;
-	std::vector<vk::CommandBuffer> freeSecondaryCommanBuffers;
 
     std::vector<perFrameResources> frameResources;
 
