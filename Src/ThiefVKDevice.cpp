@@ -70,9 +70,31 @@ void ThiefVKDevice::startFrame() {
 
 	vk::CommandBuffer flushBuffer = beginSingleUseGraphicsCommandBuffer();
 
-	frameResources[currentFrameBufferIndex].submissionID			= finishedSubmissionID; // set the minimum we need to start recording command buffers.
-	frameResources[currentFrameBufferIndex].swapChainImageAvailable = swapChainImageAvailable;
-	frameResources[currentFrameBufferIndex].flushCommandBuffer		= flushBuffer;
+	vk::CommandBufferAllocateInfo primaryCmdBufferAllocInfo;
+	primaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
+	primaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
+	primaryCmdBufferAllocInfo.setCommandBufferCount(1);
+
+	vk::CommandBuffer primaryCmdBuffer = mDevice.allocateCommandBuffers(primaryCmdBufferAllocInfo)[0];
+
+	vk::CommandBufferAllocateInfo secondaryCmdBufferAllocInfo;
+	secondaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::eSecondary);
+	secondaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
+	secondaryCmdBufferAllocInfo.setCommandBufferCount(4);
+
+	std::vector<vk::CommandBuffer> secondaryCmdBuffers = mDevice.allocateCommandBuffers(secondaryCmdBufferAllocInfo);
+
+	perFrameResources frameResource{};
+	frameResource.submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
+	frameResource.swapChainImageAvailable	= swapChainImageAvailable;
+	frameResource.flushCommandBuffer		= flushBuffer;
+	frameResource.primaryCmdBuffer			= primaryCmdBuffer;
+	frameResource.colourCmdBuffer			= secondaryCmdBuffers[0];
+	frameResource.depthCmdBuffer			= secondaryCmdBuffers[1];
+	frameResource.normalsCmdBuffer			= secondaryCmdBuffers[2];
+	frameResource.shadowCmdBuffer			= secondaryCmdBuffers[3];
+
+	frameResources.push_back(frameResource);
 }
 
 

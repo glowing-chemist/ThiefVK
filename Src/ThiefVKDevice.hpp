@@ -59,6 +59,12 @@ struct perFrameResources {
     std::vector<std::pair<vk::Buffer, Allocation>> stagingBuffers;
     std::vector<std::pair<vk::Image, Allocation>> textureImages;
 
+	vk::CommandBuffer primaryCmdBuffer;
+	vk::CommandBuffer colourCmdBuffer;
+	vk::CommandBuffer depthCmdBuffer;
+	vk::CommandBuffer normalsCmdBuffer;
+	vk::CommandBuffer shadowCmdBuffer;
+
     vk::Buffer vertexBuffer;
     Allocation vertexBufferMemory;
 
