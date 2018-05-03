@@ -99,7 +99,7 @@ void ThiefVKDevice::startFrame() {
 	frameResource.normalsCmdBuffer			= secondaryCmdBuffers[2];
 	frameResource.shadowCmdBuffer			= secondaryCmdBuffers[3];
 
-	frameResources.push_back(frameResource);
+	frameResources[currentFrameBufferIndex] = frameResource;
 
 	// start the render pass so that we can begin recording in to the command buffers
 	vk::RenderPassBeginInfo renderPassBegin{};
@@ -503,6 +503,9 @@ void ThiefVKDevice::createFrameBuffers() {
         frameBuffers[i] = mDevice.createFramebuffer(frameBufferInfo);
     }
     std::cerr << "created " << frameBuffers.size() << " frame buffers \n";
+
+	// Resize the per frame resource vector here so when we go to use it it will be valid to index in to it
+	frameResources.resize(frameBuffers.size());
 }
 
 
