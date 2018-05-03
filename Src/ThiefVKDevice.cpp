@@ -8,7 +8,12 @@
 // ThiefVKDeviceMemberFunctions
 
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
-    mPhysDev{std::get<0>(Devices)}, mDevice{std::get<1>(Devices)}, pipelineManager{mDevice},  mWindowSurface{surface}, mWindow{window}, mSwapChain{mDevice, mPhysDev, surface, window}
+    mPhysDev{std::get<0>(Devices)}, 
+	mDevice{std::get<1>(Devices)}, 
+	pipelineManager{mDevice},  
+	mWindowSurface{surface}, 
+	mWindow{window}, 
+	mSwapChain{mDevice, mPhysDev, surface, window}
 {
     const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, mPhysDev);
 
@@ -95,6 +100,18 @@ void ThiefVKDevice::startFrame() {
 	frameResource.shadowCmdBuffer			= secondaryCmdBuffers[3];
 
 	frameResources.push_back(frameResource);
+
+	// start the render pass so that we can begin recording in to the command buffers
+	vk::RenderPassBeginInfo renderPassBegin{};
+	renderPassBegin.framebuffer = frameBuffers[currentFrameBufferIndex];
+	renderPassBegin.renderPass = mRenderPasses.RenderPass;
+	vk::ClearValue colour((0.0f, 0.0f, 0.0f, 0.0f));
+	renderPassBegin.setPClearValues(&colour);
+	renderPassBegin.setRenderArea(vk::Rect2D{ { 0, 0 },
+		{ static_cast<uint32_t>(mSwapChain.getSwapChainImageHeight()), static_cast<uint32_t>(mSwapChain.getSwapChainImageWidth()) } });
+
+	// Begin the render pass
+	frameResource.primaryCmdBuffer.beginRenderPass(renderPassBegin, vk::SubpassContents::eSecondaryCommandBuffers);
 }
 
 
@@ -599,6 +616,55 @@ void ThiefVKDevice::CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, 
 	frameResources[currentFrameBufferIndex].flushCommandBuffer.copyBufferToImage(srcBuffer, dstImage, vk::ImageLayout::eTransferDstOptimal, copyInfo);
 }
 
+
+vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
+	vk::CommandBuffer& colourCmdBuffer = frameResources.back().colourCmdBuffer;
+
+	vk::CommandBufferBeginInfo beginInfo{};
+	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+
+	// start recording commands in to the buffer
+	colourCmdBuffer.begin(beginInfo);
+
+	colourCmdBuffer.bindVertexBuffers(0, frameResources[currentFrameBufferIndex].vertexBuffer, {0});
+
+	ThiefVKPipelineDescription pipelineDesc{};
+	pipelineDesc.fragmentShader		 = ShaderName::BasicTransformVertex;
+	pipelineDesc.vertexShader		 = ShaderName::BasicColourFragment;
+	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
+	pipelineDesc.renderTargetOffsetX = 0;
+	pipelineDesc.renderTargetOffsetY = 0;
+	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
+	pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+
+	colourCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
+
+	return colourCmdBuffer;
+}
+
+
+vk::CommandBuffer& ThiefVKDevice::startRecordingDepthCmdBuffer() {
+	vk::CommandBuffer& depthCmdBuffer = frameResources.back().depthCmdBuffer;
+
+
+	return depthCmdBuffer;
+}
+
+
+vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
+	vk::CommandBuffer& normalsCmdBuffer = frameResources.back().normalsCmdBuffer;
+
+
+	return normalsCmdBuffer;
+}
+
+
+vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
+	vk::CommandBuffer& compositeCmdBuffer = frameResources.back().primaryCmdBuffer;
+
+
+	return compositeCmdBuffer;
+}
 
 void ThiefVKDevice::createSemaphores() {
 

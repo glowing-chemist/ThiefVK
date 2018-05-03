@@ -119,7 +119,6 @@ public:
 
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();
-    void createGraphicsPipelines();
     void createFrameBuffers();
     void createCommandPools();
     void createVertexBuffer();
@@ -139,6 +138,11 @@ private:
     void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     void CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height);
     void copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size);
+
+	vk::CommandBuffer&  startRecordingColourCmdBuffer();
+	vk::CommandBuffer&  startRecordingDepthCmdBuffer();
+	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
+	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
 
     // private variables
     vk::PhysicalDevice mPhysDev;
