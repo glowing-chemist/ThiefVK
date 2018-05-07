@@ -16,7 +16,7 @@ set(SOURCE
 add_library(${PROJECT_NAME} ${SOURCE})
 
 if(WIN32)
-	target_link_libraries(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/VulkanSDK1.0.65.0/Lib32/vulkan-1.lib")
+        target_link_libraries(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/VulkanSDK1.0.65.0/Lib64/vulkan-1.lib")
 else()
 	target_link_libraries(${PROJECT_NAME} vulkan)
 endif(WIN32)
