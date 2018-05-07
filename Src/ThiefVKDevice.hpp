@@ -110,7 +110,7 @@ public:
     void copyDataToVertexBuffer(const std::vector<Vertex>&vertexData);
 
 	void startFrame(); // these should be called in this order... duh!
-	void draw();
+	void draw(geometry& geom);
 	void endFrmae();
 
     std::pair<vk::Image, Allocation> createColourImage(const unsigned int width, const unsigned int height);

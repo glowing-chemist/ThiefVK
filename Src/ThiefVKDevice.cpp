@@ -105,18 +105,22 @@ void ThiefVKDevice::startFrame() {
 	vk::RenderPassBeginInfo renderPassBegin{};
 	renderPassBegin.framebuffer = frameBuffers[currentFrameBufferIndex];
 	renderPassBegin.renderPass = mRenderPasses.RenderPass;
-	vk::ClearValue colour((0.0f, 0.0f, 0.0f, 0.0f));
+	vk::ClearValue colour(0.0f);
 	renderPassBegin.setPClearValues(&colour);
 	renderPassBegin.setRenderArea(vk::Rect2D{ { 0, 0 },
 		{ static_cast<uint32_t>(mSwapChain.getSwapChainImageHeight()), static_cast<uint32_t>(mSwapChain.getSwapChainImageWidth()) } });
 
 	// Begin the render pass
 	frameResource.primaryCmdBuffer.beginRenderPass(renderPassBegin, vk::SubpassContents::eSecondaryCommandBuffers);
+
+	startRecordingColourCmdBuffer();
+	startRecordingDepthCmdBuffer();
+	startRecordingNormalsCmdBuffer();
 }
 
 
-void ThiefVKDevice::draw() {
-	// TODO start recording out secondary command buffers
+void ThiefVKDevice::draw(geometry& geom) {
+
 }
 
 
@@ -621,7 +625,7 @@ void ThiefVKDevice::CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, 
 
 
 vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
-	vk::CommandBuffer& colourCmdBuffer = frameResources.back().colourCmdBuffer;
+	vk::CommandBuffer& colourCmdBuffer = frameResources[currentFrameBufferIndex].colourCmdBuffer;
 
 	vk::CommandBufferBeginInfo beginInfo{};
 	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
@@ -647,7 +651,26 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 
 
 vk::CommandBuffer& ThiefVKDevice::startRecordingDepthCmdBuffer() {
-	vk::CommandBuffer& depthCmdBuffer = frameResources.back().depthCmdBuffer;
+	vk::CommandBuffer& depthCmdBuffer = frameResources[currentFrameBufferIndex].depthCmdBuffer;
+
+	vk::CommandBufferBeginInfo beginInfo{};
+	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+
+	// start recording commands in to the buffer
+	depthCmdBuffer.begin(beginInfo);
+
+	depthCmdBuffer.bindVertexBuffers(0, frameResources[currentFrameBufferIndex].vertexBuffer, {0});
+
+	ThiefVKPipelineDescription pipelineDesc{};
+	pipelineDesc.fragmentShader		 = ShaderName::DepthVertex;
+	pipelineDesc.vertexShader		 = ShaderName::DepthFragment;
+	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
+	pipelineDesc.renderTargetOffsetX = 0;
+	pipelineDesc.renderTargetOffsetY = 0;
+	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
+	pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+
+	depthCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
 
 
 	return depthCmdBuffer;
@@ -655,19 +678,31 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingDepthCmdBuffer() {
 
 
 vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
-	vk::CommandBuffer& normalsCmdBuffer = frameResources.back().normalsCmdBuffer;
+	vk::CommandBuffer& normalsCmdBuffer = frameResources[currentFrameBufferIndex].normalsCmdBuffer;
+
+	vk::CommandBufferBeginInfo beginInfo{};
+	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+
+	// start recording commands in to the buffer
+	normalsCmdBuffer.begin(beginInfo);
+
+	normalsCmdBuffer.bindVertexBuffers(0, frameResources[currentFrameBufferIndex].vertexBuffer, {0});
+
+	ThiefVKPipelineDescription pipelineDesc{};
+	pipelineDesc.fragmentShader		 = ShaderName::NormalVertex;
+	pipelineDesc.vertexShader		 = ShaderName::NormalFragment;
+	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
+	pipelineDesc.renderTargetOffsetX = 0;
+	pipelineDesc.renderTargetOffsetY = 0;
+	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
+	pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+
+	normalsCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
 
 
 	return normalsCmdBuffer;
 }
 
-
-vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
-	vk::CommandBuffer& compositeCmdBuffer = frameResources.back().primaryCmdBuffer;
-
-
-	return compositeCmdBuffer;
-}
 
 void ThiefVKDevice::createSemaphores() {
 
