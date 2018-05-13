@@ -10,7 +10,9 @@
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
     mPhysDev{std::get<0>(Devices)}, 
 	mDevice{std::get<1>(Devices)}, 
-	pipelineManager{mDevice},  
+	pipelineManager{mDevice},
+	MemoryManager{&mPhysDev, &mDevice},
+	mUniformBufferManager{*this},
 	mWindowSurface{surface}, 
 	mWindow{window}, 
 	mSwapChain{mDevice, mPhysDev, surface, window}
@@ -20,9 +22,6 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
     mGraphicsQueue = mDevice.getQueue(queueIndices.GraphicsQueueIndex, 0);
     mPresentQueue  = mDevice.getQueue(queueIndices.PresentQueueIndex, 0);
     mComputeQueue  = mDevice.getQueue(queueIndices.ComputeQueueIndex, 0);
-
-   ThiefVKMemoryManager memoryManager(&mPhysDev, &mDevice);
-   MemoryManager = memoryManager;
 }
 
 
@@ -31,6 +30,7 @@ ThiefVKDevice::~ThiefVKDevice() {
     DestroyAllImageTextures();
     pipelineManager.Destroy();
     MemoryManager.Destroy();
+	mUniformBufferManager.Destroy();
     mSwapChain.destroy(mDevice);
     mDevice.destroyRenderPass(mRenderPasses.RenderPass);
     mDevice.destroyCommandPool(graphicsCommandPool);
@@ -129,7 +129,7 @@ void ThiefVKDevice::endFrmae() {
 }
 
 
-std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const unsigned int width, const unsigned int height) {
+std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const uint32_t width, const uint32_t height) {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.setExtent({width, height, 1});
     imageInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
@@ -149,7 +149,7 @@ std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const unsigned
 }
 
 
-std::pair<vk::Image, Allocation> ThiefVKDevice::createDepthImage(const unsigned int width, const unsigned int height) {
+std::pair<vk::Image, Allocation> ThiefVKDevice::createDepthImage(const uint32_t width, const uint32_t height) {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.setExtent({width, height, 1});
     imageInfo.setFormat(vk::Format::eD32Sfloat);
@@ -169,11 +169,12 @@ std::pair<vk::Image, Allocation> ThiefVKDevice::createDepthImage(const unsigned 
 }
 
 
-std::pair<vk::Image, Allocation> ThiefVKDevice::createNormalsImage(const unsigned int width, const unsigned int height) {
+std::pair<vk::Image, Allocation> ThiefVKDevice::createNormalsImage(const uint32_t width, const uint32_t height) {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.setExtent({width, height, 1});
     imageInfo.setFormat(vk::Format::eR8G8B8A8Sint);
     imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
+	imageInfo.setSharingMode(vk::SharingMode::eExclusive);
     imageInfo.setImageType(vk::ImageType::e2D);
     imageInfo.setMipLevels(1);
     imageInfo.setArrayLayers(1);
@@ -186,6 +187,31 @@ std::pair<vk::Image, Allocation> ThiefVKDevice::createNormalsImage(const unsigne
     Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment,  false); // we don't need to be able to map the image
 
     return {image, imageMemory};
+}
+
+
+std::pair<vk::Buffer, Allocation> ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, const uint32_t size) {
+	vk::BufferCreateInfo bufferInfo{};
+	bufferInfo.setSize(size);
+	bufferInfo.setUsage(usage);
+	bufferInfo.setSharingMode(vk::SharingMode::eExclusive);
+
+	vk::Buffer buffer = mDevice.createBuffer(bufferInfo);
+	vk::MemoryRequirements bufferMemReqs = mDevice.getBufferMemoryRequirements(buffer);
+
+	Allocation bufferMem = MemoryManager.Allocate(size, bufferMemReqs.alignment,
+												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eUniformBuffer));
+
+	MemoryManager.BindBuffer(buffer, bufferMem);
+
+	return {buffer, bufferMem};
+}
+
+
+void ThiefVKDevice::destroyBuffer(vk::Buffer& buffer, Allocation alloc) {
+	MemoryManager.Free(alloc);
+
+	mDevice.destroyBuffer(buffer);
 }
 
 

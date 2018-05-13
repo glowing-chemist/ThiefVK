@@ -11,6 +11,7 @@
 #include "ThiefVKSwapChain.hpp"
 #include "ThiefVKMemoryManager.hpp"
 #include "ThiefVKPipeLineManager.hpp"
+#include "ThiefVKUniformBufferManager.hpp"
 #include "ThiefVKVertex.hpp"
 
 // std library includes
@@ -92,11 +93,10 @@ struct geometry {
 struct SceneInfo {
 	std::vector<Vertex> vertexData;
 
-    	std::vector<geometry> geometries;
+	std::vector<geometry> geometries;
 };
 
 class ThiefVKDevice {
-
 public:
     explicit ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device>, vk::SurfaceKHR, GLFWwindow*);
     ~ThiefVKDevice();
@@ -108,14 +108,22 @@ public:
     void addSpotLight(spotLight&);
 
     void copyDataToVertexBuffer(const std::vector<Vertex>&vertexData);
+	void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+	void CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height);
+	void copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size);
+
+	ThiefVKMemoryManager*	getMemoryManager() { return &MemoryManager; }
 
 	void startFrame(); // these should be called in this order... duh!
 	void draw(geometry& geom);
 	void endFrmae();
 
-    std::pair<vk::Image, Allocation> createColourImage(const unsigned int width, const unsigned int height);
-    std::pair<vk::Image, Allocation> createDepthImage(const unsigned int width, const unsigned int height);
-    std::pair<vk::Image, Allocation> createNormalsImage(const unsigned int width, const unsigned int height);
+	std::pair<vk::Image, Allocation> createColourImage(const uint32_t width, const uint32_t height);
+	std::pair<vk::Image, Allocation> createDepthImage(const uint32_t width, const uint32_t height);
+	std::pair<vk::Image, Allocation> createNormalsImage(const uint32_t width, const uint32_t height);
+
+	std::pair<vk::Buffer, Allocation> createBuffer(const vk::BufferUsageFlags usage, const uint32_t size);
+	void destroyBuffer(vk::Buffer& buffer, Allocation alloc);
 
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();
@@ -135,10 +143,6 @@ private:
     vk::CommandBuffer beginSingleUseGraphicsCommandBuffer();
     void              endSingleUseGraphicsCommandBuffer(vk::CommandBuffer);
 
-    void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
-    void CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height);
-    void copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size);
-
 	vk::CommandBuffer&  startRecordingColourCmdBuffer();
 	vk::CommandBuffer&  startRecordingDepthCmdBuffer();
 	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
@@ -154,6 +158,8 @@ private:
     ThiefVKPipelineManager pipelineManager;
 
     ThiefVKMemoryManager MemoryManager;
+
+	ThiefVKUnifromBufferManager mUniformBufferManager;
 
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
