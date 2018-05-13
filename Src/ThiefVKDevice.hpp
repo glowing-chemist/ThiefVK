@@ -51,6 +51,8 @@ struct ThiefVKRenderPasses{
 
 
 struct perFrameResources {
+	vk::Fence frameFinished;
+
     size_t submissionID;
 	vk::CommandBuffer flushCommandBuffer;
 
@@ -116,7 +118,7 @@ public:
 
 	void startFrame(); // these should be called in this order... duh!
 	void draw(geometry& geom);
-	void endFrmae();
+	void endFrame();
 
 	std::pair<vk::Image, Allocation> createColourImage(const uint32_t width, const uint32_t height);
 	std::pair<vk::Image, Allocation> createDepthImage(const uint32_t width, const uint32_t height);
