@@ -64,6 +64,12 @@ void ThiefVKDevice::copyDataToVertexBuffer(const std::vector<Vertex>& vertexData
 	std::memcpy(mappedStagingBuffer, vertexData.data(), vertexData.size());
 	MemoryManager.UnMapAllocation(stagingBufferMemory);
 
+	if (frameResources[currentFrameBufferIndex].vertexBuffer == vk::Buffer(nullptr)) {
+		auto[buffer, alloc] = createBuffer(vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, sizeof(Vertex) * vertexData.size());
+		frameResources[currentFrameBufferIndex].vertexBuffer = buffer;
+		frameResources[currentFrameBufferIndex].vertexBufferMemory = alloc;
+	}
+
 	copyBuffers(stagingBuffer, frameResources[currentFrameBufferIndex].vertexBuffer, vertexBufferSize); // record the copy command to the flush buffer
 	frameResources[currentFrameBufferIndex].stagingBuffers.push_back(std::make_pair(stagingBuffer, stagingBufferMemory));
 }
