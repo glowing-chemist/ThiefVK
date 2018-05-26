@@ -3,7 +3,7 @@
 
 layout(location = 0) in float inDepth;
 
-layout(location = 0) out float outDepth;
+layout(location = 1) out float outDepth;
 
 void main() {
     outDepth = inDepth;
