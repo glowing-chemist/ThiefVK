@@ -7,12 +7,13 @@
 #include <glm/vec3.hpp>
 
 struct Vertex { // vertex struct representing vertex positions and texture coordinates
-    glm::vec3 pos;
-    glm::vec2 tex;
+	glm::vec3 pos;
+	glm::vec3 norm;
+	glm::vec2 tex;
 
     static vk::VertexInputBindingDescription getBindingDesc();
 
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttribDesc();
+	static std::array<vk::VertexInputAttributeDescription, 3> getAttribDesc();
 };
 
 #endif
