@@ -82,8 +82,7 @@ struct spotLight {
 };
 
 struct geometry {
-	size_t vertexOffset;
-	size_t numberOfVerticies;
+	std::vector<Vertex> verticies;
 
 	glm::mat4 object; // These will be pushed to a uniform buffer
 	glm::mat4 camera;
@@ -109,7 +108,6 @@ public:
 
     void addSpotLight(spotLight&);
 
-    void copyDataToVertexBuffer(const std::vector<Vertex>&vertexData);
 	void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 	void CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height);
 	void copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size);
@@ -162,6 +160,7 @@ private:
     ThiefVKMemoryManager MemoryManager;
 
 	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
+	ThiefVKBufferManager<Vertex>	mVertexBufferManager;
 
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;

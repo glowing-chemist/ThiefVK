@@ -14,6 +14,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 	pipelineManager{mDevice},
 	MemoryManager{&mPhysDev, &mDevice},
 	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
+	mVertexBufferManager{*this, vk::BufferUsageFlagBits::eVertexBuffer},
 	mWindowSurface{surface}, 
 	mWindow{window}, 
 	mSwapChain{mDevice, mPhysDev, surface, window}
@@ -44,35 +45,6 @@ std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
         return std::pair<vk::PhysicalDevice*, vk::Device*>(&mPhysDev, &mDevice);
 }
 
-
-void ThiefVKDevice::copyDataToVertexBuffer(const std::vector<Vertex>& vertexData) {
-
-    vk::DeviceSize vertexBufferSize = sizeof(Vertex) * vertexData.size();
-
-    vk::BufferCreateInfo stagingBufferInfo{};
-    stagingBufferInfo.setSize(vertexBufferSize);
-    stagingBufferInfo.setSharingMode(vk::SharingMode::eExclusive);
-    stagingBufferInfo.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
-
-    vk::Buffer stagingBuffer = mDevice.createBuffer(stagingBufferInfo);
-    vk::MemoryRequirements stagingBufferMemReqs = mDevice.getBufferMemoryRequirements(stagingBuffer);
-
-    Allocation stagingBufferMemory = MemoryManager.Allocate(vertexBufferSize, stagingBufferMemReqs.alignment, true); // allocate a chunk of host mappable
-    MemoryManager.BindBuffer(stagingBuffer, stagingBufferMemory);
-
-	void* mappedStagingBuffer = MemoryManager.MapAllocation(stagingBufferMemory);
-	std::memcpy(mappedStagingBuffer, vertexData.data(), vertexData.size());
-	MemoryManager.UnMapAllocation(stagingBufferMemory);
-
-	if (frameResources[currentFrameBufferIndex].vertexBuffer == vk::Buffer(nullptr)) {
-		auto[buffer, alloc] = createBuffer(vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, sizeof(Vertex) * vertexData.size());
-		frameResources[currentFrameBufferIndex].vertexBuffer = buffer;
-		frameResources[currentFrameBufferIndex].vertexBufferMemory = alloc;
-	}
-
-	copyBuffers(stagingBuffer, frameResources[currentFrameBufferIndex].vertexBuffer, vertexBufferSize); // record the copy command to the flush buffer
-	frameResources[currentFrameBufferIndex].stagingBuffers.push_back(std::make_pair(stagingBuffer, stagingBufferMemory));
-}
 
 void ThiefVKDevice::startFrame() {
 	vk::SemaphoreCreateInfo semInfo{}; // will be set once the swapchain image is available
@@ -730,8 +702,6 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 
 	// start recording commands in to the buffer
 	colourCmdBuffer.begin(beginInfo);
-
-	colourCmdBuffer.bindVertexBuffers(0, frameResources[currentFrameBufferIndex].vertexBuffer, {0});
 
 	ThiefVKPipelineDescription pipelineDesc{};
 	pipelineDesc.fragmentShader		 = ShaderName::BasicTransformVertex;

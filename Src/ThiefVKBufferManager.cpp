@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "ThiefVKDevice.hpp"
+#include "ThiefVKVertex.hpp"
 
 #include <iostream>
 
@@ -98,3 +99,6 @@ std::vector<std::pair<vk::Buffer, Allocation>> ThiefVKBufferManager<T>::flushBuf
 
 // For uniform constants.
 template class ThiefVKBufferManager<glm::mat4>;
+
+// For the vertex buffer
+template class ThiefVKBufferManager<Vertex>;
