@@ -136,7 +136,7 @@ void ThiefVKMemoryManager::MergeFreePools() {
 
 void ThiefVKMemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { // this is expensive on a a list so only call when really needed
     for(auto& pool : pools) {
-		for(auto fragIter = pool.begin(); fragIter < --pool.end(); ++fragIter) {
+		for(auto fragIter = pool.begin(); fragIter != --pool.end() || fragIter != pool.end(); ++fragIter) {
             PoolFragment frag = *fragIter;
             auto fragIterClone = fragIter;
             PoolFragment nextFrag = *(++fragIterClone);
