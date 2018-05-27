@@ -9,7 +9,7 @@ set(SOURCE
         "Src/ThiefVKSwapChain.cpp"
         "Src/ThiefVKMemoryManager.cpp"
         "Src/ThiefVKVertex.cpp"
-        "Src/ThiefVKUniformBufferManager.cpp"
+        "Src/ThiefVKBufferManager.cpp"
         "Src/ThiefVKTextureManager.cpp"
 	)
 

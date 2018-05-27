@@ -13,7 +13,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 	mDevice{std::get<1>(Devices)}, 
 	pipelineManager{mDevice},
 	MemoryManager{&mPhysDev, &mDevice},
-	mUniformBufferManager{*this},
+	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
 	mWindowSurface{surface}, 
 	mWindow{window}, 
 	mSwapChain{mDevice, mPhysDev, surface, window}

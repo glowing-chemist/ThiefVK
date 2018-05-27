@@ -9,17 +9,16 @@
 
 #include "ThiefVKMemoryManager.hpp"
 
-#define kUniformBufferSize sizeof(glm::mat4) * 30
-
 class ThiefVKDevice;
 
-class ThiefVKUnifromBufferManager {
+template<typename T>
+class ThiefVKBufferManager {
 public:
 
-	ThiefVKUnifromBufferManager(ThiefVKDevice& Device);
+        ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage);
 	void Destroy();
 
-	std::pair<vk::Buffer&, uint32_t> addBufferElements(std::vector<glm::mat4>& elements);
+        std::pair<vk::Buffer&, uint32_t> addBufferElements(std::vector<T>& elements);
 
 	std::vector<std::pair<vk::Buffer, Allocation>> flushBufferUploads();
 
@@ -29,7 +28,10 @@ private:
 
 	ThiefVKDevice& mDevice;
 
-	std::vector<glm::mat4> mUniformBuffer;
+        vk::BufferUsageFlags mUsage;
+
+        std::vector<T> mUniformBuffer;
+        size_t mMaxBufferSize;
 
 	vk::Buffer mDeviceUniformBuffer;
 	Allocation mUniformBufferMemory;

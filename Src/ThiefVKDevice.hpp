@@ -11,7 +11,7 @@
 #include "ThiefVKSwapChain.hpp"
 #include "ThiefVKMemoryManager.hpp"
 #include "ThiefVKPipeLineManager.hpp"
-#include "ThiefVKUniformBufferManager.hpp"
+#include "ThiefVKBufferManager.hpp"
 #include "ThiefVKVertex.hpp"
 
 // std library includes
@@ -161,7 +161,7 @@ private:
 
     ThiefVKMemoryManager MemoryManager;
 
-	ThiefVKUnifromBufferManager mUniformBufferManager;
+	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
 
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
