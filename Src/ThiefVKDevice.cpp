@@ -243,7 +243,8 @@ std::pair<vk::Buffer, Allocation> ThiefVKDevice::createBuffer(const vk::BufferUs
 	vk::MemoryRequirements bufferMemReqs = mDevice.getBufferMemoryRequirements(buffer);
 
 	Allocation bufferMem = MemoryManager.Allocate(size, bufferMemReqs.alignment,
-												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eUniformBuffer));
+												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eUniformBuffer) ||
+												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eTransferSrc));
 
 	MemoryManager.BindBuffer(buffer, bufferMem);
 

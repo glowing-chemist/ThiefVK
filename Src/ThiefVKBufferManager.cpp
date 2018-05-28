@@ -20,7 +20,7 @@ ThiefVKBufferManager<T>::ThiefVKBufferManager(ThiefVKDevice &Device, vk::BufferU
 			default:
 				throw std::runtime_error("unaccounted for buffer usage");
 		}
-		return 0ul;
+		return 0ull;
 	}();
 
 	startNewBuffer();
@@ -73,11 +73,22 @@ void ThiefVKBufferManager<T>::startNewBuffer() {
 
 template<typename T>
 void ThiefVKBufferManager<T>::uploadBuffer() {
-	void* memory = mDevice.getMemoryManager()->MapAllocation(mUniformBufferMemory);
+	if (mUsage & vk::BufferUsageFlagBits::eUniformBuffer) { // Take a synchronous buffer update path if we will be doing it frequently with little data.
+		void* memory = mDevice.getMemoryManager()->MapAllocation(mUniformBufferMemory);
 
-	memcpy(memory, mUniformBuffer.data(), mUniformBuffer.size() * sizeof(T));
+		memcpy(memory, mUniformBuffer.data(), mUniformBuffer.size() * sizeof(T));
 
-	mDevice.getMemoryManager()->UnMapAllocation(mUniformBufferMemory);
+		mDevice.getMemoryManager()->UnMapAllocation(mUniformBufferMemory);
+	}
+	else { // Else record the commands in to the flush buffer to copy the buffer to device local memory
+		auto [stagingBuffer, stagingAlloc] = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferSrc, mUniformBuffer.size() * sizeof(T));
+
+		void* memory = mDevice.getMemoryManager()->MapAllocation(stagingAlloc);
+		memcpy(memory, mUniformBuffer.data(), mUniformBuffer.size() * sizeof(T));
+		mDevice.getMemoryManager()->UnMapAllocation(stagingAlloc);
+
+		mDevice.copyBuffers(stagingBuffer, mDeviceUniformBuffer, mUniformBuffer.size() * sizeof(T));
+	}
 }
 
 
