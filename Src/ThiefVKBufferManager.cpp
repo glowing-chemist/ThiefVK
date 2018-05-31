@@ -10,7 +10,7 @@
 
 template<typename T>
 ThiefVKBufferManager<T>::ThiefVKBufferManager(ThiefVKDevice &Device, vk::BufferUsageFlags usage) : mDevice{Device}, mUsage{usage} {
-	mMaxBufferSize = [this]() {
+	mMaxBufferSize = [this]()  -> unsigned long long {
 		switch(static_cast<VkBufferUsageFlags>(mUsage)) {
 			case static_cast<VkBufferUsageFlags>(vk::BufferUsageFlagBits::eUniformBuffer):
 				return sizeof(T) * 30;
