@@ -129,7 +129,7 @@ public:
     void createRenderPasses();
     void createFrameBuffers();
     void createCommandPools();
-    void createVertexBuffer();
+
     void createSemaphores();
 
 private:
