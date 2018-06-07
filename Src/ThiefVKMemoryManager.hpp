@@ -26,6 +26,16 @@ private:
     bool hostMappable;
 };
 
+struct ThiefVKBuffer {
+    vk::Buffer mBuffer;
+    Allocation mBufferMemory;
+};
+
+struct ThiefVKImage {
+    vk::Image mImage;
+    Allocation mImageMemory;
+};
+
 // This class will be used for keeping track of GPU allocations for buffers and
 // images. this will be done my maintaing2 pools of gpu memory, one device local
 // and the other host mappable. allocations will be handles a opaque types that

@@ -23,7 +23,7 @@ void ThiefVKBufferManager<T>::addBufferElements(std::vector<T> &elements) {
 
 
 template<typename T>
-std::pair<std::pair<vk::Buffer, Allocation>, std::pair<vk::Buffer, Allocation>> ThiefVKBufferManager<T>::uploadBuffer(vk::Buffer& buffer, Allocation alloc) {
+std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(vk::Buffer& buffer, Allocation alloc) {
 	vk::Buffer stagingBuffer{nullptr};
 	Allocation stagingBufferMemory{};
 
@@ -52,7 +52,7 @@ std::pair<std::pair<vk::Buffer, Allocation>, std::pair<vk::Buffer, Allocation>> 
 
 
 template<typename T>
-std::pair<std::pair<vk::Buffer, Allocation>, std::pair<vk::Buffer, Allocation>> ThiefVKBufferManager<T>::flushBufferUploads() {
+std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::flushBufferUploads() {
 	auto [buffer, alloc] = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferDst | mUsage, mUniformBuffer.size() * sizeof(T));
 
 	// Upload the current buffer

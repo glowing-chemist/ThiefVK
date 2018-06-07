@@ -19,11 +19,11 @@ public:
 
 	void addBufferElements(std::vector<T>& elements);
 
-	std::pair<std::pair<vk::Buffer, Allocation>, std::pair<vk::Buffer, Allocation>> flushBufferUploads();
+	std::pair<ThiefVKBuffer, ThiefVKBuffer> flushBufferUploads();
 	std::vector<uint32_t> getBufferOffsets() const;
 
 private:
-	std::pair<std::pair<vk::Buffer, Allocation>, std::pair<vk::Buffer, Allocation>> uploadBuffer(vk::Buffer& buffer, Allocation alloc);
+	std::pair<ThiefVKBuffer, ThiefVKBuffer> uploadBuffer(vk::Buffer& buffer, Allocation alloc);
 
 	ThiefVKDevice& mDevice;
 
