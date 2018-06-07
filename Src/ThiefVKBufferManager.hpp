@@ -15,28 +15,22 @@ template<typename T>
 class ThiefVKBufferManager {
 public:
 
-        ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage);
-	void Destroy();
+	ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage);
 
-        std::pair<vk::Buffer&, uint32_t> addBufferElements(std::vector<T>& elements);
+	void addBufferElements(std::vector<T>& elements);
 
-	std::vector<std::pair<vk::Buffer, Allocation>> flushBufferUploads();
+	std::pair<std::pair<vk::Buffer, Allocation>, std::pair<vk::Buffer, Allocation>> flushBufferUploads();
+	std::vector<uint32_t> getBufferOffsets() const;
 
 private:
-	void startNewBuffer();
-	void uploadBuffer();
+	std::pair<std::pair<vk::Buffer, Allocation>, std::pair<vk::Buffer, Allocation>> uploadBuffer(vk::Buffer& buffer, Allocation alloc);
 
 	ThiefVKDevice& mDevice;
 
-        vk::BufferUsageFlags mUsage;
+	vk::BufferUsageFlags mUsage;
 
-        std::vector<T> mUniformBuffer;
-        size_t mMaxBufferSize;
-
-	vk::Buffer mDeviceUniformBuffer;
-	Allocation mUniformBufferMemory;
-
-	std::vector<std::pair<vk::Buffer, Allocation>> mFilledBuffers;
+	std::vector<T> mUniformBuffer;
+	std::vector<uint32_t> mOffsets;
 };
 
 #endif
