@@ -114,7 +114,7 @@ public:
 
 	ThiefVKMemoryManager*	getMemoryManager() { return &MemoryManager; }
 
-	void startFrame(); // these should be called in this order... duh!
+	void startFrame();
 	void draw(geometry& geom);
 	void endFrame();
 
@@ -129,7 +129,7 @@ public:
     void createRenderPasses();
     void createFrameBuffers();
     void createCommandPools();
-
+    void createDescriptorPools();
     void createSemaphores();
 
 private:
@@ -147,6 +147,8 @@ private:
 	vk::CommandBuffer&  startRecordingDepthCmdBuffer();
 	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
 	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
+
+    void renderFrame();
 
     // private variables
     vk::PhysicalDevice mPhysDev;
@@ -180,6 +182,8 @@ private:
     vk::CommandPool graphicsCommandPool;
 
     std::vector<perFrameResources> frameResources;
+
+    vk::DescriptorPool mDescPool ;
 
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
     std::vector<vk::Framebuffer> frameBuffers;

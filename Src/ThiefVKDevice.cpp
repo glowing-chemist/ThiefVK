@@ -32,7 +32,6 @@ ThiefVKDevice::~ThiefVKDevice() {
     DestroyAllImageTextures();
     pipelineManager.Destroy();
     MemoryManager.Destroy();
-	mUniformBufferManager.Destroy();
     mSwapChain.destroy(mDevice);
     mDevice.destroyRenderPass(mRenderPasses.RenderPass);
     mDevice.destroyCommandPool(graphicsCommandPool);
@@ -119,8 +118,10 @@ void ThiefVKDevice::startFrame() {
 }
 
 
+// Just gather all the state we need here, then call Start RenderScene.
 void ThiefVKDevice::draw(geometry& geom) {
-
+    mVertexBufferManager.addBufferElements(geom.verticies);
+    
 }
 
 
@@ -601,6 +602,27 @@ void ThiefVKDevice::createCommandPools() {
     vk::CommandPoolCreateInfo computePoolInfo{};
     computePoolInfo.setQueueFamilyIndex(queueIndicies.ComputeQueueIndex);
     computeCommandPool = mDevice.createCommandPool(computePoolInfo);
+}
+
+
+void ThiefVKDevice::createDescriptorPools() {
+    // crerate the descriptor set pools for uniform buffers and combined image samplers
+    vk::DescriptorPoolSize uniformBufferDescPoolSize{};
+    uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBuffer);
+    uniformBufferDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
+
+    vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
+    imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
+    imageSamplerrDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
+
+    std::array<vk::DescriptorPoolSize, 2> descPoolSizes{uniformBufferDescPoolSize, imageSamplerrDescPoolSize};
+
+    vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
+    uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size()); // two pools one for uniform buffers and one for combined image samplers
+    uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
+    uniformBufferDescPoolInfo.setMaxSets(15);
+
+    mDescPool = mDevice.createDescriptorPool(uniformBufferDescPoolInfo);
 }
 
 
