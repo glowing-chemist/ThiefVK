@@ -13,18 +13,18 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
     // crerate the descriptor set pools for uniform buffers and combined image samplers
     vk::DescriptorPoolSize uniformBufferDescPoolSize{};
     uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBuffer);
-    uniformBufferDescPoolSize.setDescriptorCount(5); // start with 5 we can allways allocate another pool if we later need more.
+    uniformBufferDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
 
 	vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
 	imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
-	imageSamplerrDescPoolSize.setDescriptorCount(5); // start with 5 we can allways allocate another pool if we later need more.
+	imageSamplerrDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
 
 	std::array<vk::DescriptorPoolSize, 2> descPoolSizes{uniformBufferDescPoolSize, imageSamplerrDescPoolSize};
 
     vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
     uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size()); // two pools one for uniform buffers and one for combined image samplers
     uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
-    uniformBufferDescPoolInfo.setMaxSets(10);
+    uniformBufferDescPoolInfo.setMaxSets(30);
 
     DescPool = dev.createDescriptorPool(uniformBufferDescPoolInfo);
 
