@@ -173,68 +173,35 @@ void ThiefVKDevice::endFrame() {
 }
 
 
-std::pair<vk::Image, Allocation> ThiefVKDevice::createColourImage(const uint32_t width, const uint32_t height) {
+ThiefVKImage ThiefVKDevice::createImage(vk::Format format, vk::ImageUsageFlags usage, const uint32_t width, const uint32_t height) {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.setExtent({width, height, 1});
-    imageInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
+    imageInfo.setFormat(format);
     imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
     imageInfo.setImageType(vk::ImageType::e2D);
     imageInfo.setMipLevels(1);
     imageInfo.setArrayLayers(1);
     imageInfo.setTiling(vk::ImageTiling::eOptimal);
-    imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+    imageInfo.setUsage(usage);
 
     vk::Image image = mDevice.createImage(imageInfo);
     vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
 
     Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment, false); // we don't need to be able to map the image
+    MemoryManager.BindImage(image, imageMemory);
 
     return {image, imageMemory};
 }
 
 
-std::pair<vk::Image, Allocation> ThiefVKDevice::createDepthImage(const uint32_t width, const uint32_t height) {
-    vk::ImageCreateInfo imageInfo{};
-    imageInfo.setExtent({width, height, 1});
-    imageInfo.setFormat(vk::Format::eD32Sfloat);
-    imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
-    imageInfo.setImageType(vk::ImageType::e2D);
-    imageInfo.setMipLevels(1);
-    imageInfo.setArrayLayers(1);
-    imageInfo.setTiling(vk::ImageTiling::eOptimal);
-    imageInfo.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+void ThiefVKDevice::destroyImage(ThiefVKImage& image) {
+    MemoryManager.Free(image.mImageMemory);
 
-    vk::Image image = mDevice.createImage(imageInfo);
-    vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
-
-    Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment,  false); // we don't need to be able to map the image
-
-    return {image, imageMemory};
+    mDevice.destroyImage(image.mImage);
 }
 
 
-std::pair<vk::Image, Allocation> ThiefVKDevice::createNormalsImage(const uint32_t width, const uint32_t height) {
-    vk::ImageCreateInfo imageInfo{};
-    imageInfo.setExtent({width, height, 1});
-    imageInfo.setFormat(vk::Format::eR8G8B8A8Sint);
-    imageInfo.setInitialLayout(vk::ImageLayout::eUndefined);
-	imageInfo.setSharingMode(vk::SharingMode::eExclusive);
-    imageInfo.setImageType(vk::ImageType::e2D);
-    imageInfo.setMipLevels(1);
-    imageInfo.setArrayLayers(1);
-    imageInfo.setTiling(vk::ImageTiling::eOptimal);
-    imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
-
-    vk::Image image = mDevice.createImage(imageInfo);
-    vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
-
-    Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment,  false); // we don't need to be able to map the image
-
-    return {image, imageMemory};
-}
-
-
-std::pair<vk::Buffer, Allocation> ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, const uint32_t size) {
+ThiefVKBuffer ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, const uint32_t size) {
 	vk::BufferCreateInfo bufferInfo{};
 	bufferInfo.setSize(size);
 	bufferInfo.setUsage(usage);
@@ -253,10 +220,10 @@ std::pair<vk::Buffer, Allocation> ThiefVKDevice::createBuffer(const vk::BufferUs
 }
 
 
-void ThiefVKDevice::destroyBuffer(vk::Buffer& buffer, Allocation alloc) {
-	MemoryManager.Free(alloc);
+void ThiefVKDevice::destroyBuffer(ThiefVKBuffer& buffer) {
+	MemoryManager.Free(buffer.mBufferMemory);
 
-	mDevice.destroyBuffer(buffer);
+	mDevice.destroyBuffer(buffer.mBuffer);
 }
 
 
@@ -292,9 +259,17 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
     ThiefVKImageTextutres Result{};
 
     for(unsigned int swapImageCount = 0; swapImageCount < mSwapChain.getNumberOfSwapChainImages(); ++swapImageCount) {
-        auto [colourImage, colourMemory]   = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
-        auto [depthImage , depthMemory]    = createDepthImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
-        auto [normalsImage, normalsMemory] = createNormalsImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+        auto [colourImage, colourMemory]   = createImage(vk::Format::eR8G8B8A8Srgb, 
+                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment, 
+                                                         mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+
+        auto [depthImage , depthMemory]    = createImage(vk::Format::eD32Sfloat,
+                                                         vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment,
+                                                         mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+
+        auto [normalsImage, normalsMemory] = createImage(vk::Format::eR8G8B8A8Sint,
+                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment,
+                                                         mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
         // Bind the memory to the images
         MemoryManager.BindImage(colourImage, colourMemory);
@@ -305,7 +280,10 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
         std::vector<Allocation> lightImageMemory(spotLights.size());
 
         for(unsigned int i = 0; i < spotLights.size(); ++i) {
-            auto [lightImage, lightMemory] = createColourImage(mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+            auto [lightImage, lightMemory] = createImage(vk::Format::eR8G8B8A8Srgb, 
+                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment, 
+                                                         mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+
             lightImages.push_back(lightImage);
             lightImageMemory.push_back(lightMemory);
 

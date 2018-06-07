@@ -118,12 +118,11 @@ public:
 	void draw(geometry& geom);
 	void endFrame();
 
-	std::pair<vk::Image, Allocation> createColourImage(const uint32_t width, const uint32_t height);
-	std::pair<vk::Image, Allocation> createDepthImage(const uint32_t width, const uint32_t height);
-	std::pair<vk::Image, Allocation> createNormalsImage(const uint32_t width, const uint32_t height);
+    ThiefVKImage createImage(vk::Format format, vk::ImageUsageFlags usage, const uint32_t width, const uint32_t height);
+    void destroyImage(ThiefVKImage& image);
 
-	std::pair<vk::Buffer, Allocation> createBuffer(const vk::BufferUsageFlags usage, const uint32_t size);
-	void destroyBuffer(vk::Buffer& buffer, Allocation alloc);
+	ThiefVKBuffer createBuffer(const vk::BufferUsageFlags usage, const uint32_t size);
+	void destroyBuffer(ThiefVKBuffer& buffer);
 
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();
