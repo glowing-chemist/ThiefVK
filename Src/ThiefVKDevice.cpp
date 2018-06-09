@@ -609,15 +609,21 @@ void ThiefVKDevice::CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, 
 vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 	vk::CommandBuffer& colourCmdBuffer = frameResources[currentFrameBufferIndex].colourCmdBuffer;
 
+    vk::CommandBufferInheritanceInfo inheritanceInfo{};
+    inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
+    inheritanceInfo.setSubpass(0);
+    inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
+
 	vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.setPInheritanceInfo(&inheritanceInfo);
 	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
 
 	// start recording commands in to the buffer
 	colourCmdBuffer.begin(beginInfo);
 
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.fragmentShader		 = ShaderName::BasicTransformVertex;
-	pipelineDesc.vertexShader		 = ShaderName::BasicColourFragment;
+	pipelineDesc.vertexShader		 = ShaderName::BasicTransformVertex;
+	pipelineDesc.fragmentShader		 = ShaderName::BasicColourFragment;
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
@@ -633,17 +639,21 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 vk::CommandBuffer& ThiefVKDevice::startRecordingDepthCmdBuffer() {
 	vk::CommandBuffer& depthCmdBuffer = frameResources[currentFrameBufferIndex].depthCmdBuffer;
 
+    vk::CommandBufferInheritanceInfo inheritanceInfo{};
+    inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
+    inheritanceInfo.setSubpass(1);
+    inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
+
 	vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.setPInheritanceInfo(&inheritanceInfo);
 	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
 
 	// start recording commands in to the buffer
 	depthCmdBuffer.begin(beginInfo);
 
-	depthCmdBuffer.bindVertexBuffers(0, frameResources[currentFrameBufferIndex].vertexBuffer, {0});
-
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.fragmentShader		 = ShaderName::DepthVertex;
-	pipelineDesc.vertexShader		 = ShaderName::DepthFragment;
+	pipelineDesc.vertexShader		 = ShaderName::DepthVertex;
+	pipelineDesc.fragmentShader		 = ShaderName::DepthFragment;
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
@@ -660,17 +670,21 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingDepthCmdBuffer() {
 vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 	vk::CommandBuffer& normalsCmdBuffer = frameResources[currentFrameBufferIndex].normalsCmdBuffer;
 
+    vk::CommandBufferInheritanceInfo inheritanceInfo{};
+    inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
+    inheritanceInfo.setSubpass(2);
+    inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
+
 	vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.setPInheritanceInfo(&inheritanceInfo);
 	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
 
 	// start recording commands in to the buffer
 	normalsCmdBuffer.begin(beginInfo);
 
-	normalsCmdBuffer.bindVertexBuffers(0, frameResources[currentFrameBufferIndex].vertexBuffer, {0});
-
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.fragmentShader		 = ShaderName::NormalVertex;
-	pipelineDesc.vertexShader		 = ShaderName::NormalFragment;
+	pipelineDesc.vertexShader		 = ShaderName::NormalVertex;
+	pipelineDesc.fragmentShader		 = ShaderName::NormalFragment;
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
