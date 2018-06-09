@@ -8,6 +8,7 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout(location = 0) in vec3 fragPos;
+layout(location = 2) in vec3 normal;
 layout(location = 1) in vec2 inText;
 
 layout(location = 0) out float depth;

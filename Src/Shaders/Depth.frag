@@ -3,8 +3,7 @@
 
 layout(location = 0) in float inDepth;
 
-layout(location = 1) out float outDepth;
 
 void main() {
-    outDepth = inDepth;
+    gl_FragDepth = inDepth;
 }
