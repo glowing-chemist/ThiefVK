@@ -46,6 +46,7 @@ void ThiefVKPipelineManager::Destroy() {
     }
     for(auto& pipeLine : pipeLineCache) {
         dev.destroyPipelineLayout(pipeLine.second.mPipelineLayout);
+        dev.destroyDescriptorSetLayout(pipeLine.second.mDescLayout);
         dev.destroyPipeline(pipeLine.second.mPipeLine);
     }
     dev.destroyDescriptorPool(DescPool);
