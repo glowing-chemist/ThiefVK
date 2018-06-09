@@ -98,6 +98,9 @@ void ThiefVKDevice::startFrame() {
 
 	frameResources[currentFrameBufferIndex] = frameResource;
 
+    vk::CommandBufferBeginInfo primaryBeginInfo{};
+    frameResources[currentFrameBufferIndex].primaryCmdBuffer.begin(primaryBeginInfo);
+
 	// start the render pass so that we can begin recording in to the command buffers
 	vk::RenderPassBeginInfo renderPassBegin{};
 	renderPassBegin.framebuffer = frameBuffers[currentFrameBufferIndex];
@@ -129,9 +132,6 @@ void ThiefVKDevice::endFrame() {
 
 	perFrameResources& resources = frameResources[currentFrameBufferIndex];
 	vk::CommandBuffer& primaryCmdBuffer = resources.primaryCmdBuffer;
-
-	vk::CommandBufferBeginInfo primaryBeginInfo{};
-	primaryCmdBuffer.begin(primaryBeginInfo);
 
 	// end recording in to these as we're
 	resources.flushCommandBuffer.end();
@@ -361,21 +361,17 @@ void ThiefVKDevice::createRenderPasses() {
 
     vk::SubpassDescription colourPassDesc{};
     colourPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-    colourPassDesc.setColorAttachmentCount(colourAttatchmentRefs.size());
-    colourPassDesc.setPColorAttachments(colourAttatchmentRefs.data());
-    colourPassDesc.setPDepthStencilAttachment(&depthRef);
+    colourPassDesc.setColorAttachmentCount(1);
+    colourPassDesc.setPColorAttachments(&colourAttatchmentRefs[0]);
 
     vk::SubpassDescription depthPassDesc{};
     depthPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-    depthPassDesc.setColorAttachmentCount(colourAttatchmentRefs.size());
-    depthPassDesc.setPColorAttachments(colourAttatchmentRefs.data());
     depthPassDesc.setPDepthStencilAttachment(&depthRef);
 
     vk::SubpassDescription normalsPassDesc{};
     normalsPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-    normalsPassDesc.setColorAttachmentCount(colourAttatchmentRefs.size());
-    normalsPassDesc.setPColorAttachments(colourAttatchmentRefs.data());
-    normalsPassDesc.setPDepthStencilAttachment(&depthRef);
+    normalsPassDesc.setColorAttachmentCount(1);
+    normalsPassDesc.setPColorAttachments(&colourAttatchmentRefs[1]);
 
     std::array<vk::AttachmentReference, 2> inputAttachments{vk::AttachmentReference{0, vk::ImageLayout::eShaderReadOnlyOptimal}, 
                                                             vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal}};
@@ -413,7 +409,7 @@ void ThiefVKDevice::createRenderPasses() {
 
     vk::SubpassDependency colourToCompositeDepen{};
     colourToCompositeDepen.setSrcSubpass(0);
-    colourToCompositeDepen.setDstSubpass(3);
+    colourToCompositeDepen.setDstSubpass(1);
     colourToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     colourToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
     colourToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
@@ -422,7 +418,7 @@ void ThiefVKDevice::createRenderPasses() {
 
     vk::SubpassDependency depthToCompositeDepen{};
     depthToCompositeDepen.setSrcSubpass(1);
-    depthToCompositeDepen.setDstSubpass(3);
+    depthToCompositeDepen.setDstSubpass(2);
     depthToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     depthToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
     depthToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
