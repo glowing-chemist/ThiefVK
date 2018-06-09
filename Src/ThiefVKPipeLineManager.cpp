@@ -34,8 +34,6 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
     shaderModules[ShaderName::BasicColourFragment]  = createShaderModule("./Shaders/BasicFragment.spv");
     shaderModules[ShaderName::DepthVertex]        = createShaderModule("./Shaders/DepthVertex.spv");
     shaderModules[ShaderName::DepthFragment]        = createShaderModule("./Shaders/DepthFragment.spv");
-    shaderModules[ShaderName::LightVertex]        = createShaderModule("./Shaders/LightVertex.spv");
-    shaderModules[ShaderName::LightFragment]        = createShaderModule("./Shaders/LightFragment.spv");
     shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/NormalVertex.spv");
     shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/NormalFragment.spv");
 */}
@@ -131,9 +129,6 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
         break;
     case ShaderName::NormalVertex:
         subpassIndex = 3;
-        break;
-    case ShaderName::LightVertex:
-        subpassIndex = 4;
         break;
     case ShaderName::CompositeVertex:
         subpassIndex = 5;

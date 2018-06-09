@@ -11,8 +11,6 @@ enum class ShaderName {
     BasicColourFragment,
     DepthVertex,
     DepthFragment,
-    LightVertex,
-    LightFragment,
     NormalVertex,
     NormalFragment,
     CompositeVertex,
