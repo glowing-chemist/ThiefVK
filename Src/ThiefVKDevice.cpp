@@ -589,7 +589,7 @@ void ThiefVKDevice::endSingleUseGraphicsCommandBuffer(vk::CommandBuffer cmdBuffe
 }
 
 
-void ThiefVKDevice::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
+void ThiefVKDevice::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
     vk::ImageMemoryBarrier memBarrier{};
     memBarrier.setOldLayout(oldLayout);
     memBarrier.setNewLayout(newLayout);
