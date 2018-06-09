@@ -28,6 +28,7 @@ public:
     unsigned int getNumberOfSwapChainImages() const;
 
     const vk::ImageView& getImageView(const size_t) const;
+    vk::Image& getImage(const size_t);
 
 	uint32_t getNextImageIndex(vk::Device&, vk::Semaphore&) const;
 
