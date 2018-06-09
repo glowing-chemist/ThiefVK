@@ -150,6 +150,16 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     pipeLineCreateInfo.setRenderPass(description.renderPass);
     pipeLineCreateInfo.setSubpass(subpassIndex); // index for subpass that this pipeline will be used in
 
+    if(description.vertexShader == ShaderName::DepthVertex) { // we need to specify ou rdepth stencil state
+        vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
+        depthStencilInfo.setDepthTestEnable(true);
+        depthStencilInfo.setDepthWriteEnable(true);
+        depthStencilInfo.setDepthCompareOp(vk::CompareOp::eLess);
+        depthStencilInfo.setDepthBoundsTestEnable(false);
+
+        pipeLineCreateInfo.setPDepthStencilState(&depthStencilInfo);
+    }
+
     vk::Pipeline pipeline = dev.createGraphicsPipeline(nullptr, pipeLineCreateInfo);
 
     PipeLine piplineInfo{pipeline, pipelineLayout, descSetLayouts};
