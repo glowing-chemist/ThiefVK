@@ -25,6 +25,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
 
     std::cerr << "validation layer: " << msg << std::endl;
 
+    asm("int3");
+
     return VK_FALSE;
 
 }
@@ -63,9 +65,15 @@ ThiefVKInstance::ThiefVKInstance() {
     uint32_t numExtensions = 0;
     const char* const* requiredExtensions = glfwGetRequiredInstanceExtensions(&numExtensions);
 
+    std::vector<const char*> requiredExtensionVector{requiredExtensions, requiredExtensions + numExtensions};
+
+#ifndef NDEBUG
+    requiredExtensionVector.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif
+
     vk::InstanceCreateInfo instanceInfo{};
-    instanceInfo.setEnabledExtensionCount(numExtensions);
-    instanceInfo.setPpEnabledExtensionNames(requiredExtensions);
+    instanceInfo.setEnabledExtensionCount(requiredExtensionVector.size());
+    instanceInfo.setPpEnabledExtensionNames(requiredExtensionVector.data());
     instanceInfo.setPApplicationInfo(&appInfo);
 #ifndef NDEBUG
     const auto availableLayers = vk::enumerateInstanceLayerProperties();
