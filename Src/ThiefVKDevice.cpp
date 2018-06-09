@@ -76,7 +76,7 @@ void ThiefVKDevice::startFrame() {
 		vk::CommandBufferAllocateInfo secondaryCmdBufferAllocInfo;
 		secondaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::eSecondary);
 		secondaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
-		secondaryCmdBufferAllocInfo.setCommandBufferCount(4);
+		secondaryCmdBufferAllocInfo.setCommandBufferCount(3);
 
 		std::vector<vk::CommandBuffer> secondaryCmdBuffers = mDevice.allocateCommandBuffers(secondaryCmdBufferAllocInfo);
 
@@ -85,13 +85,11 @@ void ThiefVKDevice::startFrame() {
 		frameResource.colourCmdBuffer			= secondaryCmdBuffers[0];
 		frameResource.depthCmdBuffer			= secondaryCmdBuffers[1];
 		frameResource.normalsCmdBuffer			= secondaryCmdBuffers[2];
-		frameResource.shadowCmdBuffer			= secondaryCmdBuffers[3];
 	} else { // Otherwise just reset them
 		frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].colourCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].depthCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
-		frameResources[currentFrameBufferIndex].shadowCmdBuffer.reset(vk::CommandBufferResetFlags());
 	}
 
 	frameResource.submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
@@ -139,7 +137,6 @@ void ThiefVKDevice::endFrame() {
 	resources.colourCmdBuffer.end();
 	resources.depthCmdBuffer.end();
 	resources.normalsCmdBuffer.end();
-	resources.shadowCmdBuffer.end();
 
 	// Execute the secondary cmd buffers in the primary
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
@@ -148,8 +145,7 @@ void ThiefVKDevice::endFrame() {
 	primaryCmdBuffer.executeCommands(1, &resources.depthCmdBuffer);
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
 	primaryCmdBuffer.executeCommands(1, &resources.normalsCmdBuffer);
-	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
-	primaryCmdBuffer.executeCommands(1, &resources.shadowCmdBuffer);
+
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 
 	// Record the compositing operations.
@@ -246,11 +242,6 @@ void ThiefVKDevice::DestroyAllImageTextures() {
         DestroyImage(images.depthImage, images.depthImageMemory);
         DestroyImageView(images.normalsImageView);
         DestroyImage(images.normalsImage, images.normalsImageMemory);
-
-        for(unsigned int i = 0; i < images.lighImages.size(); ++i) {
-            DestroyImageView(images.lighImageViews[i]);
-            DestroyImage(images.lighImages[i], images.lightImageMemory[i]);
-        }
     }
 }
 
@@ -344,10 +335,6 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
         Result.normalsImageView     = normalsImageView;
         Result.normalsImageMemory   = normalsMemory;
 
-        Result.lighImages           = lightImages;
-        Result.lighImageViews       = lightsImageViews;
-        Result.lightImageMemory     = lightImageMemory;
-
         deferedTextures.push_back(Result);
     }
 }
@@ -436,39 +423,17 @@ void ThiefVKDevice::createRenderPasses() {
     colourCompositPassReference.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
     // calculate and add the light attachment desc
-    std::vector<vk::AttachmentReference> spotLightattachmentRefs{coloursubPassReference, depthsubPassReference, normalssubPassReference};
-    for(uint32_t i = 0; i < spotLights.size(); ++i)
-    {
-        vk::AttachmentReference lightRef{};
-        lightRef.setAttachment(i + 4);
-        lightRef.setLayout(vk::ImageLayout::eGeneral);
-
-        spotLightattachmentRefs.push_back(lightRef);
-    }
+    std::vector<vk::AttachmentReference> attachmentRefs{coloursubPassReference, depthsubPassReference, normalssubPassReference};
 
     vk::SubpassDescription compositPassDesc{};
     compositPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-    compositPassDesc.setInputAttachmentCount(spotLightattachmentRefs.size());
-    compositPassDesc.setPInputAttachments(spotLightattachmentRefs.data());
+    compositPassDesc.setInputAttachmentCount(attachmentRefs.size());
+    compositPassDesc.setPInputAttachments(attachmentRefs.data());
     compositPassDesc.setColorAttachmentCount(1);
     compositPassDesc.setPColorAttachments(&swapChainAttatchmentreference);
 
 
-    std::vector<vk::AttachmentReference> lightAttachments{};
-    for(uint32_t i = 0; i < spotLights.size(); ++i) {
-        lightAttachments.push_back(coloursubPassReference);
-    }
-
-    vk::SubpassDescription lightSubpass{};
-    lightSubpass.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-    lightSubpass.setColorAttachmentCount(lightAttachments.size());
-    lightSubpass.setPColorAttachments(lightAttachments.data());
-
-
     std::vector<vk::AttachmentDescription> allAttachments{colourPassAttachment, depthPassAttachment, normalsPassAttachment, swapChainImageAttachment};
-    for(uint32_t i = 0; i < spotLights.size(); ++i ) { // only support spot lights currently
-        allAttachments.push_back(colourPassAttachment);
-    }
 
     mRenderPasses.attatchments = allAttachments;
 
@@ -507,16 +472,8 @@ void ThiefVKDevice::createRenderPasses() {
     normalsToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
     normalsToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
-    vk::SubpassDependency lightToCompositeDepen{};
-    lightToCompositeDepen.setSrcSubpass(3);
-    lightToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    lightToCompositeDepen.setDstSubpass(4);
-    lightToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
-    lightToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-    lightToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-
-    std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, lightSubpass, compositPassDesc};
-    std::vector<vk::SubpassDependency>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, depthToCompositeDepen, normalsToCompositeDepen, lightToCompositeDepen};
+    std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, compositPassDesc};
+    std::vector<vk::SubpassDependency>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, depthToCompositeDepen, normalsToCompositeDepen};
 
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.setAttachmentCount(allAttachments.size());
@@ -541,9 +498,6 @@ void ThiefVKDevice::createFrameBuffers() {
                                                           , deferedTextures[i].normalsImageView
                                                           , swapChainImage };
 
-        for(const auto& lightImageViews : deferedTextures[i].lighImageViews) {
-            frameBufferAttatchments.push_back(lightImageViews);
-        }
 
         vk::FramebufferCreateInfo frameBufferInfo{}; // we need to allocate all our images before trying to fix this
         frameBufferInfo.setRenderPass(mRenderPasses.RenderPass);

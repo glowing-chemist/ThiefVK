@@ -33,10 +33,6 @@ struct ThiefVKImageTextutres {
     vk::Image normalsImage;
     vk::ImageView normalsImageView;
     Allocation normalsImageMemory;
-
-    std::vector<vk::Image> lighImages;
-    std::vector<vk::ImageView> lighImageViews;
-    std::vector<Allocation> lightImageMemory;
 };
 
 struct ThiefVKRenderPasses{
@@ -66,7 +62,6 @@ struct perFrameResources {
 	vk::CommandBuffer colourCmdBuffer;
 	vk::CommandBuffer depthCmdBuffer;
 	vk::CommandBuffer normalsCmdBuffer;
-	vk::CommandBuffer shadowCmdBuffer;
 
     vk::Buffer vertexBuffer;
     Allocation vertexBufferMemory;
