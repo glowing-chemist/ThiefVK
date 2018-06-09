@@ -184,7 +184,7 @@ ThiefVKImage ThiefVKDevice::createImage(vk::Format format, vk::ImageUsageFlags u
     vk::Image image = mDevice.createImage(imageInfo);
     vk::MemoryRequirements imageMemRequirments = mDevice.getImageMemoryRequirements(image);
 
-    Allocation imageMemory = MemoryManager.Allocate(width * height, imageMemRequirments.alignment, false); // we don't need to be able to map the image
+    Allocation imageMemory = MemoryManager.Allocate(imageMemRequirments.size, imageMemRequirments.alignment, false); // we don't need to be able to map the image
     MemoryManager.BindImage(image, imageMemory);
 
     return {image, imageMemory};
@@ -311,7 +311,7 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
 void ThiefVKDevice::createRenderPasses() {
 
     // Specify all attachments used in all subrenderpasses
-    vk::AttachmentDescription colourPassAttachment{}; // also used for the shadow mapping
+    vk::AttachmentDescription colourPassAttachment{}; 
     colourPassAttachment.setFormat(vk::Format::eR8G8B8A8Srgb);
     colourPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
     colourPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
@@ -322,11 +322,13 @@ void ThiefVKDevice::createRenderPasses() {
 
     vk::AttachmentDescription depthPassAttachment{};
     depthPassAttachment.setFormat(vk::Format::eD32Sfloat); // store in each pixel a 32bit depth value
+    depthPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
+    depthPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
     depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-    depthPassAttachment.setInitialLayout(vk::ImageLayout::eUndefined); // wriet in a subpass then read in a subsequent one
+    depthPassAttachment.setInitialLayout(vk::ImageLayout::eUndefined); // write in a subpass then read in a subsequent one
     depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilReadOnlyOptimal);
 
     vk::AttachmentDescription normalsPassAttachment{};
@@ -373,6 +375,7 @@ void ThiefVKDevice::createRenderPasses() {
     normalsPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
     normalsPassDesc.setColorAttachmentCount(colourAttatchmentRefs.size());
     normalsPassDesc.setPColorAttachments(colourAttatchmentRefs.data());
+    normalsPassDesc.setPDepthStencilAttachment(&depthRef);
 
     std::array<vk::AttachmentReference, 2> inputAttachments{vk::AttachmentReference{0, vk::ImageLayout::eShaderReadOnlyOptimal}, 
                                                             vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal}};
@@ -384,6 +387,7 @@ void ThiefVKDevice::createRenderPasses() {
     compositPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
     compositPassDesc.setInputAttachmentCount(inputAttachments.size());
     compositPassDesc.setPInputAttachments(inputAttachments.data());
+    compositPassDesc.setPDepthStencilAttachment(&inputDepthAttatchment);
     compositPassDesc.setColorAttachmentCount(1);
     compositPassDesc.setPColorAttachments(&swapChainAttachment);
 
@@ -434,8 +438,8 @@ void ThiefVKDevice::createRenderPasses() {
     normalsToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
     normalsToCompositeDepen.setDependencyFlags(vk::DependencyFlagBits::eByRegion);
 
-    std::vector<vk::SubpassDescription> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, compositPassDesc};
-    std::vector<vk::SubpassDependency>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, depthToCompositeDepen, normalsToCompositeDepen};
+    std::array<vk::SubpassDescription, 4> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, compositPassDesc};
+    std::array<vk::SubpassDependency, 4>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, depthToCompositeDepen, normalsToCompositeDepen};
 
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.setAttachmentCount(allAttachments.size());
@@ -455,7 +459,7 @@ void ThiefVKDevice::createFrameBuffers() {
     for(uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); i++) {
         const vk::ImageView& swapChainImage = mSwapChain.getImageView(i);
 
-        std::vector<vk::ImageView> frameBufferAttatchments{deferedTextures[i].colourImageView
+        std::array<vk::ImageView, 4> frameBufferAttatchments{deferedTextures[i].colourImageView
                                                           , deferedTextures[i].depthImageView
                                                           , deferedTextures[i].normalsImageView
                                                           , swapChainImage };
