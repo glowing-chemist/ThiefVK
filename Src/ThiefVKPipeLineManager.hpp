@@ -45,15 +45,15 @@ private:
 	vk::DescriptorPool DescPool;
 
     vk::ShaderModule createShaderModule(std::string path) const;
-    vk::PipelineLayout createPipelineLayout(std::vector<vk::DescriptorSetLayout> descLayouts, ShaderName shader) const;
-    std::vector<vk::DescriptorSetLayout> createDescriptorSetLayout(ShaderName shader) const;
+    vk::PipelineLayout createPipelineLayout(vk::DescriptorSetLayout& descLayouts, ShaderName shader) const;
+    vk::DescriptorSetLayout createDescriptorSetLayout(ShaderName shader) const;
 
     std::map<ShaderName, vk::ShaderModule> shaderModules;
 
     struct PipeLine {
         vk::Pipeline mPipeLine;
         vk::PipelineLayout mPipelineLayout;
-        std::vector<vk::DescriptorSetLayout> mDescLayout;
+        vk::DescriptorSetLayout mDescLayout;
     };
     std::map<ThiefVKPipelineDescription, PipeLine> pipeLineCache;
 };

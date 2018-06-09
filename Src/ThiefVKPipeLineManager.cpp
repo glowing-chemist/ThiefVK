@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <limits>
 #include <array>
 
 
@@ -116,26 +117,23 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     blendStateInfo.setAttachmentCount(1);
     blendStateInfo.setPAttachments(&colorAttachState);
 
-    std::vector<vk::DescriptorSetLayout> descSetLayouts = createDescriptorSetLayout(description.vertexShader);
+    vk::DescriptorSetLayout descSetLayouts = createDescriptorSetLayout(description.fragmentShader);
     vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.vertexShader);
 
-    uint32_t subpassIndex = 0;
-    switch (description.vertexShader) {
-    case ShaderName::BasicTransformVertex:
-        subpassIndex = 1;
-        break;
-    case ShaderName::DepthVertex:
-        subpassIndex = 2;
-        break;
-    case ShaderName::NormalVertex:
-        subpassIndex = 3;
-        break;
-    case ShaderName::CompositeVertex:
-        subpassIndex = 5;
-        break;
-    default:
-        break;
-    }
+    const uint32_t subpassIndex = [&description]() {
+        switch (description.vertexShader) {
+            case ShaderName::BasicTransformVertex:
+                return 0u;
+            case ShaderName::DepthVertex:
+                return 1u;
+            case ShaderName::NormalVertex:
+                return  2u;
+            case ShaderName::CompositeVertex:
+                return 3u;
+            default:
+                return std::numeric_limits<uint32_t>::max();
+        }
+    }();
 
     vk::GraphicsPipelineCreateInfo pipeLineCreateInfo{};
     pipeLineCreateInfo.setStageCount(2); // vertex and fragment
@@ -174,17 +172,17 @@ vk::ShaderModule ThiefVKPipelineManager::createShaderModule(std::string path) co
 }
 
 
-vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(std::vector<vk::DescriptorSetLayout> descLayouts, ShaderName)  const {
+vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSetLayout& descLayouts, ShaderName)  const {
     vk::PipelineLayoutCreateInfo pipelinelayoutinfo{};
-    pipelinelayoutinfo.setPSetLayouts(descLayouts.data());
-    pipelinelayoutinfo.setSetLayoutCount(descLayouts.size());
+    pipelinelayoutinfo.setPSetLayouts(&descLayouts);
+    pipelinelayoutinfo.setSetLayoutCount(1);
 
     return dev.createPipelineLayout(pipelinelayoutinfo);
 }
 
 
-std::vector<vk::DescriptorSetLayout> ThiefVKPipelineManager::createDescriptorSetLayout(ShaderName shader) const {
-    std::vector<vk::DescriptorSetLayout> descSets{};
+vk::DescriptorSetLayout ThiefVKPipelineManager::createDescriptorSetLayout(ShaderName shader) const {
+    std::vector<vk::DescriptorSetLayoutBinding> descSets{};
 
     vk::DescriptorSetLayoutBinding uboDescriptorLayout{};
     uboDescriptorLayout.setDescriptorCount(1);
@@ -192,11 +190,7 @@ std::vector<vk::DescriptorSetLayout> ThiefVKPipelineManager::createDescriptorSet
     uboDescriptorLayout.setDescriptorType(vk::DescriptorType::eUniformBuffer);
     uboDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eVertex); // set what stage it will be used in
 
-    vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.setBindingCount(1);
-    layoutInfo.setPBindings(&uboDescriptorLayout);
-
-    descSets.push_back(dev.createDescriptorSetLayout(layoutInfo));
+    descSets.push_back(uboDescriptorLayout);
 
     if(shader == ShaderName::BasicColourFragment) {
         vk::DescriptorSetLayoutBinding imageSamplerDescriptorLayout{};
@@ -205,14 +199,14 @@ std::vector<vk::DescriptorSetLayout> ThiefVKPipelineManager::createDescriptorSet
         imageSamplerDescriptorLayout.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
         imageSamplerDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eFragment); // set what stage it will be used in
 
-        vk::DescriptorSetLayoutCreateInfo samplerLayoutInfo{};
-        samplerLayoutInfo.setBindingCount(1);
-        samplerLayoutInfo.setPBindings(&imageSamplerDescriptorLayout);
-
-        descSets.push_back(dev.createDescriptorSetLayout(samplerLayoutInfo));
+        descSets.push_back(imageSamplerDescriptorLayout);
     }
 
-    return descSets;
+    vk::DescriptorSetLayoutCreateInfo LayoutInfo{};
+    LayoutInfo.setBindingCount(descSets.size());
+    LayoutInfo.setPBindings(descSets.data());
+
+    return dev.createDescriptorSetLayout(LayoutInfo);
 }
 
 
