@@ -28,6 +28,11 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 
 
 ThiefVKDevice::~ThiefVKDevice() {
+    mDevice.waitIdle();
+
+    for(auto& resource : frameResources) {
+        destroyPerFrameResources(resource);
+    }
     DestroyFrameBuffers();
     DestroyAllImageTextures();
     pipelineManager.Destroy();
@@ -51,8 +56,6 @@ void ThiefVKDevice::startFrame() {
 
 	currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
 
-	vk::CommandBuffer flushBuffer = beginSingleUseGraphicsCommandBuffer();
-
 	if(frameResources[currentFrameBufferIndex].frameFinished != vk::Fence(nullptr)) {
 		mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
 		mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
@@ -62,16 +65,14 @@ void ThiefVKDevice::startFrame() {
 		frameResources[currentFrameBufferIndex].frameFinished = mDevice.createFence(fenceInfo);
 	}
 
-	perFrameResources frameResource{};
-
 	if(frameResources[currentFrameBufferIndex].primaryCmdBuffer == vk::CommandBuffer(nullptr)) {
 		// Only allocate thecommand buffers if this will be there first use.
 		vk::CommandBufferAllocateInfo primaryCmdBufferAllocInfo;
 		primaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
 		primaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
-		primaryCmdBufferAllocInfo.setCommandBufferCount(1);
+		primaryCmdBufferAllocInfo.setCommandBufferCount(2);
 
-		vk::CommandBuffer primaryCmdBuffer = mDevice.allocateCommandBuffers(primaryCmdBufferAllocInfo)[0];
+		std::vector<vk::CommandBuffer> primaryCmdBuffers = mDevice.allocateCommandBuffers(primaryCmdBufferAllocInfo);
 
 		vk::CommandBufferAllocateInfo secondaryCmdBufferAllocInfo;
 		secondaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::eSecondary);
@@ -81,22 +82,21 @@ void ThiefVKDevice::startFrame() {
 		std::vector<vk::CommandBuffer> secondaryCmdBuffers = mDevice.allocateCommandBuffers(secondaryCmdBufferAllocInfo);
 
 		// Set the initial cmd Buffers.
-		frameResource.primaryCmdBuffer			= primaryCmdBuffer;
-		frameResource.colourCmdBuffer			= secondaryCmdBuffers[0];
-		frameResource.depthCmdBuffer			= secondaryCmdBuffers[1];
-		frameResource.normalsCmdBuffer			= secondaryCmdBuffers[2];
+		frameResources[currentFrameBufferIndex].primaryCmdBuffer			= primaryCmdBuffers[0];
+        frameResources[currentFrameBufferIndex].flushCommandBuffer       = primaryCmdBuffers[1];
+		frameResources[currentFrameBufferIndex].colourCmdBuffer			= secondaryCmdBuffers[0];
+		frameResources[currentFrameBufferIndex].depthCmdBuffer			= secondaryCmdBuffers[1];
+		frameResources[currentFrameBufferIndex].normalsCmdBuffer			= secondaryCmdBuffers[2];
 	} else { // Otherwise just reset them
 		frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
+        frameResources[currentFrameBufferIndex].flushCommandBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].colourCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].depthCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
 	}
 
-	frameResource.submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
-	frameResource.swapChainImageAvailable	= swapChainImageAvailable;
-	frameResource.flushCommandBuffer		= flushBuffer;
-
-	frameResources[currentFrameBufferIndex] = frameResource;
+	frameResources[currentFrameBufferIndex].submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
+	frameResources[currentFrameBufferIndex].swapChainImageAvailable	= swapChainImageAvailable;
 
     vk::CommandBufferBeginInfo primaryBeginInfo{};
     frameResources[currentFrameBufferIndex].primaryCmdBuffer.begin(primaryBeginInfo);
@@ -112,11 +112,14 @@ void ThiefVKDevice::startFrame() {
 		{ static_cast<uint32_t>(mSwapChain.getSwapChainImageHeight()), static_cast<uint32_t>(mSwapChain.getSwapChainImageWidth()) } });
 
 	// Begin the render pass
-	frameResource.primaryCmdBuffer.beginRenderPass(renderPassBegin, vk::SubpassContents::eSecondaryCommandBuffers);
+	frameResources[currentFrameBufferIndex].primaryCmdBuffer.beginRenderPass(renderPassBegin, vk::SubpassContents::eSecondaryCommandBuffers);
 
 	startRecordingColourCmdBuffer();
 	startRecordingDepthCmdBuffer();
 	startRecordingNormalsCmdBuffer();
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    frameResources[currentFrameBufferIndex].flushCommandBuffer.begin(beginInfo);
 }
 
 
@@ -134,13 +137,11 @@ void ThiefVKDevice::endFrame() {
 	vk::CommandBuffer& primaryCmdBuffer = resources.primaryCmdBuffer;
 
 	// end recording in to these as we're
-	resources.flushCommandBuffer.end();
 	resources.colourCmdBuffer.end();
 	resources.depthCmdBuffer.end();
 	resources.normalsCmdBuffer.end();
 
 	// Execute the secondary cmd buffers in the primary
-	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
 	primaryCmdBuffer.executeCommands(1, &resources.colourCmdBuffer);
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
 	primaryCmdBuffer.executeCommands(1, &resources.depthCmdBuffer);
@@ -154,6 +155,13 @@ void ThiefVKDevice::endFrame() {
 
 	primaryCmdBuffer.endRenderPass();
 	primaryCmdBuffer.end();
+
+    transitionImageLayout(deferedTextures[currentFrameBufferIndex].colourImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+    transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+    transitionImageLayout(deferedTextures[currentFrameBufferIndex].normalsImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+    transitionImageLayout(mSwapChain.getImage(currentFrameBufferIndex), vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+
+    resources.flushCommandBuffer.end();
 
 	// Submit everything for this frame
 	std::array<vk::CommandBuffer, 2> cmdBuffers{resources.flushCommandBuffer, resources.primaryCmdBuffer};
@@ -329,7 +337,7 @@ void ThiefVKDevice::createRenderPasses() {
     depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     depthPassAttachment.setInitialLayout(vk::ImageLayout::eUndefined); // write in a subpass then read in a subsequent one
-    depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+    depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
     vk::AttachmentDescription normalsPassAttachment{};
     normalsPassAttachment.setFormat(vk::Format::eR8G8B8A8Sint);
@@ -561,23 +569,15 @@ void ThiefVKDevice::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
     memBarrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
 
     memBarrier.setImage(image);
-    memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
-    vk::PipelineStageFlags sourceStage;
-    vk::PipelineStageFlags destinationStage;
-
-    if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
-        memBarrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-        destinationStage = vk::PipelineStageFlagBits::eTransfer;
-    } else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-        memBarrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        memBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-        sourceStage = vk::PipelineStageFlagBits::eTransfer;
-        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+    if(newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+        memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
+    } else {
+        memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
     }
+
+    vk::PipelineStageFlags sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+    vk::PipelineStageFlags destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
     frameResources[currentFrameBufferIndex].flushCommandBuffer.pipelineBarrier(sourceStage, destinationStage, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &memBarrier);
 }
@@ -695,6 +695,22 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 
 
 	return normalsCmdBuffer;
+}
+
+
+void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
+    mDevice.destroyFence(resources.frameFinished);
+    mDevice.destroySemaphore(resources.swapChainImageAvailable);
+    mDevice.destroySemaphore(resources.imagePresented);
+
+    for(auto& buffer : resources.stagingBuffers)  {
+        destroyBuffer(buffer);
+    }
+    for(auto& image : resources.textureImages) {
+        destroyImage(image);
+    }
+    destroyBuffer(resources.vertexBuffer);
+    destroyBuffer(resources.indexBuffer);
 }
 
 

@@ -55,19 +55,17 @@ struct perFrameResources {
 	vk::Semaphore swapChainImageAvailable;
 	vk::Semaphore imagePresented;
 
-    std::vector<std::pair<vk::Buffer, Allocation>> stagingBuffers;
-    std::vector<std::pair<vk::Image, Allocation>> textureImages;
+    std::vector<ThiefVKBuffer> stagingBuffers;
+    std::vector<ThiefVKImage> textureImages;
 
 	vk::CommandBuffer primaryCmdBuffer;
 	vk::CommandBuffer colourCmdBuffer;
 	vk::CommandBuffer depthCmdBuffer;
 	vk::CommandBuffer normalsCmdBuffer;
 
-    vk::Buffer vertexBuffer;
-    Allocation vertexBufferMemory;
+    ThiefVKBuffer vertexBuffer;
 
-    vk::Buffer indexBuffer;
-    Allocation indexBufferMemory;
+    ThiefVKBuffer indexBuffer;
 };
 
 
@@ -143,6 +141,8 @@ private:
 	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
 
     void renderFrame();
+
+    void destroyPerFrameResources(perFrameResources&);
 
     // private variables
     vk::PhysicalDevice mPhysDev;
