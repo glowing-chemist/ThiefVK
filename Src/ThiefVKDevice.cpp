@@ -11,6 +11,7 @@
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
     mPhysDev{std::get<0>(Devices)}, 
 	mDevice{std::get<1>(Devices)}, 
+    currentFrameBufferIndex{0},
 	pipelineManager{mDevice},
 	MemoryManager{&mPhysDev, &mDevice},
 	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
@@ -54,14 +55,16 @@ void ThiefVKDevice::startFrame() {
 	vk::SemaphoreCreateInfo semInfo{}; // will be set once the swapchain image is available
 	vk::Semaphore swapChainImageAvailable = mDevice.createSemaphore(semInfo);
 
-	currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
 
 	if(frameResources[currentFrameBufferIndex].frameFinished != vk::Fence(nullptr)) {
 		mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
 		mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
-	} else {
-		vk::FenceCreateInfo fenceInfo{};
 
+        currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
+	} else {
+        currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
+
+		vk::FenceCreateInfo fenceInfo{};
 		frameResources[currentFrameBufferIndex].frameFinished = mDevice.createFence(fenceInfo);
 	}
 
