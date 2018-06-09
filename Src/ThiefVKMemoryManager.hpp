@@ -69,6 +69,11 @@ private:
     void FreeDevicePools();
     void FreeHostMappablePools();
 
+    void findPoolIndicies();
+
+    uint32_t mDeviceLocalPoolIndex;
+    uint32_t mHostMappablePoolIndex;
+
     std::vector<vk::DeviceMemory> deviceMemoryBackers;
     std::vector<vk::DeviceMemory> hostMappableMemoryBackers;
     std::vector<std::list<PoolFragment>>   deviceLocalPools;

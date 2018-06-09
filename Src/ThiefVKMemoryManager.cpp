@@ -16,6 +16,8 @@ bool operator==(const PoolFragment& lhs, const PoolFragment& rhs) {
 
 
 ThiefVKMemoryManager::ThiefVKMemoryManager(vk::PhysicalDevice* physDev, vk::Device *Dev) : PhysDev{physDev}, Device{Dev} {
+    findPoolIndicies();
+
     AllocateDevicePool();
     AllocateHostMappablePool();
 }
@@ -27,33 +29,47 @@ void ThiefVKMemoryManager::Destroy() {
 }
 
 
-void ThiefVKMemoryManager::AllocateDevicePool() {
+void ThiefVKMemoryManager::findPoolIndicies() {
     vk::PhysicalDeviceMemoryProperties memProps = PhysDev->getMemoryProperties();
 
-    int deviceLocalPoolIndex = -1;
+    bool poolFound = false;
     for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
         if(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal
            && !(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent))
         {
-            deviceLocalPoolIndex = i; // just find the find pool that is device local
+            mDeviceLocalPoolIndex = i; // just find the find pool that is device local
+            poolFound = true;
             break;
         }
     }
 
-    if(deviceLocalPoolIndex == -1) {
+    if(!poolFound) {
         for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
             if(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
             {
                 std::cerr << "having to use host coherint memory, probably a integrated GPU  \n";
-                deviceLocalPoolIndex = i; // just find the first pool that is device local
+                mDeviceLocalPoolIndex = i; // just find the first pool that is device local
                 break;
             }
         }
     }
 
-    if(deviceLocalPoolIndex == -1) std::cerr << "Unable to find Device Local Memory \n";
+    for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
+        if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent)
+           && (memProps.memoryTypes[i]).propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
+        {
+            mHostMappablePoolIndex = i; // just find the find pool that is device local
+            break;
+        }
+    }
 
-    vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(deviceLocalPoolIndex)};
+    
+}
+
+
+void ThiefVKMemoryManager::AllocateDevicePool() {
+
+    vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
 
     deviceMemoryBackers.push_back(Device->allocateMemory(allocInfo));
 
@@ -77,21 +93,8 @@ void ThiefVKMemoryManager::AllocateDevicePool() {
 
 
 void ThiefVKMemoryManager::AllocateHostMappablePool() {
-    vk::PhysicalDeviceMemoryProperties memProps = PhysDev->getMemoryProperties();
 
-    int deviceLocalPoolIndex = -1;
-    for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
-        if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent)
-           && (memProps.memoryTypes[i]).propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
-        {
-            deviceLocalPoolIndex = i; // just find the find pool that is device local
-            break;
-        }
-    }
-
-    if(deviceLocalPoolIndex == -1) std::cerr << "Unable to find host visible Device Local Memory \n";
-
-    vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(deviceLocalPoolIndex)};
+    vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
     hostMappableMemoryBackers.push_back(Device->allocateMemory(allocInfo));
 
