@@ -25,7 +25,11 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
 
     std::cerr << "validation layer: " << msg << std::endl;
 
+#ifdef _MSC_VER 
+	__debugbreak;
+#else
     asm("int3");
+#endif
 
     return VK_FALSE;
 
