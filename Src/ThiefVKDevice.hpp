@@ -110,6 +110,7 @@ public:
 	void startFrame();
 	void draw(geometry& geom);
 	void endFrame();
+	void swap();
 
     ThiefVKImage createImage(vk::Format format, vk::ImageUsageFlags usage, const uint32_t width, const uint32_t height);
     void destroyImage(ThiefVKImage& image);

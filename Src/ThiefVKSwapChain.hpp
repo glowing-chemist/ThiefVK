@@ -30,7 +30,10 @@ public:
     const vk::ImageView& getImageView(const size_t) const;
     vk::Image& getImage(const size_t);
 
-	uint32_t getNextImageIndex(vk::Device&, vk::Semaphore&) const;
+	uint32_t getNextImageIndex(vk::Device&, vk::Semaphore&);
+	uint32_t getcurrentImageIndex() { return mCurrentImageIndex; };
+
+	void present(vk::Queue&, vk::Semaphore&);
 
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
@@ -38,6 +41,7 @@ private:
 
     void createSwapChainImageViews(vk::Device&);
 
+	uint32_t mCurrentImageIndex;
     vk::SwapchainKHR swapChain;
     std::vector<vk::Image> swapChainImages;
     std::vector<vk::ImageView> swapChainImageViews;

@@ -57,10 +57,10 @@ void ThiefVKDevice::startFrame() {
 
 
 	if(frameResources[currentFrameBufferIndex].frameFinished != vk::Fence(nullptr)) {
+		currentFrameBufferIndex = mSwapChain.getcurrentImageIndex() + 1 % mSwapChain.getNumberOfSwapChainImages();
+
 		mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
 		mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
-
-        currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
 	} else {
         currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
 
@@ -178,6 +178,11 @@ void ThiefVKDevice::endFrame() {
 	submitInfo.setPWaitDstStageMask(&waitStage);
 
 	mGraphicsQueue.submit(submitInfo, resources.frameFinished);
+}
+
+
+void ThiefVKDevice::swap() {
+	mSwapChain.present(mPresentQueue, frameResources[currentFrameBufferIndex].imagePresented);
 }
 
 

@@ -148,9 +148,20 @@ vk::Image& ThiefVKSwapChain::getImage(const size_t index) {
 }
 
 
-uint32_t ThiefVKSwapChain::getNextImageIndex(vk::Device& dev, vk::Semaphore& sem) const {
-	uint32_t imageIndex;
-	dev.acquireNextImageKHR(swapChain, std::numeric_limits<uint64_t>::max(), sem, nullptr, &imageIndex);
+uint32_t ThiefVKSwapChain::getNextImageIndex(vk::Device& dev, vk::Semaphore& sem) {
+	dev.acquireNextImageKHR(swapChain, std::numeric_limits<uint64_t>::max(), sem, nullptr, &mCurrentImageIndex);
 	
-	return imageIndex;
+	return mCurrentImageIndex;
+}
+
+
+void ThiefVKSwapChain::present(vk::Queue& presentQueue, vk::Semaphore& waitSemaphore) {
+	vk::PresentInfoKHR info{};
+	info.setPSwapchains(&swapChain);
+	info.setSwapchainCount(1);
+	info.setPWaitSemaphores(&waitSemaphore);
+	info.setWaitSemaphoreCount(1);
+	info.setPImageIndices(&mCurrentImageIndex);
+
+	presentQueue.presentKHR(info);
 }
