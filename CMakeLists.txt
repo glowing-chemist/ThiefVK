@@ -10,7 +10,6 @@ set(SOURCE
         "Src/ThiefVKMemoryManager.cpp"
         "Src/ThiefVKVertex.cpp"
         "Src/ThiefVKBufferManager.cpp"
-        "Src/ThiefVKTextureManager.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image/stb_image.cpp"	
 	)
 
