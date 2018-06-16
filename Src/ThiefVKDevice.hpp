@@ -53,7 +53,7 @@ struct perFrameResources {
 	vk::CommandBuffer flushCommandBuffer;
 
 	vk::Semaphore swapChainImageAvailable;
-	vk::Semaphore imagePresented;
+	vk::Semaphore imageRendered;
 
     std::vector<ThiefVKBuffer> stagingBuffers;
     std::vector<ThiefVKImage> textureImages;

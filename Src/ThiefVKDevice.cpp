@@ -52,24 +52,14 @@ std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
 
 
 void ThiefVKDevice::startFrame() {
-	vk::SemaphoreCreateInfo semInfo{}; // will be set once the swapchain image is available
-	vk::Semaphore swapChainImageAvailable = mDevice.createSemaphore(semInfo);
 
+    currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, frameResources[currentFrameBufferIndex].swapChainImageAvailable);
 
-	if(frameResources[currentFrameBufferIndex].frameFinished != vk::Fence(nullptr)) {
-		currentFrameBufferIndex = mSwapChain.getcurrentImageIndex() + 1 % mSwapChain.getNumberOfSwapChainImages();
-
-		mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
-		mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
-	} else {
-        currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, swapChainImageAvailable);
-
-		vk::FenceCreateInfo fenceInfo{};
-		frameResources[currentFrameBufferIndex].frameFinished = mDevice.createFence(fenceInfo);
-	}
+	mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
+	mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
 
 	if(frameResources[currentFrameBufferIndex].primaryCmdBuffer == vk::CommandBuffer(nullptr)) {
-		// Only allocate thecommand buffers if this will be there first use.
+		// Only allocate the command buffers if this will be there first use.
 		vk::CommandBufferAllocateInfo primaryCmdBufferAllocInfo;
 		primaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
 		primaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
@@ -99,7 +89,6 @@ void ThiefVKDevice::startFrame() {
 	}
 
 	frameResources[currentFrameBufferIndex].submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
-	frameResources[currentFrameBufferIndex].swapChainImageAvailable	= swapChainImageAvailable;
 
     vk::CommandBufferBeginInfo primaryBeginInfo{};
     frameResources[currentFrameBufferIndex].primaryCmdBuffer.begin(primaryBeginInfo);
@@ -174,6 +163,8 @@ void ThiefVKDevice::endFrame() {
 	submitInfo.setPCommandBuffers(cmdBuffers.data());
 	submitInfo.setWaitSemaphoreCount(1);
 	submitInfo.setPWaitSemaphores(&resources.swapChainImageAvailable);
+    submitInfo.setPSignalSemaphores(&resources.imageRendered);
+    submitInfo.setSignalSemaphoreCount(1);
 	auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eTransfer);
 	submitInfo.setPWaitDstStageMask(&waitStage);
 
@@ -182,7 +173,9 @@ void ThiefVKDevice::endFrame() {
 
 
 void ThiefVKDevice::swap() {
-	mSwapChain.present(mPresentQueue, frameResources[currentFrameBufferIndex].imagePresented);
+	mSwapChain.present(mPresentQueue, frameResources[currentFrameBufferIndex].imageRendered);
+
+    currentFrameBufferIndex = (mSwapChain.getCurrentImageIndex() + 1) % mSwapChain.getNumberOfSwapChainImages();
 }
 
 
@@ -709,7 +702,7 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     mDevice.destroyFence(resources.frameFinished);
     mDevice.destroySemaphore(resources.swapChainImageAvailable);
-    mDevice.destroySemaphore(resources.imagePresented);
+    mDevice.destroySemaphore(resources.imageRendered);
 
     for(auto& buffer : resources.stagingBuffers)  {
         destroyBuffer(buffer);
@@ -723,5 +716,14 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
 
 
 void ThiefVKDevice::createSemaphores() {
+    for(auto& resources : frameResources) {
+        vk::SemaphoreCreateInfo semInfo{};
 
+        vk::FenceCreateInfo fenceInfo{};
+        fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
+
+        resources.frameFinished = mDevice.createFence(fenceInfo);
+        resources.swapChainImageAvailable = mDevice.createSemaphore(semInfo);
+        resources.imageRendered = mDevice.createSemaphore(semInfo);
+    }
 }
