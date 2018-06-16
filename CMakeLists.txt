@@ -11,9 +11,10 @@ set(SOURCE
         "Src/ThiefVKVertex.cpp"
         "Src/ThiefVKBufferManager.cpp"
         "Src/ThiefVKTextureManager.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image/stb_image.cpp"	
 	)
 
-
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image")
 
 add_library(${PROJECT_NAME} ${SOURCE})
 
