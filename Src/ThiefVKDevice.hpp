@@ -101,9 +101,9 @@ public:
 
     void addSpotLight(spotLight&);
 
-	void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
-	void CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height);
-	void copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size);
+	void transitionImageLayout(vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+	void CopybufferToImage(vk::Buffer& srcBuffer, vk::Image& dstImage, uint32_t width, uint32_t height);
+	void copyBuffers(vk::Buffer& SrcBuffer, vk::Buffer& DstBuffer, vk::DeviceSize size);
 
 	ThiefVKMemoryManager*	getMemoryManager() { return &MemoryManager; }
 
@@ -117,6 +117,11 @@ public:
 
 	ThiefVKBuffer createBuffer(const vk::BufferUsageFlags usage, const uint32_t size);
 	void destroyBuffer(ThiefVKBuffer& buffer);
+
+    ThiefVKImage createTexture(std::string&);
+
+    vk::Fence createFence();
+    void destroyFence(vk::Fence&);
 
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();

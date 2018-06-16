@@ -1,6 +1,8 @@
 #include "ThiefVKDevice.hpp"
 #include "ThiefVKInstance.hpp"
 
+#include "stb_image.h"
+
 #include <array>
 #include <iostream>
 #include <limits>
@@ -253,6 +255,46 @@ void ThiefVKDevice::DestroyAllImageTextures() {
         DestroyImageView(images.normalsImageView);
         DestroyImage(images.normalsImage, images.normalsImageMemory);
     }
+}
+
+
+ThiefVKImage ThiefVKDevice::createTexture(std::string& path) {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load(path.data(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        vk::DeviceSize imageSize = texWidth * texHeight * 4;
+
+        ThiefVKBuffer stagingBuffer = createBuffer(vk::BufferUsageFlagBits::eTransferSrc, imageSize);
+
+        void* data = MemoryManager.MapAllocation(stagingBuffer.mBufferMemory);
+        memcpy(data, pixels, imageSize);
+        MemoryManager.UnMapAllocation(stagingBuffer.mBufferMemory);
+
+        stbi_image_free(pixels);
+
+        ThiefVKImage textureImage = createImage(vk::Format::eR8G8B8A8Unorm
+                                                ,vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
+                                                texWidth, texHeight);
+
+        transitionImageLayout(textureImage.mImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+        CopybufferToImage(stagingBuffer.mBuffer, textureImage.mImage, texWidth, texHeight);
+
+        transitionImageLayout(textureImage.mImage, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal); // we will sample from it next so transition the layout
+
+        frameResources[currentFrameBufferIndex].stagingBuffers.push_back(stagingBuffer);
+        frameResources[currentFrameBufferIndex].textureImages.push_back(textureImage);
+
+        return textureImage;
+}
+
+
+vk::Fence ThiefVKDevice::createFence() {
+    vk::FenceCreateInfo info{};
+    return mDevice.createFence(info);
+}
+
+
+void ThiefVKDevice::destroyFence(vk::Fence& fence) {
+    mDevice.destroyFence(fence);
 }
 
 
@@ -560,7 +602,7 @@ void ThiefVKDevice::endSingleUseGraphicsCommandBuffer(vk::CommandBuffer cmdBuffe
 }
 
 
-void ThiefVKDevice::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
+void ThiefVKDevice::transitionImageLayout(vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
     vk::ImageMemoryBarrier memBarrier{};
     memBarrier.setOldLayout(oldLayout);
     memBarrier.setNewLayout(newLayout);
@@ -584,7 +626,7 @@ void ThiefVKDevice::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
 }
 
 
-void ThiefVKDevice::copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::DeviceSize size) {
+void ThiefVKDevice::copyBuffers(vk::Buffer& SrcBuffer, vk::Buffer& DstBuffer, vk::DeviceSize size) {
     vk::BufferCopy copyInfo{};
     copyInfo.setSize(size);
 
@@ -592,7 +634,7 @@ void ThiefVKDevice::copyBuffers(vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::
 }
 
 
-void ThiefVKDevice::CopybufferToImage(vk::Buffer srcBuffer, vk::Image dstImage, uint32_t width, uint32_t height) {
+void ThiefVKDevice::CopybufferToImage(vk::Buffer& srcBuffer, vk::Image& dstImage, uint32_t width, uint32_t height) {
     vk::BufferImageCopy copyInfo{};
     copyInfo.setBufferOffset(0);
     copyInfo.setBufferImageHeight(0);
