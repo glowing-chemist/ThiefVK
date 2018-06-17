@@ -36,6 +36,6 @@ std::array<vk::VertexInputAttributeDescription, 3> Vertex::getAttribDesc() {
 }
 
 
-bool operator==(Vertex& lhs, Vertex& rhs) {
+bool operator==(const Vertex& lhs, const Vertex& rhs) {
     return lhs.pos == rhs.pos && lhs.norm == rhs.norm && lhs.tex == rhs.tex;
 }
