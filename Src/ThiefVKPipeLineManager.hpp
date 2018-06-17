@@ -38,6 +38,7 @@ public:
     void Destroy();
 
     vk::Pipeline getPipeLine(ThiefVKPipelineDescription);
+    vk::DescriptorSetLayout getPipelineLayout(ThiefVKPipelineDescription);
 private:
 
     // reference to device for creating shader modules and destroying pipelines

@@ -175,6 +175,13 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
 }
 
 
+vk::DescriptorSetLayout ThiefVKPipelineManager::getPipelineLayout(ThiefVKPipelineDescription description) {
+    if(pipeLineCache[description].mPipeLine != vk::Pipeline{nullptr}) return pipeLineCache[description].mDescLayout;
+
+    return nullptr;
+}
+
+
 vk::ShaderModule ThiefVKPipelineManager::createShaderModule(std::string path) const {
     std::ifstream file{path, std::ios::binary};
 
