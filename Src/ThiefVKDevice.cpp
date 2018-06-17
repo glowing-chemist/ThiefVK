@@ -118,9 +118,12 @@ void ThiefVKDevice::startFrame() {
 
 
 // Just gather all the state we need here, then call Start RenderScene.
-void ThiefVKDevice::draw(geometry& geom) {
+void ThiefVKDevice::draw(const geometry& geom) {
     mVertexBufferManager.addBufferElements(geom.verticies);
-    
+    mUniformBufferManager.addBufferElements({geom.object, geom.camera, geom.world});
+
+    auto image = createTexture(geom.texturePath); 
+    mPreFrameTextures.push_back(image);
 }
 
 
@@ -258,7 +261,7 @@ void ThiefVKDevice::DestroyAllImageTextures() {
 }
 
 
-ThiefVKImage ThiefVKDevice::createTexture(std::string& path) {
+ThiefVKImage ThiefVKDevice::createTexture(const std::string& path) {
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load(path.data(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         vk::DeviceSize imageSize = texWidth * texHeight * 4;

@@ -87,7 +87,7 @@ struct geometry {
 	glm::mat4 camera;
 	glm::mat4 world;
 
-	std::string textureName;
+	std::string texturePath;
 };
 
 struct SceneInfo {
@@ -114,7 +114,7 @@ public:
 	ThiefVKMemoryManager*	getMemoryManager() { return &MemoryManager; }
 
 	void startFrame();
-	void draw(geometry& geom);
+	void draw(const geometry& geom);
 	void endFrame();
 	void swap();
 
@@ -124,7 +124,7 @@ public:
 	ThiefVKBuffer createBuffer(const vk::BufferUsageFlags usage, const uint32_t size);
 	void destroyBuffer(ThiefVKBuffer& buffer);
 
-    ThiefVKImage createTexture(std::string&);
+    ThiefVKImage createTexture(const std::string&);
 
     vk::Fence createFence();
     void destroyFence(vk::Fence&);
