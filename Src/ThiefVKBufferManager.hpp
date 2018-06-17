@@ -22,6 +22,8 @@ public:
 	std::pair<ThiefVKBuffer, ThiefVKBuffer> flushBufferUploads();
 	std::vector<uint32_t> getBufferOffsets() const;
 
+	bool bufferHasChanged() const;
+
 private:
 	std::pair<ThiefVKBuffer, ThiefVKBuffer> uploadBuffer(vk::Buffer& buffer, Allocation alloc);
 
@@ -29,8 +31,10 @@ private:
 
 	vk::BufferUsageFlags mUsage;
 
-	std::vector<T> mUniformBuffer;
+	std::vector<T> mBuffer;
 	std::vector<uint32_t> mOffsets;
+
+	std::vector<T> mPreviousBuffer;
 };
 
 #endif

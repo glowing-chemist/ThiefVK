@@ -34,3 +34,8 @@ std::array<vk::VertexInputAttributeDescription, 3> Vertex::getAttribDesc() {
 
 	return {atribDescPos, atribDescTex, atribDescNormal};
 }
+
+
+bool operator==(Vertex& lhs, Vertex& rhs) {
+    return lhs.pos == rhs.pos && lhs.norm == rhs.norm && lhs.tex == rhs.tex;
+}

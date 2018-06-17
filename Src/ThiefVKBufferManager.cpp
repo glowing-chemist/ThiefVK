@@ -14,10 +14,10 @@ ThiefVKBufferManager<T>::ThiefVKBufferManager(ThiefVKDevice &Device, vk::BufferU
 
 template<typename T>
 void ThiefVKBufferManager<T>::addBufferElements(std::vector<T> &elements) {
-	uint32_t offset = mUniformBuffer.size();
+	uint32_t offset = mBuffer.size();
 	mOffsets.push_back(offset);
 
-	mUniformBuffer.insert(mUniformBuffer.end(), elements.begin(), elements.end());
+	mBuffer.insert(mBuffer.end(), elements.begin(), elements.end());
 
 }
 
@@ -30,22 +30,25 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(vk
 	if (mUsage & vk::BufferUsageFlagBits::eUniformBuffer) { // Take a synchronous buffer update path if we will be doing it frequently with little data.
 		void* memory = mDevice.getMemoryManager()->MapAllocation(alloc);
 
-		memcpy(memory, mUniformBuffer.data(), mUniformBuffer.size() * sizeof(T));
+		memcpy(memory, mBuffer.data(), mBuffer.size() * sizeof(T));
 
 		mDevice.getMemoryManager()->UnMapAllocation(alloc);
 	}
 	else { // Else record the commands in to the flush buffer to copy the buffer to device local memory
 
-		auto [Buffer, Memory] = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferSrc, mUniformBuffer.size() * sizeof(T));
+		auto [Buffer, Memory] = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferSrc, mBuffer.size() * sizeof(T));
 		stagingBuffer = Buffer;
 		stagingBufferMemory = Memory;
 
 		void* memory = mDevice.getMemoryManager()->MapAllocation(stagingBufferMemory);
-		memcpy(memory, mUniformBuffer.data(), mUniformBuffer.size() * sizeof(T));
+		memcpy(memory, mBuffer.data(), mBuffer.size() * sizeof(T));
 		mDevice.getMemoryManager()->UnMapAllocation(stagingBufferMemory);
 
-		mDevice.copyBuffers(stagingBuffer, buffer, mUniformBuffer.size() * sizeof(T));
+		mDevice.copyBuffers(stagingBuffer, buffer, mBuffer.size() * sizeof(T));
 	}
+
+	mPreviousBuffer = mBuffer;
+	mBuffer.clear();
 
 	return {{buffer, alloc}, {stagingBuffer, stagingBufferMemory}};
 }
@@ -53,7 +56,7 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(vk
 
 template<typename T>
 std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::flushBufferUploads() {
-	auto [buffer, alloc] = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferDst | mUsage, mUniformBuffer.size() * sizeof(T));
+	auto [buffer, alloc] = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferDst | mUsage, mBuffer.size() * sizeof(T));
 
 	// Upload the current buffer
 	return uploadBuffer(buffer, alloc);
@@ -65,6 +68,11 @@ std::vector<uint32_t> ThiefVKBufferManager<T>::getBufferOffsets() const {
 	return mOffsets;
 }
 
+
+template<typename T>
+bool ThiefVKBufferManager<T>::bufferHasChanged() const {
+	return mPreviousBuffer == mBuffer;
+}
 
 // we need to explicitly instansiate what buffer managers we will be using here
 

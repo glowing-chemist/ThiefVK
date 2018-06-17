@@ -16,4 +16,7 @@ struct Vertex { // vertex struct representing vertex positions and texture coord
 	static std::array<vk::VertexInputAttributeDescription, 3> getAttribDesc();
 };
 
+
+bool operator==(const Vertex& lhs, const Vertex& rhs);
+
 #endif
