@@ -75,11 +75,6 @@ struct perFrameResources {
 };
 
 
-struct spotLight {
-    glm::vec3 pos;
-    glm::mat4 view;
-};
-
 struct geometry {
 	std::vector<Vertex> verticies;
 
@@ -105,7 +100,7 @@ public:
 
 	void drawScene(SceneInfo&);
 
-    void addSpotLight(spotLight&);
+    void addSpotLight(glm::mat4&);
 
 	void transitionImageLayout(vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 	void CopybufferToImage(vk::Buffer& srcBuffer, vk::Image& dstImage, uint32_t width, uint32_t height);
@@ -195,7 +190,7 @@ private:
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
     std::vector<vk::Framebuffer> frameBuffers;
 
-    std::vector<spotLight> spotLights;
+    std::vector<glm::mat4> spotLights;
 
     std::vector<ThiefVKImage> mPreFrameTextures;
     std::vector<ThiefVKBuffer> mPreFrameStagingBuffers;
