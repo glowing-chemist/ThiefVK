@@ -283,8 +283,7 @@ ThiefVKImage ThiefVKDevice::createTexture(const std::string& path) {
 
         transitionImageLayout(textureImage.mImage, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal); // we will sample from it next so transition the layout
 
-        frameResources[currentFrameBufferIndex].stagingBuffers.push_back(stagingBuffer);
-        frameResources[currentFrameBufferIndex].textureImages.push_back(textureImage);
+        mPreFrameStagingBuffers.push_back(stagingBuffer);
 
         return textureImage;
 }

@@ -135,6 +135,7 @@ public:
     void createCommandPools();
     void createDescriptorPools();
     void createSemaphores();
+    std::vector<vk::DescriptorSet> createDescriptorSets();
 
 private:
     // private funcs
@@ -195,6 +196,9 @@ private:
     std::vector<vk::Framebuffer> frameBuffers;
 
     std::vector<spotLight> spotLights;
+
+    std::vector<ThiefVKImage> mPreFrameTextures;
+    std::vector<ThiefVKBuffer> mPreFrameStagingBuffers;
 };
 
 #endif
