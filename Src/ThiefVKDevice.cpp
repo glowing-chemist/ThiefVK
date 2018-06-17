@@ -144,8 +144,8 @@ void ThiefVKDevice::endFrame() {
 
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 
-	// Record the compositing operations.
-	// TODO
+	// The compositing pass uses a full screen triangle so no need to bind a vertex buffer
+    compositeCmdBufferBindPipeline();
 
 	primaryCmdBuffer.endRenderPass();
 	primaryCmdBuffer.end();
@@ -738,6 +738,23 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 
 
 	return normalsCmdBuffer;
+}
+
+vk::CommandBuffer& ThiefVKDevice::compositeCmdBufferBindPipeline() {
+    vk::CommandBuffer& primaryCmdBuffer = frameResources[currentFrameBufferIndex].primaryCmdBuffer;
+
+    ThiefVKPipelineDescription pipelineDesc{};
+    pipelineDesc.vertexShader        = ShaderName::CompositeVertex;
+    pipelineDesc.fragmentShader      = ShaderName::CompositeFragment;
+    pipelineDesc.renderPass          = mRenderPasses.RenderPass;
+    pipelineDesc.renderTargetOffsetX = 0;
+    pipelineDesc.renderTargetOffsetY = 0;
+    pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
+    pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+
+    primaryCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
+
+    return primaryCmdBuffer;
 }
 
 

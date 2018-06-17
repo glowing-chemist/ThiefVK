@@ -66,6 +66,12 @@ struct perFrameResources {
     ThiefVKBuffer vertexBuffer;
 
     ThiefVKBuffer indexBuffer;
+
+    ThiefVKBuffer subpassUniformBuffer;
+    ThiefVKBuffer compositeUniformBuffer;
+    std::vector<vk::Sampler> samplers;
+    std::vector<vk::Sampler> usedSamplers;
+    std::array<vk::DescriptorSet, 2> subpassDescriptorSets;
 };
 
 
@@ -144,7 +150,7 @@ private:
 	vk::CommandBuffer&  startRecordingColourCmdBuffer();
 	vk::CommandBuffer&  startRecordingDepthCmdBuffer();
 	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
-	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
+	vk::CommandBuffer&  compositeCmdBufferBindPipeline();
 
     void renderFrame();
 

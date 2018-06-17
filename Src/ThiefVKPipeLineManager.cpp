@@ -37,6 +37,8 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
     shaderModules[ShaderName::DepthFragment]        = createShaderModule("./Shaders/DepthFragment.spv");
     shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/NormalVertex.spv");
     shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/NormalFragment.spv");
+    shaderModules[ShaderName::CompositeVertex]      = createShaderModule("./shaders/CompositeVertex.spv");
+    shaderModules[ShaderName::CompositeFragment]    = createShaderModule("./shaders/CompositeFragment.spv");
 }
 
 
@@ -140,8 +142,11 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     pipeLineCreateInfo.setStageCount(2); // vertex and fragment
     pipeLineCreateInfo.setPStages(shaderStages);
 
-    pipeLineCreateInfo.setPVertexInputState(&vertexInputInfo);
-    pipeLineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
+    if(description.fragmentShader != ShaderName::CompositeFragment) { // The composite pass uses a hardcoded full screen triangle so doesn't need a vertex buffer.
+        pipeLineCreateInfo.setPVertexInputState(&vertexInputInfo);
+        pipeLineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
+    }
+
     pipeLineCreateInfo.setPViewportState(&viewPortInfo);
     pipeLineCreateInfo.setPRasterizationState(&rastInfo);
     pipeLineCreateInfo.setPMultisampleState(&multiSampInfo);
@@ -199,7 +204,7 @@ vk::DescriptorSetLayout ThiefVKPipelineManager::createDescriptorSetLayout(Shader
     uboDescriptorLayout.setDescriptorCount(1);
     uboDescriptorLayout.setBinding(0);
     uboDescriptorLayout.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-    uboDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eVertex); // set what stage it will be used in
+    uboDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eVertex); 
 
     descSets.push_back(uboDescriptorLayout);
 
@@ -208,9 +213,20 @@ vk::DescriptorSetLayout ThiefVKPipelineManager::createDescriptorSetLayout(Shader
         imageSamplerDescriptorLayout.setDescriptorCount(1);
         imageSamplerDescriptorLayout.setBinding(1);
         imageSamplerDescriptorLayout.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-        imageSamplerDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eFragment); // set what stage it will be used in
+        imageSamplerDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eFragment);
 
         descSets.push_back(imageSamplerDescriptorLayout);
+    } else if(shader == ShaderName::CompositeFragment) {
+        for(unsigned int i = 1; i < 4; ++i) {
+            vk::DescriptorSetLayoutBinding imageSamplerDescriptorLayout{};
+            imageSamplerDescriptorLayout.setDescriptorCount(1);
+            imageSamplerDescriptorLayout.setBinding(i);
+            imageSamplerDescriptorLayout.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+            imageSamplerDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eFragment); 
+
+            descSets.push_back(imageSamplerDescriptorLayout);
+        }
+
     }
 
     vk::DescriptorSetLayoutCreateInfo LayoutInfo{};
