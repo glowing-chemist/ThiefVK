@@ -18,10 +18,16 @@ ThiefVKEngine::~ThiefVKEngine() {
 
 
 void ThiefVKEngine::Init() {
-    Device.createRenderPasses();
-    Device.createDeferedRenderTargetImageViews();
-    Device.createFrameBuffers();
+  Device.createRenderPasses();
+  Device.createDeferedRenderTargetImageViews();
+  Device.createFrameBuffers();
 	Device.createCommandPools();
+  Device.createSemaphores();
+  Device.createDescriptorSets();
 
-	Device.startFrame();
+  for(int i = 0; i < 100; i++) {
+	     Device.startFrame();
+       Device.endFrame();
+       Device.swap();
+  }
 }
