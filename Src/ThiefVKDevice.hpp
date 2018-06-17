@@ -71,7 +71,7 @@ struct perFrameResources {
     ThiefVKBuffer compositeUniformBuffer;
     std::vector<vk::Sampler> samplers;
     std::vector<vk::Sampler> usedSamplers;
-    std::array<vk::DescriptorSet, 2> subpassDescriptorSets;
+    std::vector<vk::DescriptorSet> DescSets;
 };
 
 
@@ -130,7 +130,7 @@ public:
     void createCommandPools();
     void createDescriptorPools();
     void createSemaphores();
-    std::vector<vk::DescriptorSet> createDescriptorSets();
+    void createDescriptorSets();
 
 private:
     // private funcs

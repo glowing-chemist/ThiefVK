@@ -795,7 +795,17 @@ void ThiefVKDevice::createSemaphores() {
 }
 
 
-std::vector<vk::DescriptorSet> ThiefVKDevice::createDescriptorSets() {
-    auto [uniformBuffer, stagingBuffer] = mUniformBufferManager.flushBufferUploads();
+void ThiefVKDevice::createDescriptorSets() {
+        for(auto& resources : frameResources) {
+            vk::DescriptorSetAllocateInfo info{};
+            info.setDescriptorPool(mDescPool);
+            info.setDescriptorSetCount(3);
 
+            std::array<vk::DescriptorSetLayout, 3> descLayouts{pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment),
+                                                               pipelineManager.getDescriptorSetLayout(ShaderName::BasicColourFragment),
+                                                               pipelineManager.getDescriptorSetLayout(ShaderName::CompositeFragment)};
+            info.setPSetLayouts(descLayouts.data());
+
+            resources.DescSets = mDevice.allocateDescriptorSets(info);
+    }
 }
