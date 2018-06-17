@@ -20,7 +20,7 @@ public:
 	void addBufferElements(const std::vector<T>& elements);
 
 	std::pair<ThiefVKBuffer, ThiefVKBuffer> flushBufferUploads();
-	std::vector<uint32_t> getBufferOffsets() const;
+	std::vector<uint32_t> getBufferOffsets();
 
 	bool bufferHasChanged() const;
 

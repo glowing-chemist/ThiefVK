@@ -64,8 +64,11 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::flushBufferUplo
 
 
 template<typename T>
-std::vector<uint32_t> ThiefVKBufferManager<T>::getBufferOffsets() const {
-	return mOffsets;
+std::vector<uint32_t> ThiefVKBufferManager<T>::getBufferOffsets() {
+	std::vector<uint32_t > offsets = mOffsets;
+	mOffsets.clear();
+
+	return offsets;
 }
 
 
