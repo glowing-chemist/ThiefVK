@@ -149,6 +149,8 @@ private:
 	vk::CommandBuffer&  compositeCmdBufferBindPipeline();
 
     void renderFrame();
+    void startFrameInternal();
+    void endFrameInternal();
 
     void destroyPerFrameResources(perFrameResources&);
 
@@ -191,9 +193,6 @@ private:
     std::vector<vk::Framebuffer> frameBuffers;
 
     std::vector<glm::mat4> spotLights;
-
-    std::vector<ThiefVKImage> mPreFrameTextures;
-    std::vector<ThiefVKBuffer> mPreFrameStagingBuffers;
 };
 
 #endif

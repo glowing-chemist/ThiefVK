@@ -54,9 +54,14 @@ std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
 
 
 void ThiefVKDevice::startFrame() {
-
     currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, frameResources[currentFrameBufferIndex].swapChainImageAvailable);
+}
 
+
+void ThiefVKDevice::endFrame() {}
+
+
+void ThiefVKDevice::startFrameInternal() {
 	mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
 	mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
 
@@ -123,11 +128,11 @@ void ThiefVKDevice::draw(const geometry& geom) {
     mUniformBufferManager.addBufferElements({geom.object, geom.camera, geom.world});
 
     auto image = createTexture(geom.texturePath); 
-    mPreFrameTextures.push_back(image);
+    frameResources[currentFrameBufferIndex].textureImages.push_back(image);
 }
 
 
-void ThiefVKDevice::endFrame() {
+void ThiefVKDevice::endFrameInternal() {
 	finishedSubmissionID++;
 
 	perFrameResources& resources = frameResources[currentFrameBufferIndex];
@@ -283,7 +288,7 @@ ThiefVKImage ThiefVKDevice::createTexture(const std::string& path) {
 
         transitionImageLayout(textureImage.mImage, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal); // we will sample from it next so transition the layout
 
-        mPreFrameStagingBuffers.push_back(stagingBuffer);
+        frameResources[currentFrameBufferIndex].stagingBuffers.push_back(stagingBuffer);
 
         return textureImage;
 }
@@ -787,4 +792,10 @@ void ThiefVKDevice::createSemaphores() {
         resources.swapChainImageAvailable = mDevice.createSemaphore(semInfo);
         resources.imageRendered = mDevice.createSemaphore(semInfo);
     }
+}
+
+
+std::vector<vk::DescriptorSet> ThiefVKDevice::createDescriptorSets() {
+    auto [uniformBuffer, stagingBuffer] = mUniformBufferManager.flushBufferUploads();
+
 }
