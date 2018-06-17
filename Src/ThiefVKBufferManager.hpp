@@ -17,7 +17,7 @@ public:
 
 	ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage);
 
-	void addBufferElements(std::vector<T>& elements);
+	void addBufferElements(const std::vector<T>& elements);
 
 	std::pair<ThiefVKBuffer, ThiefVKBuffer> flushBufferUploads();
 	std::vector<uint32_t> getBufferOffsets() const;

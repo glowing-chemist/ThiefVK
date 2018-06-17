@@ -13,7 +13,7 @@ ThiefVKBufferManager<T>::ThiefVKBufferManager(ThiefVKDevice &Device, vk::BufferU
 
 
 template<typename T>
-void ThiefVKBufferManager<T>::addBufferElements(std::vector<T> &elements) {
+void ThiefVKBufferManager<T>::addBufferElements(const std::vector<T> &elements) {
 	uint32_t offset = mBuffer.size();
 	mOffsets.push_back(offset);
 
