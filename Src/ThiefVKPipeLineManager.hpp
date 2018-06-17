@@ -38,7 +38,7 @@ public:
     void Destroy();
 
     vk::Pipeline getPipeLine(ThiefVKPipelineDescription);
-    vk::DescriptorSetLayout getPipelineLayout(ThiefVKPipelineDescription);
+    vk::DescriptorSetLayout getDescriptorSetLayout(ShaderName);
 private:
 
     // reference to device for creating shader modules and destroying pipelines
@@ -54,9 +54,9 @@ private:
     struct PipeLine {
         vk::Pipeline mPipeLine;
         vk::PipelineLayout mPipelineLayout;
-        vk::DescriptorSetLayout mDescLayout;
     };
     std::map<ThiefVKPipelineDescription, PipeLine> pipeLineCache;
+    std::map<ShaderName, vk::DescriptorSetLayout> DescSetLayoutCache;
 };
 
 #endif

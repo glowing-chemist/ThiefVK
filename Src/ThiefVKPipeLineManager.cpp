@@ -48,8 +48,10 @@ void ThiefVKPipelineManager::Destroy() {
     }
     for(auto& pipeLine : pipeLineCache) {
         dev.destroyPipelineLayout(pipeLine.second.mPipelineLayout);
-        dev.destroyDescriptorSetLayout(pipeLine.second.mDescLayout);
         dev.destroyPipeline(pipeLine.second.mPipeLine);
+    }
+    for(auto& [shader, descSetLayout] : DescSetLayoutCache) {
+        dev.destroyDescriptorSetLayout(descSetLayout);
     }
     dev.destroyDescriptorPool(DescPool);
 }
@@ -120,7 +122,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     blendStateInfo.setAttachmentCount(1);
     blendStateInfo.setPAttachments(&colorAttachState);
 
-    vk::DescriptorSetLayout descSetLayouts = createDescriptorSetLayout(description.fragmentShader);
+    vk::DescriptorSetLayout descSetLayouts = getDescriptorSetLayout(description.fragmentShader);
     vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.vertexShader);
 
     const uint32_t subpassIndex = [&description]() {
@@ -168,17 +170,19 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
 
     vk::Pipeline pipeline = dev.createGraphicsPipeline(nullptr, pipeLineCreateInfo);
 
-    PipeLine piplineInfo{pipeline, pipelineLayout, descSetLayouts};
+    PipeLine piplineInfo{pipeline, pipelineLayout};
     pipeLineCache[description] = piplineInfo;
 
     return pipeline;
 }
 
 
-vk::DescriptorSetLayout ThiefVKPipelineManager::getPipelineLayout(ThiefVKPipelineDescription description) {
-    if(pipeLineCache[description].mPipeLine != vk::Pipeline{nullptr}) return pipeLineCache[description].mDescLayout;
+vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(ShaderName description) {
+    if(auto layout = DescSetLayoutCache[description]; layout != vk::DescriptorSetLayout{nullptr}) return layout;
 
-    return nullptr;
+    auto descSetLayout = createDescriptorSetLayout(description);
+    DescSetLayoutCache[description] = descSetLayout;
+    return descSetLayout;
 }
 
 
