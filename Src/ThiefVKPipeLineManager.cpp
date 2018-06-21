@@ -215,7 +215,7 @@ vk::DescriptorSetLayout ThiefVKPipelineManager::createDescriptorSetLayout(Shader
     uboDescriptorLayout.setDescriptorCount(1);
     uboDescriptorLayout.setBinding(0);
     uboDescriptorLayout.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-    uboDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eVertex); 
+    uboDescriptorLayout.setStageFlags( shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex); 
 
     descSets.push_back(uboDescriptorLayout);
 
