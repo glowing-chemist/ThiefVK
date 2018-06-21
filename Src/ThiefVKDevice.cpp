@@ -557,7 +557,7 @@ void ThiefVKDevice::createCommandPools() {
 }
 
 
-void ThiefVKDevice::createDescriptorPools() {
+vk::DescriptorPool ThiefVKDevice::createDescriptorPool() {
     // crerate the descriptor set pools for uniform buffers and combined image samplers
     vk::DescriptorPoolSize uniformBufferDescPoolSize{};
     uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBuffer);
@@ -574,7 +574,12 @@ void ThiefVKDevice::createDescriptorPools() {
     uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
     uniformBufferDescPoolInfo.setMaxSets(15);
 
-    mDescPool = mDevice.createDescriptorPool(uniformBufferDescPoolInfo);
+    return mDevice.createDescriptorPool(uniformBufferDescPoolInfo);
+}
+
+
+void ThiefVKDevice::destroyDescriptorPool(vk::DescriptorPool& pool) {
+    mDevice.destroyDescriptorPool(pool);
 }
 
 
@@ -795,17 +800,16 @@ void ThiefVKDevice::createSemaphores() {
 }
 
 
-void ThiefVKDevice::createDescriptorSets() {
-        for(auto& resources : frameResources) {
-            vk::DescriptorSetAllocateInfo info{};
-            info.setDescriptorPool(mDescPool);
-            info.setDescriptorSetCount(3);
+std::vector<vk::DescriptorSet> ThiefVKDevice::allocateDescriptorSets(vk::DescriptorPool& pool) {
+        vk::DescriptorSetAllocateInfo info{};
+        info.setDescriptorPool(pool);
+        info.setDescriptorSetCount(3);
 
-            std::array<vk::DescriptorSetLayout, 3> descLayouts{pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment),
+        std::array<vk::DescriptorSetLayout, 3> descLayouts{pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment),
                                                                pipelineManager.getDescriptorSetLayout(ShaderName::BasicColourFragment),
                                                                pipelineManager.getDescriptorSetLayout(ShaderName::CompositeFragment)};
-            info.setPSetLayouts(descLayouts.data());
+        info.setPSetLayouts(descLayouts.data());
 
-            resources.DescSets = mDevice.allocateDescriptorSets(info);
-    }
+        return mDevice.allocateDescriptorSets(info);
+
 }

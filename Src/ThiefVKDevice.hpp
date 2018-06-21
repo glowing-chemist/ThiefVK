@@ -72,6 +72,7 @@ struct perFrameResources {
     std::vector<vk::Sampler> samplers;
     std::vector<vk::Sampler> usedSamplers;
     std::vector<vk::DescriptorSet> DescSets;
+    vk::DescriptorPool descPool;
 };
 
 
@@ -124,13 +125,16 @@ public:
     vk::Fence createFence();
     void destroyFence(vk::Fence&);
 
+    vk::DescriptorPool createDescriptorPool();
+    void destroyDescriptorPool(vk::DescriptorPool&);
+    std::vector<vk::DescriptorSet> allocateDescriptorSets(vk::DescriptorPool& pool);
+
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();
     void createFrameBuffers();
     void createCommandPools();
     void createDescriptorPools();
     void createSemaphores();
-    void createDescriptorSets();
 
 private:
     // private funcs
@@ -186,8 +190,6 @@ private:
     vk::CommandPool graphicsCommandPool;
 
     std::vector<perFrameResources> frameResources;
-
-    vk::DescriptorPool mDescPool ;
 
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
     std::vector<vk::Framebuffer> frameBuffers;

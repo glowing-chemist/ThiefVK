@@ -23,7 +23,6 @@ void ThiefVKEngine::Init() {
   Device.createFrameBuffers();
 	Device.createCommandPools();
   Device.createSemaphores();
-  Device.createDescriptorSets();
 
   for(int i = 0; i < 100; i++) {
 	     Device.startFrame();
