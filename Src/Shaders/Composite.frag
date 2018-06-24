@@ -13,7 +13,7 @@ layout (push_constant) uniform pushConstants {
 	int numberOfLights;
 } lights;
 
-layout(location = 3) out vec4 frameBuffer;
+layout(location = 0) out vec4 frameBuffer;
 
 void main() {
 	frameBuffer = vec4(1.0, 0.0, 0.0, 1.0);
