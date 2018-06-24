@@ -37,8 +37,8 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
     shaderModules[ShaderName::DepthFragment]        = createShaderModule("./Shaders/DepthFragment.spv");
     shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/NormalVertex.spv");
     shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/NormalFragment.spv");
-    shaderModules[ShaderName::CompositeVertex]      = createShaderModule("./shaders/CompositeVertex.spv");
-    shaderModules[ShaderName::CompositeFragment]    = createShaderModule("./shaders/CompositeFragment.spv");
+    shaderModules[ShaderName::CompositeVertex]      = createShaderModule("./Shaders/CompositeVertex.spv");
+    shaderModules[ShaderName::CompositeFragment]    = createShaderModule("./Shaders/CompositeFragment.spv");
 }
 
 
