@@ -82,6 +82,10 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     vertexInputInfo.setVertexBindingDescriptionCount(1);
     vertexInputInfo.setPVertexBindingDescriptions(&bindingDesc);
 
+    vk::PipelineVertexInputStateCreateInfo compositeVertexInputInfo{};
+    compositeVertexInputInfo.setVertexAttributeDescriptionCount(0);
+    compositeVertexInputInfo.setVertexBindingDescriptionCount(0);
+
     vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
     inputAssemblyInfo.setTopology(vk::PrimitiveTopology::eTriangleList);
     inputAssemblyInfo.setPrimitiveRestartEnable(false);
@@ -146,8 +150,10 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
 
     if(description.fragmentShader != ShaderName::CompositeFragment) { // The composite pass uses a hardcoded full screen triangle so doesn't need a vertex buffer.
         pipeLineCreateInfo.setPVertexInputState(&vertexInputInfo);
-        pipeLineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
+    } else {
+        pipeLineCreateInfo.setPVertexInputState(&compositeVertexInputInfo);
     }
+    pipeLineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
 
     pipeLineCreateInfo.setPViewportState(&viewPortInfo);
     pipeLineCreateInfo.setPRasterizationState(&rastInfo);
@@ -158,7 +164,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     pipeLineCreateInfo.setRenderPass(description.renderPass);
     pipeLineCreateInfo.setSubpass(subpassIndex); // index for subpass that this pipeline will be used in
 
-    if(description.vertexShader == ShaderName::DepthVertex) { // we need to specify ou rdepth stencil state
+    if(description.vertexShader == ShaderName::DepthVertex || description.vertexShader == ShaderName::CompositeVertex) { // we need to specify ou rdepth stencil state
         vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
         depthStencilInfo.setDepthTestEnable(true);
         depthStencilInfo.setDepthWriteEnable(true);
