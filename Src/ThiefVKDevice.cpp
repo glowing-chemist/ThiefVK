@@ -58,7 +58,12 @@ void ThiefVKDevice::startFrame() {
 }
 
 
-void ThiefVKDevice::endFrame() {}
+void ThiefVKDevice::endFrame() {
+    startFrameInternal();
+
+
+    endFrameInternal();
+}
 
 
 void ThiefVKDevice::startFrameInternal() {
@@ -77,7 +82,7 @@ void ThiefVKDevice::startFrameInternal() {
 		vk::CommandBufferAllocateInfo secondaryCmdBufferAllocInfo;
 		secondaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::eSecondary);
 		secondaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
-		secondaryCmdBufferAllocInfo.setCommandBufferCount(3);
+		secondaryCmdBufferAllocInfo.setCommandBufferCount(4);
 
 		std::vector<vk::CommandBuffer> secondaryCmdBuffers = mDevice.allocateCommandBuffers(secondaryCmdBufferAllocInfo);
 
@@ -87,6 +92,8 @@ void ThiefVKDevice::startFrameInternal() {
 		frameResources[currentFrameBufferIndex].colourCmdBuffer			= secondaryCmdBuffers[0];
 		frameResources[currentFrameBufferIndex].depthCmdBuffer			= secondaryCmdBuffers[1];
 		frameResources[currentFrameBufferIndex].normalsCmdBuffer			= secondaryCmdBuffers[2];
+        frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
+
 	} else { // Otherwise just reset them
 		frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
         frameResources[currentFrameBufferIndex].flushCommandBuffer.reset(vk::CommandBufferResetFlags());
@@ -116,6 +123,7 @@ void ThiefVKDevice::startFrameInternal() {
 	startRecordingColourCmdBuffer();
 	startRecordingDepthCmdBuffer();
 	startRecordingNormalsCmdBuffer();
+    startRecordingCompositeCmdBuffer();
 
     vk::CommandBufferBeginInfo beginInfo{};
     frameResources[currentFrameBufferIndex].flushCommandBuffer.begin(beginInfo);
@@ -142,6 +150,7 @@ void ThiefVKDevice::endFrameInternal() {
 	resources.colourCmdBuffer.end();
 	resources.depthCmdBuffer.end();
 	resources.normalsCmdBuffer.end();
+    resources.compositeCmdBuffer.end();
 
 	// Execute the secondary cmd buffers in the primary
 	primaryCmdBuffer.executeCommands(1, &resources.colourCmdBuffer);
@@ -149,11 +158,8 @@ void ThiefVKDevice::endFrameInternal() {
 	primaryCmdBuffer.executeCommands(1, &resources.depthCmdBuffer);
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
 	primaryCmdBuffer.executeCommands(1, &resources.normalsCmdBuffer);
-
-	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eInline);
-
-	// The compositing pass uses a full screen triangle so no need to bind a vertex buffer
-    compositeCmdBufferBindPipeline();
+	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
+    primaryCmdBuffer.executeCommands(1, &resources.compositeCmdBuffer);
 
 	primaryCmdBuffer.endRenderPass();
 	primaryCmdBuffer.end();
@@ -752,8 +758,19 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 	return normalsCmdBuffer;
 }
 
-vk::CommandBuffer& ThiefVKDevice::compositeCmdBufferBindPipeline() {
-    vk::CommandBuffer& primaryCmdBuffer = frameResources[currentFrameBufferIndex].primaryCmdBuffer;
+vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
+    vk::CommandBuffer& compositeCmdBuffer = frameResources[currentFrameBufferIndex].compositeCmdBuffer;
+
+    vk::CommandBufferInheritanceInfo inheritanceInfo{};
+    inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
+    inheritanceInfo.setSubpass(3);
+    inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.setPInheritanceInfo(&inheritanceInfo);
+    beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
+
+    compositeCmdBuffer.begin(beginInfo);
 
     ThiefVKPipelineDescription pipelineDesc{};
     pipelineDesc.vertexShader        = ShaderName::CompositeVertex;
@@ -764,9 +781,9 @@ vk::CommandBuffer& ThiefVKDevice::compositeCmdBufferBindPipeline() {
     pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
     pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
 
-    primaryCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
+    compositeCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
 
-    return primaryCmdBuffer;
+    return compositeCmdBuffer;
 }
 
 

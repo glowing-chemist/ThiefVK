@@ -62,6 +62,7 @@ struct perFrameResources {
 	vk::CommandBuffer colourCmdBuffer;
 	vk::CommandBuffer depthCmdBuffer;
 	vk::CommandBuffer normalsCmdBuffer;
+    vk::CommandBuffer compositeCmdBuffer;
 
     ThiefVKBuffer vertexBuffer;
 
@@ -150,7 +151,7 @@ private:
 	vk::CommandBuffer&  startRecordingColourCmdBuffer();
 	vk::CommandBuffer&  startRecordingDepthCmdBuffer();
 	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
-	vk::CommandBuffer&  compositeCmdBufferBindPipeline();
+	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
 
     void renderFrame();
     void startFrameInternal();
