@@ -825,16 +825,8 @@ void ThiefVKDevice::createSemaphores() {
 }
 
 
-std::vector<vk::DescriptorSet> ThiefVKDevice::allocateDescriptorSets(vk::DescriptorPool& pool) {
-        vk::DescriptorSetAllocateInfo info{};
-        info.setDescriptorPool(pool);
-        info.setDescriptorSetCount(3);
-
-        std::array<vk::DescriptorSetLayout, 3> descLayouts{pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment),
-                                                               pipelineManager.getDescriptorSetLayout(ShaderName::BasicColourFragment),
-                                                               pipelineManager.getDescriptorSetLayout(ShaderName::CompositeFragment)};
-        info.setPSetLayouts(descLayouts.data());
-
-        return mDevice.allocateDescriptorSets(info);
-
+void ThiefVKDevice::createDescriptorPools() {
+        for(auto& resources : frameResources) {
+            resources.descPool = createDescriptorPool();
+        }
 }

@@ -128,7 +128,6 @@ public:
 
     vk::DescriptorPool createDescriptorPool();
     void destroyDescriptorPool(vk::DescriptorPool&);
-    std::vector<vk::DescriptorSet> allocateDescriptorSets(vk::DescriptorPool& pool);
 
     void createDeferedRenderTargetImageViews();
     void createRenderPasses();
