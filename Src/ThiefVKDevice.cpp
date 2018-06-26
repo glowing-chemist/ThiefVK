@@ -61,6 +61,8 @@ void ThiefVKDevice::startFrame() {
 void ThiefVKDevice::endFrame() {
     startFrameInternal();
 
+    auto& resources = frameResources[currentFrameBufferIndex];
+    resources.compositeCmdBuffer.draw(3,1,0,0);
 
     endFrameInternal();
 }
@@ -94,12 +96,17 @@ void ThiefVKDevice::startFrameInternal() {
 		frameResources[currentFrameBufferIndex].normalsCmdBuffer			= secondaryCmdBuffers[2];
         frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
 
+        // create the descriptor Pool
+        frameResources[currentFrameBufferIndex].descPool = createDescriptorPool();
+
 	} else { // Otherwise just reset them
 		frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
         frameResources[currentFrameBufferIndex].flushCommandBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].colourCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].depthCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
+
+        mDevice.resetDescriptorPool(frameResources[currentFrameBufferIndex].descPool, vk::DescriptorPoolResetFlags());
 	}
 
 	frameResources[currentFrameBufferIndex].submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
@@ -800,6 +807,7 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     }
     destroyBuffer(resources.vertexBuffer);
     destroyBuffer(resources.indexBuffer);
+    destroyDescriptorPool(resources.descPool);
 }
 
 
