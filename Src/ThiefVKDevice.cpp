@@ -59,9 +59,61 @@ void ThiefVKDevice::startFrame() {
 
 
 void ThiefVKDevice::endFrame() {
+    auto& resources = frameResources[currentFrameBufferIndex];
+
+    const std::vector<uint32_t> vertexBufferOffsets = mVertexBufferManager.getBufferOffsets();
+    auto [vertexBuffer, vertexStagingBuffer] = mVertexBufferManager.flushBufferUploads();
+
+    const std::vector<uint32_t> uniformBufferOffsets = mUniformBufferManager.getBufferOffsets();
+    auto [uniformBuffer, uniformStagingBuffer] = mUniformBufferManager.flushBufferUploads();
+
+    resources.stagingBuffers.push_back(vertexStagingBuffer);
+    resources.vertexBuffer = vertexBuffer;
+    resources.stagingBuffers.push_back(uniformStagingBuffer);
+    resources.uniformBuffer = uniformBuffer;
+
+    // allocate the descriptorSets
+    std::vector<vk::DescriptorSetLayout> colourLayouts(vertexBufferOffsets.size(), pipelineManager.getDescriptorSetLayout(ShaderName::BasicColourFragment));
+
+    vk::DescriptorSetAllocateInfo colourPassDescSetInfo{};
+    colourPassDescSetInfo.setDescriptorPool(resources.descPool);
+    colourPassDescSetInfo.setPSetLayouts(colourLayouts.data());
+    colourPassDescSetInfo.setDescriptorSetCount(colourLayouts.size());
+
+    std::vector<vk::DescriptorSet> colourDescriptorSets = mDevice.allocateDescriptorSets(colourPassDescSetInfo);
+
+    // allocate the depth descriptor set
+    vk::DescriptorSetLayout depthLayout = pipelineManager.getDescriptorSetLayout(ShaderName::DepthFragment);
+
+    vk::DescriptorSetAllocateInfo depthPassDescSetInfo{};
+    depthPassDescSetInfo.setDescriptorPool(resources.descPool);
+    depthPassDescSetInfo.setPSetLayouts(&depthLayout);
+    depthPassDescSetInfo.setDescriptorSetCount(1);
+
+    vk::DescriptorSet depthDescriptorSet = mDevice.allocateDescriptorSets(depthPassDescSetInfo)[0];
+
+    // allocate normals descpitor set
+    vk::DescriptorSetLayout normalLayout = pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment);
+
+    vk::DescriptorSetAllocateInfo normalPassDescSetInfo{};
+    normalPassDescSetInfo.setDescriptorPool(resources.descPool);
+    normalPassDescSetInfo.setPSetLayouts(&normalLayout);
+    normalPassDescSetInfo.setDescriptorSetCount(1);
+
+    vk::DescriptorSet normalDescriptorSet = mDevice.allocateDescriptorSets(normalPassDescSetInfo)[0];
+
+    // allocate composite descriptor set
+    vk::DescriptorSetLayout compositeLayout = pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment);
+
+    vk::DescriptorSetAllocateInfo compositePassDescSetInfo{};
+    compositePassDescSetInfo.setDescriptorPool(resources.descPool);
+    compositePassDescSetInfo.setPSetLayouts(&compositeLayout);
+    compositePassDescSetInfo.setDescriptorSetCount(1);
+
+    vk::DescriptorSet compositeDescriptorSet = mDevice.allocateDescriptorSets(compositePassDescSetInfo)[0];
+
     startFrameInternal();
 
-    auto& resources = frameResources[currentFrameBufferIndex];
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
     endFrameInternal();
@@ -95,9 +147,6 @@ void ThiefVKDevice::startFrameInternal() {
 		frameResources[currentFrameBufferIndex].depthCmdBuffer			= secondaryCmdBuffers[1];
 		frameResources[currentFrameBufferIndex].normalsCmdBuffer			= secondaryCmdBuffers[2];
         frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
-
-        // create the descriptor Pool
-        frameResources[currentFrameBufferIndex].descPool = createDescriptorPool();
 
 	} else { // Otherwise just reset them
 		frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());

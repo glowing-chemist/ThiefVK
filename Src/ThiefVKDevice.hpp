@@ -68,8 +68,7 @@ struct perFrameResources {
 
     ThiefVKBuffer indexBuffer;
 
-    ThiefVKBuffer subpassUniformBuffer;
-    ThiefVKBuffer compositeUniformBuffer;
+    ThiefVKBuffer uniformBuffer;
     std::vector<vk::Sampler> samplers;
     std::vector<vk::Sampler> usedSamplers;
     std::vector<vk::DescriptorSet> DescSets;
