@@ -71,7 +71,7 @@ void ThiefVKDevice::endFrame() {
     resources.vertexBuffer = vertexBuffer;
     resources.stagingBuffers.push_back(uniformStagingBuffer);
     resources.uniformBuffer = uniformBuffer;
-
+	
     // allocate the descriptorSets
     std::vector<vk::DescriptorSetLayout> colourLayouts(vertexBufferOffsets.size(), pipelineManager.getDescriptorSetLayout(ShaderName::BasicColourFragment));
 
@@ -103,7 +103,7 @@ void ThiefVKDevice::endFrame() {
     vk::DescriptorSet normalDescriptorSet = mDevice.allocateDescriptorSets(normalPassDescSetInfo)[0];
 
     // allocate composite descriptor set
-    vk::DescriptorSetLayout compositeLayout = pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment);
+    vk::DescriptorSetLayout compositeLayout = pipelineManager.getDescriptorSetLayout(ShaderName::CompositeFragment);
 
     vk::DescriptorSetAllocateInfo compositePassDescSetInfo{};
     compositePassDescSetInfo.setDescriptorPool(resources.descPool);
