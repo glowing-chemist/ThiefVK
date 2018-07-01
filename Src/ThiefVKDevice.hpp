@@ -151,6 +151,8 @@ private:
 	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
 	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
 
+	void writeDescriptorSetWrite(vk::DescriptorSet&, const uint32_t binding, vk::ImageView* image, vk::Buffer* buffer);
+
     void renderFrame();
     void startFrameInternal();
     void endFrameInternal();

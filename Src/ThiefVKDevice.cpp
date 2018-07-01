@@ -653,6 +653,40 @@ vk::DescriptorPool ThiefVKDevice::createDescriptorPool() {
 }
 
 
+void ThiefVKDevice::writeDescriptorSetWrite(vk::DescriptorSet& descSet, const uint32_t binding, vk::ImageView* image, vk::Buffer* buffer) {
+	vk::WriteDescriptorSet descWrite{};
+	descWrite.setDstSet(descSet);
+	descWrite.setDstBinding(binding);
+	descWrite.setDstArrayElement(0);
+	descWrite.setDescriptorCount(1);
+
+	vk::DescriptorImageInfo imageInfo{};
+	vk::DescriptorBufferInfo bufferInfo{};
+	if (image) {
+		descWrite.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+
+		imageInfo.setImageView(*image);
+		imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		// imageInfo.setSampler() TODO
+
+		descWrite.setPImageInfo(&imageInfo);
+		descWrite.setPBufferInfo(nullptr);
+	}
+	else {
+		descWrite.setDescriptorType(vk::DescriptorType::eUniformBufferDynamic);
+
+		bufferInfo.setBuffer(*buffer);
+		bufferInfo.setOffset(0);
+		bufferInfo.setRange(VK_WHOLE_SIZE);
+
+		descWrite.setPBufferInfo(&bufferInfo);
+		descWrite.setPImageInfo(nullptr);
+	}
+
+	mDevice.updateDescriptorSets({ descWrite }, nullptr);
+}
+
+
 void ThiefVKDevice::destroyDescriptorPool(vk::DescriptorPool& pool) {
     mDevice.destroyDescriptorPool(pool);
 }
