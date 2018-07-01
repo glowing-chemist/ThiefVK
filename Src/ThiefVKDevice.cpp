@@ -61,10 +61,10 @@ void ThiefVKDevice::startFrame() {
 void ThiefVKDevice::endFrame() {
     auto& resources = frameResources[currentFrameBufferIndex];
 
-    const std::vector<uint32_t> vertexBufferOffsets = mVertexBufferManager.getBufferOffsets();
+    const std::vector<entryInfo> vertexBufferOffsets = mVertexBufferManager.getBufferOffsets();
     auto [vertexBuffer, vertexStagingBuffer] = mVertexBufferManager.flushBufferUploads();
 
-    const std::vector<uint32_t> uniformBufferOffsets = mUniformBufferManager.getBufferOffsets();
+    const std::vector<entryInfo> uniformBufferOffsets = mUniformBufferManager.getBufferOffsets();
     auto [uniformBuffer, uniformStagingBuffer] = mUniformBufferManager.flushBufferUploads();
 
     resources.stagingBuffers.push_back(vertexStagingBuffer);
@@ -113,6 +113,19 @@ void ThiefVKDevice::endFrame() {
     vk::DescriptorSet compositeDescriptorSet = mDevice.allocateDescriptorSets(compositePassDescSetInfo)[0];
 
     startFrameInternal();
+
+	for (uint32_t i = 0; i < vertexBufferOffsets.size(); ++i) {
+		const vk::DeviceSize bufferOffset = vertexBufferOffsets[i].offset;
+		
+		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+		resources.colourCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+		
+		resources.depthCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+		resources.depthCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+
+		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+		resources.normalsCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+	}
 
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
