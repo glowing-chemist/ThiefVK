@@ -11,6 +11,11 @@
 
 class ThiefVKDevice;
 
+struct entryInfo {
+	uint32_t offset;
+	uint64_t numberOfEntries;
+};
+
 template<typename T>
 class ThiefVKBufferManager {
 public:
@@ -20,7 +25,7 @@ public:
 	void addBufferElements(const std::vector<T>& elements);
 
 	std::pair<ThiefVKBuffer, ThiefVKBuffer> flushBufferUploads();
-	std::vector<uint32_t> getBufferOffsets();
+	std::vector<entryInfo> getBufferOffsets();
 
 	bool bufferHasChanged() const;
 
@@ -32,7 +37,7 @@ private:
 	vk::BufferUsageFlags mUsage;
 
 	std::vector<T> mBuffer;
-	std::vector<uint32_t> mOffsets;
+	std::vector<entryInfo> mEntries;
 
 	std::vector<T> mPreviousBuffer;
 };

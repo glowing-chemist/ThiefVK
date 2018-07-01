@@ -15,7 +15,7 @@ ThiefVKBufferManager<T>::ThiefVKBufferManager(ThiefVKDevice &Device, vk::BufferU
 template<typename T>
 void ThiefVKBufferManager<T>::addBufferElements(const std::vector<T> &elements) {
 	uint32_t offset = mBuffer.size() * sizeof(T);
-	mOffsets.push_back(offset);
+	mEntries.push_back({offset, elements.size()});
 
 	mBuffer.insert(mBuffer.end(), elements.begin(), elements.end());
 
@@ -64,9 +64,9 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::flushBufferUplo
 
 
 template<typename T>
-std::vector<uint32_t> ThiefVKBufferManager<T>::getBufferOffsets() {
-	std::vector<uint32_t > offsets = mOffsets;
-	mOffsets.clear();
+std::vector<entryInfo> ThiefVKBufferManager<T>::getBufferOffsets() {
+	std::vector<entryInfo > offsets = mEntries;
+	mEntries.clear();
 
 	return offsets;
 }
