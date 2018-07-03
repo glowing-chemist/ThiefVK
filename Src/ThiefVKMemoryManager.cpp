@@ -6,6 +6,15 @@
 #include <list>
 #include <iostream>
 
+bool operator==(const ThiefVKImage& lhs, const ThiefVKImage& rhs) {
+	return lhs.mImage == rhs.mImage;
+}
+
+
+bool operator!=(const ThiefVKImage& lhs, const ThiefVKImage& rhs) {
+	return !(lhs == rhs);
+}
+
 
 bool operator==(const PoolFragment& lhs, const PoolFragment& rhs) {
     return lhs.DeviceLocal == rhs.DeviceLocal

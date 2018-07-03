@@ -342,30 +342,34 @@ void ThiefVKDevice::DestroyAllImageTextures() {
 
 
 ThiefVKImage ThiefVKDevice::createTexture(const std::string& path) {
-        int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(path.data(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        vk::DeviceSize imageSize = texWidth * texHeight * 4;
+	if (auto image = mTextureCache[path]; image != ThiefVKImage{}) return image;  
 
-        ThiefVKBuffer stagingBuffer = createBuffer(vk::BufferUsageFlagBits::eTransferSrc, imageSize);
+    int texWidth, texHeight, texChannels;
+    stbi_uc* pixels = stbi_load(path.data(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
-        void* data = MemoryManager.MapAllocation(stagingBuffer.mBufferMemory);
-        memcpy(data, pixels, imageSize);
-        MemoryManager.UnMapAllocation(stagingBuffer.mBufferMemory);
+    ThiefVKBuffer stagingBuffer = createBuffer(vk::BufferUsageFlagBits::eTransferSrc, imageSize);
 
-        stbi_image_free(pixels);
+    void* data = MemoryManager.MapAllocation(stagingBuffer.mBufferMemory);
+    memcpy(data, pixels, imageSize);
+    MemoryManager.UnMapAllocation(stagingBuffer.mBufferMemory);
 
-        ThiefVKImage textureImage = createImage(vk::Format::eR8G8B8A8Unorm
-                                                ,vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
-                                                texWidth, texHeight);
+    stbi_image_free(pixels);
 
-        transitionImageLayout(textureImage.mImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-        CopybufferToImage(stagingBuffer.mBuffer, textureImage.mImage, texWidth, texHeight);
+    ThiefVKImage textureImage = createImage(vk::Format::eR8G8B8A8Unorm
+                                            ,vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
+                                            texWidth, texHeight);
 
-        transitionImageLayout(textureImage.mImage, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal); // we will sample from it next so transition the layout
+    transitionImageLayout(textureImage.mImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    CopybufferToImage(stagingBuffer.mBuffer, textureImage.mImage, texWidth, texHeight);
 
-        frameResources[currentFrameBufferIndex].stagingBuffers.push_back(stagingBuffer);
+    transitionImageLayout(textureImage.mImage, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal); // we will sample from it next so transition the layout
 
-        return textureImage;
+    frameResources[currentFrameBufferIndex].stagingBuffers.push_back(stagingBuffer);
+
+	mTextureCache[path] = textureImage;
+
+    return textureImage;
 }
 
 

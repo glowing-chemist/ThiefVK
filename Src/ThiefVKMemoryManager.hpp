@@ -36,6 +36,9 @@ struct ThiefVKImage {
     Allocation mImageMemory;
 };
 
+bool operator==(const ThiefVKImage&, const ThiefVKImage&);
+bool operator!=(const ThiefVKImage&, const ThiefVKImage&);
+
 // This class will be used for keeping track of GPU allocations for buffers and
 // images. this will be done my maintaing2 pools of gpu memory, one device local
 // and the other host mappable. allocations will be handles a opaque types that

@@ -173,6 +173,8 @@ private:
 	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
 	ThiefVKBufferManager<Vertex>	mVertexBufferManager;
 
+	std::map<std::string, ThiefVKImage> mTextureCache;
+
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
 
