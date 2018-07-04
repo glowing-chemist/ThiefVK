@@ -98,6 +98,8 @@ public:
     ~ThiefVKDevice();
 
     std::pair<vk::PhysicalDevice*, vk::Device*> getDeviceHandles();
+	vk::PhysicalDevice* getPhysicalDevice() { return &mPhysDev;  }
+	vk::Device* getLogicalDevice() { return &mDevice; }
 
 	void drawScene(SceneInfo&);
 
