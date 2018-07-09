@@ -1,5 +1,7 @@
 #include "ThiefVKPipeLineManager.hpp"
 #include "ThiefVKVertex.hpp"
+#include "ThiefVKDescriptorManager.hpp"
+#include "ThiefVKDevice.hpp"
 
 #include <string>
 #include <fstream>
@@ -8,27 +10,8 @@
 #include <array>
 
 
-ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
+ThiefVKPipelineManager::ThiefVKPipelineManager(ThiefVKDevice& dev)
     :dev{dev} {
-
-    // crerate the descriptor set pools for uniform buffers and combined image samplers
-    vk::DescriptorPoolSize uniformBufferDescPoolSize{};
-    uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBuffer);
-    uniformBufferDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
-
-	vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
-	imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
-	imageSamplerrDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
-
-	std::array<vk::DescriptorPoolSize, 2> descPoolSizes{uniformBufferDescPoolSize, imageSamplerrDescPoolSize};
-
-    vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
-    uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size()); // two pools one for uniform buffers and one for combined image samplers
-    uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
-    uniformBufferDescPoolInfo.setMaxSets(30);
-
-    DescPool = dev.createDescriptorPool(uniformBufferDescPoolInfo);
-
 
     // Load up the shader spir-v from disk and create shader modules.
     shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransVert.spv");
@@ -44,16 +27,12 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(vk::Device& dev)
 
 void ThiefVKPipelineManager::Destroy() {
     for(auto& shader : shaderModules) {
-        dev.destroyShaderModule(shader.second);
+        dev.getLogicalDevice()->destroyShaderModule(shader.second);
     }
     for(auto& pipeLine : pipeLineCache) {
-        dev.destroyPipelineLayout(pipeLine.second.mPipelineLayout);
-        dev.destroyPipeline(pipeLine.second.mPipeLine);
+		dev.getLogicalDevice()->destroyPipelineLayout(pipeLine.second.mPipelineLayout);
+		dev.getLogicalDevice()->destroyPipeline(pipeLine.second.mPipeLine);
     }
-    for(auto& [shader, descSetLayout] : DescSetLayoutCache) {
-        dev.destroyDescriptorSetLayout(descSetLayout);
-    }
-    dev.destroyDescriptorPool(DescPool);
 }
 
 
@@ -183,12 +162,8 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
 }
 
 
-vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(ShaderName description) {
-    if(auto layout = DescSetLayoutCache[description]; layout != vk::DescriptorSetLayout{nullptr}) return layout;
+ThiefVKDescriptorSetDescription ThiefVKPipelineManager::getDescriptorSetLayout(ShaderName description) {
 
-    auto descSetLayout = createDescriptorSetLayout(description);
-    DescSetLayoutCache[description] = descSetLayout;
-    return descSetLayout;
 }
 
 
@@ -201,7 +176,7 @@ vk::ShaderModule ThiefVKPipelineManager::createShaderModule(std::string path) co
     info.setCodeSize(shaderSource.size());
     info.setPCode(reinterpret_cast<const uint32_t*>(shaderSource.data()));
 
-    return dev.createShaderModule(info);
+    return dev.getLogicalDevice()->createShaderModule(info);
 }
 
 
@@ -210,11 +185,11 @@ vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSe
     pipelinelayoutinfo.setPSetLayouts(&descLayouts);
     pipelinelayoutinfo.setSetLayoutCount(1);
 
-    return dev.createPipelineLayout(pipelinelayoutinfo);
+    return dev.getLogicalDevice()->createPipelineLayout(pipelinelayoutinfo);
 }
 
 
-vk::DescriptorSetLayout ThiefVKPipelineManager::createDescriptorSetLayout(ShaderName shader) const {
+ThiefVKDescriptorSetDescription ThiefVKPipelineManager::createDescriptorSetLayout(ShaderName shader) const {
     std::vector<vk::DescriptorSetLayoutBinding> descSets{};
 
     vk::DescriptorSetLayoutBinding uboDescriptorLayout{};
@@ -250,7 +225,7 @@ vk::DescriptorSetLayout ThiefVKPipelineManager::createDescriptorSetLayout(Shader
     LayoutInfo.setBindingCount(descSets.size());
     LayoutInfo.setPBindings(descSets.data());
 
-    return dev.createDescriptorSetLayout(LayoutInfo);
+    return dev.getLogicalDevice()->createDescriptorSetLayout(LayoutInfo);
 }
 
 

@@ -1,10 +1,14 @@
 #ifndef THIEFVKPIPELINEMANAGER_HPP
 #define THIEFVKPIPELINEMANAGER_HPP
 
+#include "ThiefVKDescriptorManager.hpp"
+
 #include <map> // used for a runtime pipeline cache
 #include <string>
 
 #include <vulkan/vulkan.hpp>
+
+class ThiefVKDevice;
 
 enum class ShaderName {
     BasicTransformVertex,
@@ -34,20 +38,19 @@ bool operator<(const ThiefVKPipelineDescription&, const ThiefVKPipelineDescripti
 
 class ThiefVKPipelineManager {
 public:
-    ThiefVKPipelineManager(vk::Device& dev);
+    ThiefVKPipelineManager(ThiefVKDevice& dev);
     void Destroy();
 
     vk::Pipeline getPipeLine(ThiefVKPipelineDescription);
-    vk::DescriptorSetLayout getDescriptorSetLayout(ShaderName);
+	ThiefVKDescriptorSetDescription getDescriptorSetLayout(ShaderName);
 private:
 
     // reference to device for creating shader modules and destroying pipelines
-    vk::Device& dev;
+    ThiefVKDevice& dev;
 	vk::DescriptorPool DescPool;
 
     vk::ShaderModule createShaderModule(std::string path) const;
     vk::PipelineLayout createPipelineLayout(vk::DescriptorSetLayout& descLayouts, ShaderName shader) const;
-    vk::DescriptorSetLayout createDescriptorSetLayout(ShaderName shader) const;
 
     std::map<ShaderName, vk::ShaderModule> shaderModules;
 
@@ -56,7 +59,6 @@ private:
         vk::PipelineLayout mPipelineLayout;
     };
     std::map<ThiefVKPipelineDescription, PipeLine> pipeLineCache;
-    std::map<ShaderName, vk::DescriptorSetLayout> DescSetLayoutCache;
 };
 
 #endif

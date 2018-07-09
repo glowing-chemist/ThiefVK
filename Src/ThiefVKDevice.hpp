@@ -12,6 +12,7 @@
 #include "ThiefVKMemoryManager.hpp"
 #include "ThiefVKPipeLineManager.hpp"
 #include "ThiefVKBufferManager.hpp"
+#include "ThiefVKDescriptorManager.hpp"
 #include "ThiefVKVertex.hpp"
 
 // std library includes
@@ -110,6 +111,7 @@ public:
 	void copyBuffers(vk::Buffer& SrcBuffer, vk::Buffer& DstBuffer, vk::DeviceSize size);
 
 	ThiefVKMemoryManager*	getMemoryManager() { return &MemoryManager; }
+	ThiefVKDescriptorManager* getDescriptorManager() { return &DescriptorManager;  }
 
 	void startFrame();
 	void draw(const geometry& geom);
@@ -174,6 +176,8 @@ private:
 
 	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
 	ThiefVKBufferManager<Vertex>	mVertexBufferManager;
+
+	ThiefVKDescriptorManager DescriptorManager;
 
 	std::map<std::string, ThiefVKImage> mTextureCache;
 
