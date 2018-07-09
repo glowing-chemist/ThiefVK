@@ -1,7 +1,7 @@
 #ifndef THIEFVKDESCRIPTORMANAGER_HPP
 #define THIEFVKDESCRIPTORMANAGER_HPP
 
-#include "ThiefVKPipelineManager.hpp"
+#include "ThiefVKPipeLineManager.hpp"
 
 #include <vulkan/vulkan.hpp>
 
