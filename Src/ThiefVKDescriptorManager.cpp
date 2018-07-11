@@ -1,6 +1,8 @@
 #include "ThiefVKDescriptorManager.hpp"
 #include "ThiefVKDevice.hpp"
 
+#include <iostream>
+
 bool operator<(const ThiefVKDescriptorDescription& lhs, const ThiefVKDescriptorDescription& rhs) {
 	return static_cast<int>(lhs.mDescriptor.mDescType) < static_cast<int>(rhs.mDescriptor.mDescType) &&
 		lhs.mDescriptor.mbinding < rhs.mDescriptor.mbinding;
@@ -38,7 +40,34 @@ ThiefVKDescriptorSet ThiefVKDescriptorManager::getDescriptorSet(const ThiefVKDes
 
 
 vk::DescriptorSet ThiefVKDescriptorManager::createDescriptorSet(const ThiefVKDescriptorSetDescription& description) {
+	vk::DescriptorSetLayout layout;
 
+	if (mFreeCache[description].first != vk::DescriptorSetLayout(nullptr)) {
+		layout = mFreeCache[description].first;
+	} 
+	else {
+		layout = createDescriptorSetLayout(description);
+		mFreeCache[description].first = layout;
+	}
+	for (;;) {
+		for (auto& pool : mPools) {
+			vk::DescriptorSetAllocateInfo allocInfo{};
+			allocInfo.setDescriptorPool(pool);
+			allocInfo.setDescriptorSetCount(1);
+			allocInfo.setPSetLayouts(&layout);
+
+			try {
+				auto descriptorSet = mDev.getLogicalDevice()->allocateDescriptorSets(allocInfo);
+
+				return descriptorSet[0];
+			}
+			catch (...) {
+				std::cerr << "pool exhausted trying next descriptor pool \n";
+			}
+		}
+		vk::DescriptorPool newPool = allocateNewPool();
+		mPools.insert(mPools.begin(), newPool);
+	}
 }
 
 
@@ -55,7 +84,13 @@ vk::DescriptorSetLayout ThiefVKDescriptorManager::getDescriptorSetLayout(const T
 
 
 vk::DescriptorSetLayout ThiefVKDescriptorManager::createDescriptorSetLayout(const ThiefVKDescriptorSetDescription& description) {
+	std::vector<vk::DescriptorSetLayoutBinding> layoutBindings = extractLayoutBindings(description);
 
+	vk::DescriptorSetLayoutCreateInfo info{};
+	info.setPBindings(layoutBindings.data());
+	info.setBindingCount(layoutBindings.size());
+
+	return mDev.getLogicalDevice()->createDescriptorSetLayout(info);
 }
 
 
@@ -87,4 +122,20 @@ vk::DescriptorPool ThiefVKDescriptorManager::allocateNewPool() {
 	uniformBufferDescPoolInfo.setMaxSets(30);
 
 	return mDev.getLogicalDevice()->createDescriptorPool(uniformBufferDescPoolInfo);
+}
+
+
+std::vector<vk::DescriptorSetLayoutBinding> ThiefVKDescriptorManager::extractLayoutBindings(const ThiefVKDescriptorSetDescription& description) {
+	std::vector<vk::DescriptorSetLayoutBinding> bindings(description.size());
+	
+	for (const auto& ThiefDescription : description) {
+		vk::DescriptorSetLayoutBinding binding{};
+		binding.setDescriptorCount(1);
+		binding.setDescriptorType(ThiefDescription.mDescriptor.mDescType);
+		binding.setStageFlags(ThiefDescription.mDescriptor.mShaderStage);
+
+		bindings.push_back(binding);
+	}
+
+	return bindings;
 }
