@@ -14,10 +14,11 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
     mPhysDev{std::get<0>(Devices)}, 
 	mDevice{std::get<1>(Devices)}, 
     currentFrameBufferIndex{0},
-	pipelineManager{mDevice},
+	pipelineManager{*this},
 	MemoryManager{&mPhysDev, &mDevice},
 	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
 	mVertexBufferManager{*this, vk::BufferUsageFlagBits::eVertexBuffer},
+	DescriptorManager{*this},
 	mWindowSurface{surface}, 
 	mWindow{window}, 
 	mSwapChain{mDevice, mPhysDev, surface, window}
@@ -40,6 +41,7 @@ ThiefVKDevice::~ThiefVKDevice() {
     DestroyAllImageTextures();
     pipelineManager.Destroy();
     MemoryManager.Destroy();
+	DescriptorManager.Destroy();
     mSwapChain.destroy(mDevice);
     mDevice.destroyRenderPass(mRenderPasses.RenderPass);
     mDevice.destroyCommandPool(graphicsCommandPool);

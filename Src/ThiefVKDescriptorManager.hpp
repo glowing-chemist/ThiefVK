@@ -1,8 +1,6 @@
 #ifndef THIEFVKDESCRIPTORMANAGER_HPP
 #define THIEFVKDESCRIPTORMANAGER_HPP
 
-#include "ThiefVKPipeLineManager.hpp"
-
 #include <vulkan/vulkan.hpp>
 
 #include <vector>
@@ -15,7 +13,7 @@ class ThiefVKDescriptorManager;
 struct ThiefVKDescriptor {
 	vk::DescriptorType mDescType;
 	vk::ShaderStageFlagBits mShaderStage;
-	uint32_t mbinding;
+	uint32_t mBinding;
 };
 
 struct ThiefVKDescriptorDescription {
@@ -44,7 +42,7 @@ private:
 class ThiefVKDescriptorManager {
 public:
 	ThiefVKDescriptorManager(ThiefVKDevice&);
-	~ThiefVKDescriptorManager();
+	void Destroy();
 
 	ThiefVKDescriptorSet getDescriptorSet(const ThiefVKDescriptorSetDescription&);
 	vk::DescriptorSetLayout getDescriptorSetLayout(const ThiefVKDescriptorSetDescription&);

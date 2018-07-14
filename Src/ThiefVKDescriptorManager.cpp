@@ -5,7 +5,7 @@
 
 bool operator<(const ThiefVKDescriptorDescription& lhs, const ThiefVKDescriptorDescription& rhs) {
 	return static_cast<int>(lhs.mDescriptor.mDescType) < static_cast<int>(rhs.mDescriptor.mDescType) &&
-		lhs.mDescriptor.mbinding < rhs.mDescriptor.mbinding;
+		lhs.mDescriptor.mBinding < rhs.mDescriptor.mBinding;
 }
 
 
@@ -15,7 +15,7 @@ ThiefVKDescriptorManager::ThiefVKDescriptorManager(ThiefVKDevice& device) : mDev
 }
 
 
-ThiefVKDescriptorManager::~ThiefVKDescriptorManager() {
+void ThiefVKDescriptorManager::Destroy() {
 	for (auto& pool : mPools) {
 		mDev.getLogicalDevice()->destroyDescriptorPool(pool);
 	}

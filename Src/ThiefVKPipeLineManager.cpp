@@ -105,7 +105,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     blendStateInfo.setAttachmentCount(1);
     blendStateInfo.setPAttachments(&colorAttachState);
 
-    vk::DescriptorSetLayout descSetLayouts = getDescriptorSetLayout(description.fragmentShader);
+	vk::DescriptorSetLayout descSetLayouts = getDescriptorSetLayout(description.fragmentShader);
     vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.vertexShader);
 
     const uint32_t subpassIndex = [&description]() {
@@ -153,17 +153,12 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
         pipeLineCreateInfo.setPDepthStencilState(&depthStencilInfo);
     }
 
-    vk::Pipeline pipeline = dev.createGraphicsPipeline(nullptr, pipeLineCreateInfo);
+    vk::Pipeline pipeline = dev.getLogicalDevice()->createGraphicsPipeline(nullptr, pipeLineCreateInfo);
 
     PipeLine piplineInfo{pipeline, pipelineLayout};
     pipeLineCache[description] = piplineInfo;
 
     return pipeline;
-}
-
-
-ThiefVKDescriptorSetDescription ThiefVKPipelineManager::getDescriptorSetLayout(ShaderName description) {
-
 }
 
 
@@ -189,43 +184,43 @@ vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSe
 }
 
 
-ThiefVKDescriptorSetDescription ThiefVKPipelineManager::createDescriptorSetLayout(ShaderName shader) const {
-    std::vector<vk::DescriptorSetLayoutBinding> descSets{};
+ThiefVKDescriptorSetDescription ThiefVKPipelineManager::getDescriptorSetDescription(const ShaderName shader) const {
+	ThiefVKDescriptorSetDescription descSets{};
 
-    vk::DescriptorSetLayoutBinding uboDescriptorLayout{};
-    uboDescriptorLayout.setDescriptorCount(1);
-    uboDescriptorLayout.setBinding(0);
-    uboDescriptorLayout.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-    uboDescriptorLayout.setStageFlags( shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex); 
+	ThiefVKDescriptorDescription uboDescriptorLayout{};
+    uboDescriptorLayout.mDescriptor.mBinding = 0;
+    uboDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eUniformBuffer;
+    uboDescriptorLayout.mDescriptor.mShaderStage  = shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
 
     descSets.push_back(uboDescriptorLayout);
 
     if(shader == ShaderName::BasicColourFragment) {
-        vk::DescriptorSetLayoutBinding imageSamplerDescriptorLayout{};
-        imageSamplerDescriptorLayout.setDescriptorCount(1);
-        imageSamplerDescriptorLayout.setBinding(1);
-        imageSamplerDescriptorLayout.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-        imageSamplerDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+		ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
+		imageSamplerDescriptorLayout.mDescriptor.mBinding = 0;
+        imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
+        imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
 
         descSets.push_back(imageSamplerDescriptorLayout);
     } else if(shader == ShaderName::CompositeFragment) {
         for(unsigned int i = 1; i < 4; ++i) {
-            vk::DescriptorSetLayoutBinding imageSamplerDescriptorLayout{};
-            imageSamplerDescriptorLayout.setDescriptorCount(1);
-            imageSamplerDescriptorLayout.setBinding(i);
-            imageSamplerDescriptorLayout.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-            imageSamplerDescriptorLayout.setStageFlags(vk::ShaderStageFlagBits::eFragment); 
+			ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
+            imageSamplerDescriptorLayout.mDescriptor.mBinding = i;
+            imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
+            imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
 
             descSets.push_back(imageSamplerDescriptorLayout);
         }
 
     }
 
-    vk::DescriptorSetLayoutCreateInfo LayoutInfo{};
-    LayoutInfo.setBindingCount(descSets.size());
-    LayoutInfo.setPBindings(descSets.data());
+	return descSets;
+}
 
-    return dev.getLogicalDevice()->createDescriptorSetLayout(LayoutInfo);
+
+vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(const ShaderName shader) const {
+	const ThiefVKDescriptorSetDescription descSetDesc = getDescriptorSetDescription(shader);
+
+	return dev.getDescriptorManager()->getDescriptorSetLayout(descSetDesc);
 }
 
 
