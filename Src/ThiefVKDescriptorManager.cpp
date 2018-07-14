@@ -153,7 +153,7 @@ std::vector<vk::WriteDescriptorSet> ThiefVKDescriptorManager::extractDescriptorS
 vk::DescriptorPool ThiefVKDescriptorManager::allocateNewPool() {
 	// crerate the descriptor set pools for uniform buffers and combined image samplers
 	vk::DescriptorPoolSize uniformBufferDescPoolSize{};
-	uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBuffer);
+	uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBufferDynamic);
 	uniformBufferDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
 
 	vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
