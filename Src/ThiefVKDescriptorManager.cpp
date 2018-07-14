@@ -95,7 +95,7 @@ vk::DescriptorSetLayout ThiefVKDescriptorManager::createDescriptorSetLayout(cons
 
 
 void ThiefVKDescriptorManager::destroyDescriptorSet(const ThiefVKDescriptorSet& descSet) {
-
+	mFreeCache[descSet.mDesc].second.push_back(descSet.mDescSet);
 }
 
 
