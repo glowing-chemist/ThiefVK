@@ -386,6 +386,32 @@ void ThiefVKDevice::destroyFence(vk::Fence& fence) {
 }
 
 
+vk::Sampler ThiefVKDevice::createSampler() {
+    vk::SamplerCreateInfo info{};
+    info.setMagFilter(vk::Filter::eLinear);
+    info.setMinFilter(vk::Filter::eLinear);
+    info.setAddressModeU(vk::SamplerAddressMode::eClampToEdge);
+    info.setAddressModeV(vk::SamplerAddressMode::eClampToEdge);
+    info.setAddressModeW (vk::SamplerAddressMode::eClampToEdge);
+    info.setAnisotropyEnable(true);
+    info.setMaxAnisotropy(8);
+    info.setBorderColor(vk::BorderColor::eIntOpaqueBlack);
+    info.setCompareEnable(false);
+    info.setCompareOp(vk::CompareOp::eAlways);
+    info.setMipmapMode(vk::SamplerMipmapMode::eLinear);
+    info.setMipLodBias(0.0f);
+    info.setMinLod(0.0f);
+    info.setMaxLod(0.0f);
+
+    return mDevice.createSampler(info);
+}
+
+
+void ThiefVKDevice::destroySampler(vk::Sampler& theSampler) {
+    mDevice.destroySampler(theSampler);
+}
+
+
 void ThiefVKDevice::createDeferedRenderTargetImageViews() {
     ThiefVKImageTextutres Result{};
 

@@ -129,6 +129,9 @@ public:
     vk::Fence createFence();
     void destroyFence(vk::Fence&);
 
+    vk::Sampler createSampler();
+    void destroySampler(vk::Sampler&);
+
     vk::DescriptorPool createDescriptorPool();
     void destroyDescriptorPool(vk::DescriptorPool&);
 
