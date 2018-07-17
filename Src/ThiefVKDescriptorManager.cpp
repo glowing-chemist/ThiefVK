@@ -23,23 +23,22 @@ void ThiefVKDescriptorManager::Destroy() {
 
 
 ThiefVKDescriptorSet ThiefVKDescriptorManager::getDescriptorSet(const ThiefVKDescriptorSetDescription& description) {
-	vk::DescriptorSet set{};
+	ThiefVKDescriptorSet set{};
 	
 	if (!mFreeCache[description].second.empty()) {
-		set = mFreeCache[description].second.back();
+		set.mDescSet = mFreeCache[description].second.back();
 		mFreeCache[description].second.pop_back();
 	} else {
 		set = createDescriptorSet(description);
 	}
-	ThiefVKDescriptorSet descSet = { set, description };
 
-	writeDescriptorSet(descSet);
+	writeDescriptorSet(set);
 	
-	return descSet;
+	return set;
 }
 
 
-vk::DescriptorSet ThiefVKDescriptorManager::createDescriptorSet(const ThiefVKDescriptorSetDescription& description) {
+ThiefVKDescriptorSet ThiefVKDescriptorManager::createDescriptorSet(const ThiefVKDescriptorSetDescription& description) {
 	vk::DescriptorSetLayout layout;
 
 	if (mFreeCache[description].first != vk::DescriptorSetLayout(nullptr)) {
@@ -59,7 +58,13 @@ vk::DescriptorSet ThiefVKDescriptorManager::createDescriptorSet(const ThiefVKDes
 			try {
 				auto descriptorSet = mDev.getLogicalDevice()->allocateDescriptorSets(allocInfo);
 
-				return descriptorSet[0];
+				std::vector<vk::Sampler> samplers{};
+				for(const auto& desc : description) {
+					if(desc.mDescriptor.mDescType == vk::DescriptorType::eCombinedImageSampler)
+						samplers.push_back(mDev.createSampler());
+				}
+
+				return {descriptorSet[0], description, samplers};
 			}
 			catch (...) {
 				std::cerr << "pool exhausted trying next descriptor pool \n";

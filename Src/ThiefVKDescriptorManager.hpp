@@ -30,7 +30,12 @@ class ThiefVKDescriptorSet {
 public:
 	friend ThiefVKDescriptorManager;
 
-	ThiefVKDescriptorSet(const vk::DescriptorSet& descSet, const ThiefVKDescriptorSetDescription& desc) : mDescSet{ descSet }, mDesc{ desc } {}
+	ThiefVKDescriptorSet() = default;
+	ThiefVKDescriptorSet(const vk::DescriptorSet& descSet, const ThiefVKDescriptorSetDescription& desc, std::vector<vk::Sampler> samplers) : 
+		mDescSet{ descSet }, 
+		mDesc{ desc }, 
+		mSamplers{ samplers } {}
+
 	vk::DescriptorSet& getHandle() { return mDescSet; }
 
 private:
@@ -51,7 +56,7 @@ public:
 	void destroyDescriptorSet(const ThiefVKDescriptorSet&);
 private:
 
-	vk::DescriptorSet createDescriptorSet(const ThiefVKDescriptorSetDescription&);
+	ThiefVKDescriptorSet createDescriptorSet(const ThiefVKDescriptorSetDescription&);
 	vk::DescriptorSetLayout createDescriptorSetLayout(const ThiefVKDescriptorSetDescription&);
 	void writeDescriptorSet(ThiefVKDescriptorSet&);
 	vk::DescriptorPool allocateNewPool();
