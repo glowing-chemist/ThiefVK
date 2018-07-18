@@ -74,46 +74,6 @@ void ThiefVKDevice::endFrame() {
     resources.stagingBuffers.push_back(uniformStagingBuffer);
     resources.uniformBuffer = uniformBuffer;
 	
-    // allocate the descriptorSets
-    std::vector<vk::DescriptorSetLayout> colourLayouts(vertexBufferOffsets.size(), pipelineManager.getDescriptorSetLayout(ShaderName::BasicColourFragment));
-
-    vk::DescriptorSetAllocateInfo colourPassDescSetInfo{};
-    colourPassDescSetInfo.setDescriptorPool(resources.descPool);
-    colourPassDescSetInfo.setPSetLayouts(colourLayouts.data());
-    colourPassDescSetInfo.setDescriptorSetCount(colourLayouts.size());
-
-    std::vector<vk::DescriptorSet> colourDescriptorSets = mDevice.allocateDescriptorSets(colourPassDescSetInfo);
-
-    // allocate the depth descriptor set
-    vk::DescriptorSetLayout depthLayout = pipelineManager.getDescriptorSetLayout(ShaderName::DepthFragment);
-
-    vk::DescriptorSetAllocateInfo depthPassDescSetInfo{};
-    depthPassDescSetInfo.setDescriptorPool(resources.descPool);
-    depthPassDescSetInfo.setPSetLayouts(&depthLayout);
-    depthPassDescSetInfo.setDescriptorSetCount(1);
-
-    vk::DescriptorSet depthDescriptorSet = mDevice.allocateDescriptorSets(depthPassDescSetInfo)[0];
-
-    // allocate normals descpitor set
-    vk::DescriptorSetLayout normalLayout = pipelineManager.getDescriptorSetLayout(ShaderName::NormalFragment);
-
-    vk::DescriptorSetAllocateInfo normalPassDescSetInfo{};
-    normalPassDescSetInfo.setDescriptorPool(resources.descPool);
-    normalPassDescSetInfo.setPSetLayouts(&normalLayout);
-    normalPassDescSetInfo.setDescriptorSetCount(1);
-
-    vk::DescriptorSet normalDescriptorSet = mDevice.allocateDescriptorSets(normalPassDescSetInfo)[0];
-
-    // allocate composite descriptor set
-    vk::DescriptorSetLayout compositeLayout = pipelineManager.getDescriptorSetLayout(ShaderName::CompositeFragment);
-
-    vk::DescriptorSetAllocateInfo compositePassDescSetInfo{};
-    compositePassDescSetInfo.setDescriptorPool(resources.descPool);
-    compositePassDescSetInfo.setPSetLayouts(&compositeLayout);
-    compositePassDescSetInfo.setDescriptorSetCount(1);
-
-    vk::DescriptorSet compositeDescriptorSet = mDevice.allocateDescriptorSets(compositePassDescSetInfo)[0];
-
     startFrameInternal();
 
 	for (uint32_t i = 0; i < vertexBufferOffsets.size(); ++i) {
@@ -682,40 +642,6 @@ vk::DescriptorPool ThiefVKDevice::createDescriptorPool() {
     uniformBufferDescPoolInfo.setMaxSets(15);
 
     return mDevice.createDescriptorPool(uniformBufferDescPoolInfo);
-}
-
-
-void ThiefVKDevice::writeDescriptorSetWrite(vk::DescriptorSet& descSet, const uint32_t binding, vk::ImageView* image, vk::Buffer* buffer) {
-	vk::WriteDescriptorSet descWrite{};
-	descWrite.setDstSet(descSet);
-	descWrite.setDstBinding(binding);
-	descWrite.setDstArrayElement(0);
-	descWrite.setDescriptorCount(1);
-
-	vk::DescriptorImageInfo imageInfo{};
-	vk::DescriptorBufferInfo bufferInfo{};
-	if (image) {
-		descWrite.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-
-		imageInfo.setImageView(*image);
-		imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-		// imageInfo.setSampler() TODO
-
-		descWrite.setPImageInfo(&imageInfo);
-		descWrite.setPBufferInfo(nullptr);
-	}
-	else {
-		descWrite.setDescriptorType(vk::DescriptorType::eUniformBufferDynamic);
-
-		bufferInfo.setBuffer(*buffer);
-		bufferInfo.setOffset(0);
-		bufferInfo.setRange(VK_WHOLE_SIZE);
-
-		descWrite.setPBufferInfo(&bufferInfo);
-		descWrite.setPImageInfo(nullptr);
-	}
-
-	mDevice.updateDescriptorSets({ descWrite }, nullptr);
 }
 
 
