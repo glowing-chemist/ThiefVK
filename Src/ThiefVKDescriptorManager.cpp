@@ -16,6 +16,13 @@ ThiefVKDescriptorManager::ThiefVKDescriptorManager(ThiefVKDevice& device) : mDev
 
 
 void ThiefVKDescriptorManager::Destroy() {
+	for(auto& [key, descriptorSet] : mFreeCache) {
+		for(auto& descriptor : descriptorSet.second) {
+			for(auto& sampler : descriptor.mSamplers) {
+				mDev.destroySampler(sampler);
+			}
+		}
+	}
 	for (auto& pool : mPools) {
 		mDev.getLogicalDevice()->destroyDescriptorPool(pool);
 	}
@@ -26,7 +33,7 @@ ThiefVKDescriptorSet ThiefVKDescriptorManager::getDescriptorSet(const ThiefVKDes
 	ThiefVKDescriptorSet set{};
 	
 	if (!mFreeCache[description].second.empty()) {
-		set.mDescSet = mFreeCache[description].second.back();
+		set = mFreeCache[description].second.back();
 		mFreeCache[description].second.pop_back();
 	} else {
 		set = createDescriptorSet(description);
@@ -100,11 +107,7 @@ vk::DescriptorSetLayout ThiefVKDescriptorManager::createDescriptorSetLayout(cons
 
 
 void ThiefVKDescriptorManager::destroyDescriptorSet(const ThiefVKDescriptorSet& descSet) {
-	for (const auto& sampler : descSet.mSamplers) {
-		mDev.getLogicalDevice()->destroySampler(sampler);
-	}
-
-	mFreeCache[descSet.mDesc].second.push_back(descSet.mDescSet);
+	mFreeCache[descSet.mDesc].second.push_back(descSet);
 }
 
 
@@ -156,23 +159,7 @@ std::vector<vk::WriteDescriptorSet> ThiefVKDescriptorManager::extractDescriptorS
 
 
 vk::DescriptorPool ThiefVKDescriptorManager::allocateNewPool() {
-	// crerate the descriptor set pools for uniform buffers and combined image samplers
-	vk::DescriptorPoolSize uniformBufferDescPoolSize{};
-	uniformBufferDescPoolSize.setType(vk::DescriptorType::eUniformBufferDynamic);
-	uniformBufferDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
-
-	vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
-	imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
-	imageSamplerrDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
-
-	std::array<vk::DescriptorPoolSize, 2> descPoolSizes{ uniformBufferDescPoolSize, imageSamplerrDescPoolSize };
-
-	vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
-	uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size()); // two pools one for uniform buffers and one for combined image samplers
-	uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
-	uniformBufferDescPoolInfo.setMaxSets(30);
-
-	return mDev.getLogicalDevice()->createDescriptorPool(uniformBufferDescPoolInfo);
+	return mDev.createDescriptorPool();
 }
 
 

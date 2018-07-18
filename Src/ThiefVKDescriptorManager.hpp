@@ -67,7 +67,7 @@ private:
 
 	std::vector<vk::DescriptorPool> mPools;
 
-	std::map<ThiefVKDescriptorSetDescription, std::pair<vk::DescriptorSetLayout, std::vector<vk::DescriptorSet>>> mFreeCache;
+	std::map<ThiefVKDescriptorSetDescription, std::pair<vk::DescriptorSetLayout, std::vector<ThiefVKDescriptorSet>>> mFreeCache;
 };
 
 

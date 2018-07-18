@@ -1,5 +1,6 @@
 #include "ThiefVKDevice.hpp"
 #include "ThiefVKInstance.hpp"
+#include "ThiefVKDescriptorManager.hpp"
 
 #include "stb_image.h"
 
@@ -73,6 +74,24 @@ void ThiefVKDevice::endFrame() {
     resources.vertexBuffer = vertexBuffer;
     resources.stagingBuffers.push_back(uniformStagingBuffer);
     resources.uniformBuffer = uniformBuffer;
+
+    // Get all of the descriptor sets needed for this frame.
+    ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription(ShaderName::BasicColourFragment);
+    ThiefVKDescriptorSet basicColourDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+
+    ThiefVKDescriptorSetDescription depthDesc = getDescriptorSetDescription(ShaderName::DepthFragment);
+    ThiefVKDescriptorSet depthDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+
+    ThiefVKDescriptorSetDescription normalsDesc = getDescriptorSetDescription(ShaderName::NormalFragment);
+    ThiefVKDescriptorSet normalsDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+
+    ThiefVKDescriptorSetDescription compositeDesc = getDescriptorSetDescription(ShaderName::CompositeFragment);
+    ThiefVKDescriptorSet compositeDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+
+    frameResources[currentFrameBufferIndex].DescSets.push_back(basicColourDescriptor);
+    frameResources[currentFrameBufferIndex].DescSets.push_back(depthDescriptor);
+    frameResources[currentFrameBufferIndex].DescSets.push_back(normalsDescriptor);
+    frameResources[currentFrameBufferIndex].DescSets.push_back(compositeDescriptor);
 	
     startFrameInternal();
 
@@ -130,7 +149,9 @@ void ThiefVKDevice::startFrameInternal() {
 		frameResources[currentFrameBufferIndex].depthCmdBuffer.reset(vk::CommandBufferResetFlags());
 		frameResources[currentFrameBufferIndex].normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
 
-        mDevice.resetDescriptorPool(frameResources[currentFrameBufferIndex].descPool, vk::DescriptorPoolResetFlags());
+        for(const auto& descriptorSet : frameResources[currentFrameBufferIndex].DescSets) {
+            DescriptorManager.destroyDescriptorSet(descriptorSet);
+        }
 	}
 
 	frameResources[currentFrameBufferIndex].submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
@@ -168,6 +189,15 @@ void ThiefVKDevice::draw(const geometry& geom) {
 
     auto image = createTexture(geom.texturePath); 
     frameResources[currentFrameBufferIndex].textureImages.push_back(image);
+
+    // create an image View as well.
+    vk::ImageViewCreateInfo viewInfo{};
+    viewInfo.setImage(image.mImage);
+    viewInfo.setFormat(vk::Format::eR8G8B8A8Unorm);
+    viewInfo.setViewType(vk::ImageViewType::e2D);
+    viewInfo.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+    frameResources[currentFrameBufferIndex].textureImageViews.push_back(mDevice.createImageView(viewInfo));
 }
 
 
@@ -632,7 +662,7 @@ vk::DescriptorPool ThiefVKDevice::createDescriptorPool() {
 
     vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
     imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
-    imageSamplerrDescPoolSize.setDescriptorCount(15); // start with 5 we can allways allocate another pool if we later need more.
+    imageSamplerrDescPoolSize.setDescriptorCount(40); // start with 5 we can allways allocate another pool if we later need more.
 
     std::array<vk::DescriptorPoolSize, 2> descPoolSizes{uniformBufferDescPoolSize, imageSamplerrDescPoolSize};
 
@@ -861,7 +891,6 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     }
     destroyBuffer(resources.vertexBuffer);
     destroyBuffer(resources.indexBuffer);
-    destroyDescriptorPool(resources.descPool);
 }
 
 
@@ -879,8 +908,47 @@ void ThiefVKDevice::createSemaphores() {
 }
 
 
-void ThiefVKDevice::createDescriptorPools() {
-        for(auto& resources : frameResources) {
-            resources.descPool = createDescriptorPool();
+ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const ShaderName shader) {
+    ThiefVKDescriptorSetDescription descSets{};
+
+    ThiefVKDescriptorDescription uboDescriptorLayout{};
+    uboDescriptorLayout.mDescriptor.mBinding = 0;
+    uboDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eUniformBuffer;
+    uboDescriptorLayout.mDescriptor.mShaderStage  = shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
+    uboDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].uniformBuffer.mBuffer;
+
+    descSets.push_back(uboDescriptorLayout);
+
+    if(shader == ShaderName::BasicColourFragment) {
+        ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
+        imageSamplerDescriptorLayout.mDescriptor.mBinding = 0;
+        imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
+        imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
+        imageSamplerDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].textureImageViews[0];
+
+        descSets.push_back(imageSamplerDescriptorLayout);
+    } else if(shader == ShaderName::CompositeFragment) {
+        for(unsigned int i = 1; i < 4; ++i) {
+            ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
+            imageSamplerDescriptorLayout.mDescriptor.mBinding = i;
+            imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
+            imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
+            imageSamplerDescriptorLayout.mResource = [this, i]() -> vk::ImageView*{
+                switch(i) {
+                    case 1:
+                        return &this->deferedTextures[currentFrameBufferIndex].colourImageView;
+                    case 2:
+                        return &this->deferedTextures[currentFrameBufferIndex].depthImageView;
+                    case 3:
+                        return &this->deferedTextures[currentFrameBufferIndex].normalsImageView;
+                }
+                return nullptr;
+            }();
+
+            descSets.push_back(imageSamplerDescriptorLayout);
         }
+
+    }
+
+    return descSets;
 }

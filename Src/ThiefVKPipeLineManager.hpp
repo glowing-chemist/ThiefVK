@@ -42,7 +42,6 @@ public:
     void Destroy();
 
     vk::Pipeline getPipeLine(ThiefVKPipelineDescription);
-	ThiefVKDescriptorSetDescription getDescriptorSetDescription(const ShaderName) const;
 	vk::DescriptorSetLayout getDescriptorSetLayout(const ShaderName) const;
 private:
 

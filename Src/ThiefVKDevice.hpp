@@ -58,6 +58,7 @@ struct perFrameResources {
 
     std::vector<ThiefVKBuffer> stagingBuffers;
     std::vector<ThiefVKImage> textureImages;
+    std::vector<vk::ImageView> textureImageViews;
 
 	vk::CommandBuffer primaryCmdBuffer;
 	vk::CommandBuffer colourCmdBuffer;
@@ -70,10 +71,7 @@ struct perFrameResources {
     ThiefVKBuffer indexBuffer;
 
     ThiefVKBuffer uniformBuffer;
-    std::vector<vk::Sampler> samplers;
-    std::vector<vk::Sampler> usedSamplers;
-    std::vector<vk::DescriptorSet> DescSets;
-    vk::DescriptorPool descPool;
+    std::vector<ThiefVKDescriptorSet> DescSets;
 };
 
 
@@ -142,6 +140,8 @@ public:
     void createDescriptorPools();
     void createSemaphores();
 
+    ThiefVKDescriptorSetDescription getDescriptorSetDescription(const ShaderName);
+
 private:
     // private funcs
     void DestroyAllImageTextures();
@@ -157,7 +157,6 @@ private:
 	vk::CommandBuffer&  startRecordingDepthCmdBuffer();
 	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
 	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
-
 
     void renderFrame();
     void startFrameInternal();

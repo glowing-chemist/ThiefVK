@@ -184,41 +184,8 @@ vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSe
 }
 
 
-ThiefVKDescriptorSetDescription ThiefVKPipelineManager::getDescriptorSetDescription(const ShaderName shader) const {
-	ThiefVKDescriptorSetDescription descSets{};
-
-	ThiefVKDescriptorDescription uboDescriptorLayout{};
-    uboDescriptorLayout.mDescriptor.mBinding = 0;
-    uboDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eUniformBuffer;
-    uboDescriptorLayout.mDescriptor.mShaderStage  = shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
-
-    descSets.push_back(uboDescriptorLayout);
-
-    if(shader == ShaderName::BasicColourFragment) {
-		ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
-		imageSamplerDescriptorLayout.mDescriptor.mBinding = 0;
-        imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
-        imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
-
-        descSets.push_back(imageSamplerDescriptorLayout);
-    } else if(shader == ShaderName::CompositeFragment) {
-        for(unsigned int i = 1; i < 4; ++i) {
-			ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
-            imageSamplerDescriptorLayout.mDescriptor.mBinding = i;
-            imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
-            imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
-
-            descSets.push_back(imageSamplerDescriptorLayout);
-        }
-
-    }
-
-	return descSets;
-}
-
-
 vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(const ShaderName shader) const {
-	const ThiefVKDescriptorSetDescription descSetDesc = getDescriptorSetDescription(shader);
+	const ThiefVKDescriptorSetDescription descSetDesc = dev.getDescriptorSetDescription(shader);
 
 	return dev.getDescriptorManager()->getDescriptorSetLayout(descSetDesc);
 }
