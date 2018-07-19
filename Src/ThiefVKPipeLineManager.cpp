@@ -191,6 +191,16 @@ vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(const Sha
 }
 
 
+// This is a bit hacky, will fix at some point
+vk::PipelineLayout ThiefVKPipelineManager::getPipelineLayout(const ShaderName shader) const {
+    for(const auto& [key, pipeline] : pipeLineCache) {
+        if( key.fragmentShader == shader) return pipeline.mPipelineLayout;
+    }
+
+    return vk::PipelineLayout{nullptr};
+}
+
+
 bool operator<(const ThiefVKPipelineDescription& lhs, const ThiefVKPipelineDescription& rhs) {
     return static_cast<int>(lhs.fragmentShader) < static_cast<int>(rhs.fragmentShader);
 }

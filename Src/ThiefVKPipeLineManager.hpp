@@ -43,6 +43,7 @@ public:
 
     vk::Pipeline getPipeLine(ThiefVKPipelineDescription);
 	vk::DescriptorSetLayout getDescriptorSetLayout(const ShaderName) const;
+    vk::PipelineLayout getPipelineLayout(const ShaderName) const;
 private:
 
     // reference to device for creating shader modules and destroying pipelines

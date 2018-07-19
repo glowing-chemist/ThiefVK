@@ -99,15 +99,19 @@ void ThiefVKDevice::endFrame() {
 		const vk::DeviceSize bufferOffset = vertexBufferOffsets[i].offset;
 		
 		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), static_cast<uint32_t>(bufferOffset));
 		resources.colourCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 		
 		resources.depthCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+        resources.depthCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::DepthFragment), 0, depthDescriptor.getHandle(), bufferOffset );
 		resources.depthCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), bufferOffset);
 		resources.normalsCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 	}
 
+    resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), 0, compositeDescriptor.getHandle(), {} );
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
     endFrameInternal();
