@@ -34,6 +34,8 @@ ThiefVKDescriptorSet ThiefVKDescriptorManager::getDescriptorSet(const ThiefVKDes
 	
 	if (!mFreeCache[description].second.empty()) {
 		set = mFreeCache[description].second.back();
+		set.mDesc = description;
+
 		mFreeCache[description].second.pop_back();
 	} else {
 		set = createDescriptorSet(description);
@@ -126,7 +128,7 @@ void ThiefVKDescriptorManager::writeDescriptorSet(ThiefVKDescriptorSet& descSet)
 		const auto& description = descSet.mDesc[i];
 
 		vk::WriteDescriptorSet descWrite{};
-		descWrite.setDstBinding(1);
+		descWrite.setDstBinding(i);
 		descWrite.setDescriptorCount(1);
 		descWrite.setDescriptorType(description.mDescriptor.mDescType);
 		descWrite.setDstSet(descSet.mDescSet);
@@ -141,14 +143,18 @@ void ThiefVKDescriptorManager::writeDescriptorSet(ThiefVKDescriptorSet& descSet)
 				imageInfo.setSampler(descSet.mSamplers[samplerCount]);
 				imageInfo.setImageView(*std::get<vk::ImageView*>(description.mResource));
 				imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-				descWrite.setPImageInfo(&imageInfo);
+
+				imageInfos.push_back(imageInfo);
+				descWrite.setPImageInfo(&imageInfos.back());
 				++samplerCount;
 				break;
 			case 1:
 				bufferInfo.setBuffer(*std::get<vk::Buffer*>(description.mResource));
 				bufferInfo.setOffset(0);
 				bufferInfo.setRange(VK_WHOLE_SIZE);
-				descWrite.setPBufferInfo(&bufferInfo);
+
+				bufferInfos.push_back(bufferInfo);
+				descWrite.setPBufferInfo(&bufferInfos.back());
 				break;
 			default:
 				break;
