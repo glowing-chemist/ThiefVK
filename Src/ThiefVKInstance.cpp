@@ -154,6 +154,7 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     const char* deviceExtensions = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 
     vk::PhysicalDeviceFeatures physicalFeatures{};
+    physicalFeatures.setSamplerAnisotropy(true);
 
     vk::DeviceCreateInfo deviceInfo{};
     deviceInfo.setEnabledExtensionCount(1);
@@ -187,6 +188,8 @@ void ThiefVKInstance::addDebugCallback() {
 
     auto* func = (PFN_vkCreateDebugReportCallbackEXT) mInstance.getProcAddr("vkCreateDebugReportCallbackEXT");
     if(func != nullptr) {
+        std::cerr << "Inserting debug callback \n";
+
         auto call = static_cast<VkDebugReportCallbackEXT>(debugCallback);
         func(static_cast<VkInstance>(mInstance), &callbackCreateInfo, nullptr, &call);
     }
