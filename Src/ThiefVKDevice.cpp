@@ -58,6 +58,48 @@ std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
 
 void ThiefVKDevice::startFrame() {
     currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, frameResources[currentFrameBufferIndex].swapChainImageAvailable);
+
+    mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
+    mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
+
+    if(frameResources[currentFrameBufferIndex].primaryCmdBuffer == vk::CommandBuffer(nullptr)) {
+        // Only allocate the command buffers if this will be there first use.
+        vk::CommandBufferAllocateInfo primaryCmdBufferAllocInfo;
+        primaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
+        primaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
+        primaryCmdBufferAllocInfo.setCommandBufferCount(2);
+
+        std::vector<vk::CommandBuffer> primaryCmdBuffers = mDevice.allocateCommandBuffers(primaryCmdBufferAllocInfo);
+
+        vk::CommandBufferAllocateInfo secondaryCmdBufferAllocInfo;
+        secondaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::eSecondary);
+        secondaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
+        secondaryCmdBufferAllocInfo.setCommandBufferCount(4);
+
+        std::vector<vk::CommandBuffer> secondaryCmdBuffers = mDevice.allocateCommandBuffers(secondaryCmdBufferAllocInfo);
+
+        // Set the initial cmd Buffers.
+        frameResources[currentFrameBufferIndex].primaryCmdBuffer            = primaryCmdBuffers[0];
+        frameResources[currentFrameBufferIndex].flushCommandBuffer       = primaryCmdBuffers[1];
+        frameResources[currentFrameBufferIndex].colourCmdBuffer         = secondaryCmdBuffers[0];
+        frameResources[currentFrameBufferIndex].depthCmdBuffer          = secondaryCmdBuffers[1];
+        frameResources[currentFrameBufferIndex].normalsCmdBuffer            = secondaryCmdBuffers[2];
+        frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
+
+    } else { // Otherwise just reset them
+        frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
+        frameResources[currentFrameBufferIndex].flushCommandBuffer.reset(vk::CommandBufferResetFlags());
+        frameResources[currentFrameBufferIndex].colourCmdBuffer.reset(vk::CommandBufferResetFlags());
+        frameResources[currentFrameBufferIndex].depthCmdBuffer.reset(vk::CommandBufferResetFlags());
+        frameResources[currentFrameBufferIndex].normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
+
+        for(const auto& descriptorSet : frameResources[currentFrameBufferIndex].DescSets) {
+            DescriptorManager.destroyDescriptorSet(descriptorSet);
+        }
+    }
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    frameResources[currentFrameBufferIndex].flushCommandBuffer.begin(beginInfo);
 }
 
 
@@ -119,44 +161,6 @@ void ThiefVKDevice::endFrame() {
 
 
 void ThiefVKDevice::startFrameInternal() {
-	mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
-	mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
-
-	if(frameResources[currentFrameBufferIndex].primaryCmdBuffer == vk::CommandBuffer(nullptr)) {
-		// Only allocate the command buffers if this will be there first use.
-		vk::CommandBufferAllocateInfo primaryCmdBufferAllocInfo;
-		primaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
-		primaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
-		primaryCmdBufferAllocInfo.setCommandBufferCount(2);
-
-		std::vector<vk::CommandBuffer> primaryCmdBuffers = mDevice.allocateCommandBuffers(primaryCmdBufferAllocInfo);
-
-		vk::CommandBufferAllocateInfo secondaryCmdBufferAllocInfo;
-		secondaryCmdBufferAllocInfo.setLevel(vk::CommandBufferLevel::eSecondary);
-		secondaryCmdBufferAllocInfo.setCommandPool(graphicsCommandPool);
-		secondaryCmdBufferAllocInfo.setCommandBufferCount(4);
-
-		std::vector<vk::CommandBuffer> secondaryCmdBuffers = mDevice.allocateCommandBuffers(secondaryCmdBufferAllocInfo);
-
-		// Set the initial cmd Buffers.
-		frameResources[currentFrameBufferIndex].primaryCmdBuffer			= primaryCmdBuffers[0];
-        frameResources[currentFrameBufferIndex].flushCommandBuffer       = primaryCmdBuffers[1];
-		frameResources[currentFrameBufferIndex].colourCmdBuffer			= secondaryCmdBuffers[0];
-		frameResources[currentFrameBufferIndex].depthCmdBuffer			= secondaryCmdBuffers[1];
-		frameResources[currentFrameBufferIndex].normalsCmdBuffer			= secondaryCmdBuffers[2];
-        frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
-
-	} else { // Otherwise just reset them
-		frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
-        frameResources[currentFrameBufferIndex].flushCommandBuffer.reset(vk::CommandBufferResetFlags());
-		frameResources[currentFrameBufferIndex].colourCmdBuffer.reset(vk::CommandBufferResetFlags());
-		frameResources[currentFrameBufferIndex].depthCmdBuffer.reset(vk::CommandBufferResetFlags());
-		frameResources[currentFrameBufferIndex].normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
-
-        for(const auto& descriptorSet : frameResources[currentFrameBufferIndex].DescSets) {
-            DescriptorManager.destroyDescriptorSet(descriptorSet);
-        }
-	}
 
 	frameResources[currentFrameBufferIndex].submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
 
@@ -180,9 +184,6 @@ void ThiefVKDevice::startFrameInternal() {
 	startRecordingDepthCmdBuffer();
 	startRecordingNormalsCmdBuffer();
     startRecordingCompositeCmdBuffer();
-
-    vk::CommandBufferBeginInfo beginInfo{};
-    frameResources[currentFrameBufferIndex].flushCommandBuffer.begin(beginInfo);
 }
 
 
@@ -925,7 +926,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
 
     if(shader == ShaderName::BasicColourFragment) {
         ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
-        imageSamplerDescriptorLayout.mDescriptor.mBinding = 0;
+        imageSamplerDescriptorLayout.mDescriptor.mBinding = 1;
         imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
         imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
         imageSamplerDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].textureImageViews[0];
@@ -934,7 +935,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
     } else if(shader == ShaderName::CompositeFragment) {
         for(unsigned int i = 1; i < 4; ++i) {
             ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
-            imageSamplerDescriptorLayout.mDescriptor.mBinding = i;
+            imageSamplerDescriptorLayout.mDescriptor.mBinding = i + 1;
             imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
             imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
             imageSamplerDescriptorLayout.mResource = [this, i]() -> vk::ImageView*{
