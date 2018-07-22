@@ -31,7 +31,7 @@ public:
 	friend ThiefVKDescriptorManager;
 
 	ThiefVKDescriptorSet() = default;
-	ThiefVKDescriptorSet(const vk::DescriptorSet& descSet, const ThiefVKDescriptorSetDescription& desc, std::vector<vk::Sampler> samplers) : 
+	ThiefVKDescriptorSet(const vk::DescriptorSet& descSet, const ThiefVKDescriptorSetDescription& desc, std::vector<vk::Sampler>& samplers) : 
 		mDescSet{ descSet }, 
 		mDesc{ desc }, 
 		mSamplers{ samplers } {}
