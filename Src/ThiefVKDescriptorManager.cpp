@@ -115,7 +115,16 @@ void ThiefVKDescriptorManager::writeDescriptorSet(ThiefVKDescriptorSet& descSet)
 	std::vector<vk::WriteDescriptorSet> descSetWrites{};
 	uint32_t samplerCount = 0;
 
-	for (const auto& description : descSet.mDesc) {
+	// so we don't end up with more use after stack bugs here
+	// keep them alive until the ebd of the function.
+	std::vector<vk::DescriptorImageInfo> imageInfos;
+	std::vector<vk::DescriptorBufferInfo> bufferInfos;
+	imageInfos.reserve(descSet.mDesc.size());
+	bufferInfos.reserve(descSet.mDesc.size());
+
+	for (uint32_t i = 0; i< descSet.mDesc.size(); ++i) {
+		const auto& description = descSet.mDesc[i];
+
 		vk::WriteDescriptorSet descWrite{};
 		descWrite.setDstBinding(1);
 		descWrite.setDescriptorCount(1);
