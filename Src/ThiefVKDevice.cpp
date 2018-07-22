@@ -122,13 +122,13 @@ void ThiefVKDevice::endFrame() {
     ThiefVKDescriptorSet basicColourDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
 
     ThiefVKDescriptorSetDescription depthDesc = getDescriptorSetDescription(ShaderName::DepthFragment);
-    ThiefVKDescriptorSet depthDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+    ThiefVKDescriptorSet depthDescriptor = DescriptorManager.getDescriptorSet(depthDesc);
 
     ThiefVKDescriptorSetDescription normalsDesc = getDescriptorSetDescription(ShaderName::NormalFragment);
-    ThiefVKDescriptorSet normalsDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+    ThiefVKDescriptorSet normalsDescriptor = DescriptorManager.getDescriptorSet(normalsDesc);
 
     ThiefVKDescriptorSetDescription compositeDesc = getDescriptorSetDescription(ShaderName::CompositeFragment);
-    ThiefVKDescriptorSet compositeDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+    ThiefVKDescriptorSet compositeDescriptor = DescriptorManager.getDescriptorSet(compositeDesc);
 
     frameResources[currentFrameBufferIndex].DescSets.push_back(basicColourDescriptor);
     frameResources[currentFrameBufferIndex].DescSets.push_back(depthDescriptor);
@@ -296,7 +296,8 @@ ThiefVKBuffer ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, cons
 	bufferInfo.setSharingMode(vk::SharingMode::eExclusive);
 
 	vk::Buffer buffer = mDevice.createBuffer(bufferInfo);
-	vk::MemoryRequirements bufferMemReqs = mDevice.getBufferMemoryRequirements(buffer);
+    vk::MemoryRequirements bufferMemReqs = mDevice.getBufferMemoryRequirements(buffer);
+
 
 	Allocation bufferMem = MemoryManager.Allocate(size, bufferMemReqs.alignment,
 												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eUniformBuffer) ||
@@ -918,7 +919,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
 
     ThiefVKDescriptorDescription uboDescriptorLayout{};
     uboDescriptorLayout.mDescriptor.mBinding = 0;
-    uboDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eUniformBuffer;
+    uboDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eUniformBufferDynamic;
     uboDescriptorLayout.mDescriptor.mShaderStage  = shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
     uboDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].uniformBuffer.mBuffer;
 
