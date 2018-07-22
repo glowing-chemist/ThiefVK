@@ -413,15 +413,15 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
 
     for(unsigned int swapImageCount = 0; swapImageCount < mSwapChain.getNumberOfSwapChainImages(); ++swapImageCount) {
         auto [colourImage, colourMemory]   = createImage(vk::Format::eR8G8B8A8Srgb, 
-                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment, 
+                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled, 
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
         auto [depthImage , depthMemory]    = createImage(vk::Format::eD32Sfloat,
-                                                         vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment,
+                                                         vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
         auto [normalsImage, normalsMemory] = createImage(vk::Format::eR8G8B8A8Sint,
-                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment,
+                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
 
@@ -892,9 +892,6 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     for(auto& buffer : resources.stagingBuffers)  {
         destroyBuffer(buffer);
     }
-    for(auto& image : resources.textureImages) {
-        destroyImage(image);
-    }
     destroyBuffer(resources.vertexBuffer);
     destroyBuffer(resources.indexBuffer);
 }
@@ -919,7 +916,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
 
     ThiefVKDescriptorDescription uboDescriptorLayout{};
     uboDescriptorLayout.mDescriptor.mBinding = 0;
-    uboDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eUniformBufferDynamic;
+    uboDescriptorLayout.mDescriptor.mDescType = shader == ShaderName::CompositeFragment ? vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eUniformBufferDynamic;
     uboDescriptorLayout.mDescriptor.mShaderStage  = shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
     uboDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].uniformBuffer.mBuffer;
 
@@ -936,7 +933,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
     } else if(shader == ShaderName::CompositeFragment) {
         for(unsigned int i = 1; i < 4; ++i) {
             ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
-            imageSamplerDescriptorLayout.mDescriptor.mBinding = i + 1;
+            imageSamplerDescriptorLayout.mDescriptor.mBinding = i;
             imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
             imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
             imageSamplerDescriptorLayout.mResource = [this, i]() -> vk::ImageView*{
