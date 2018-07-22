@@ -112,32 +112,24 @@ void ThiefVKDescriptorManager::destroyDescriptorSet(const ThiefVKDescriptorSet& 
 
 
 void ThiefVKDescriptorManager::writeDescriptorSet(ThiefVKDescriptorSet& descSet) {
-	std::vector<vk::WriteDescriptorSet> descSetWrites = extractDescriptorSetWrites(descSet);
-
-	mDev.getLogicalDevice()->updateDescriptorSets(descSetWrites, {});
-}
-
-
-std::vector<vk::WriteDescriptorSet> ThiefVKDescriptorManager::extractDescriptorSetWrites(const ThiefVKDescriptorSet& desc)  const {
 	std::vector<vk::WriteDescriptorSet> descSetWrites{};
 	uint32_t samplerCount = 0;
 
-	for (const auto& description : desc.mDesc) {
+	for (const auto& description : descSet.mDesc) {
 		vk::WriteDescriptorSet descWrite{};
 		descWrite.setDstBinding(1);
 		descWrite.setDescriptorCount(1);
 		descWrite.setDescriptorType(description.mDescriptor.mDescType);
-		descWrite.setDstSet(desc.mDescSet);
+		descWrite.setDstSet(descSet.mDescSet);
 
 		vk::DescriptorImageInfo imageInfo{};
-		vk::Sampler sampler;
 
 		vk::DescriptorBufferInfo bufferInfo{};
 
 
 		switch (description.mResource.index()) {
 			case 0:
-				imageInfo.setSampler(desc.mSamplers[samplerCount]);
+				imageInfo.setSampler(descSet.mSamplers[samplerCount]);
 				imageInfo.setImageView(*std::get<vk::ImageView*>(description.mResource));
 				imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 				descWrite.setPImageInfo(&imageInfo);
@@ -152,9 +144,11 @@ std::vector<vk::WriteDescriptorSet> ThiefVKDescriptorManager::extractDescriptorS
 			default:
 				break;
 		}
+
+		descSetWrites.push_back(descWrite);
 	}
 
-	return descSetWrites;
+	mDev.getLogicalDevice()->updateDescriptorSets(descSetWrites, {});
 }
 
 
@@ -164,10 +158,11 @@ vk::DescriptorPool ThiefVKDescriptorManager::allocateNewPool() {
 
 
 std::vector<vk::DescriptorSetLayoutBinding> ThiefVKDescriptorManager::extractLayoutBindings(const ThiefVKDescriptorSetDescription& description) const {
-	std::vector<vk::DescriptorSetLayoutBinding> bindings(description.size());
+	std::vector<vk::DescriptorSetLayoutBinding> bindings{};
 	
 	for (const auto& ThiefDescription : description) {
 		vk::DescriptorSetLayoutBinding binding{};
+		binding.setBinding(ThiefDescription.mDescriptor.mBinding);
 		binding.setDescriptorCount(1);
 		binding.setDescriptorType(ThiefDescription.mDescriptor.mDescType);
 		binding.setStageFlags(ThiefDescription.mDescriptor.mShaderStage);

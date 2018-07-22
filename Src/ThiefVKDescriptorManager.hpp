@@ -61,7 +61,6 @@ private:
 	void writeDescriptorSet(ThiefVKDescriptorSet&);
 	vk::DescriptorPool allocateNewPool();
 	std::vector<vk::DescriptorSetLayoutBinding> extractLayoutBindings(const ThiefVKDescriptorSetDescription&) const ;
-	std::vector<vk::WriteDescriptorSet> extractDescriptorSetWrites(const ThiefVKDescriptorSet&) const;
 
 	ThiefVKDevice& mDev;
 
