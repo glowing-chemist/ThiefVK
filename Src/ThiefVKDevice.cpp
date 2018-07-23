@@ -38,6 +38,9 @@ ThiefVKDevice::~ThiefVKDevice() {
     for(auto& resource : frameResources) {
         destroyPerFrameResources(resource);
     }
+    for(auto& [path, texture] : mTextureCache) {
+        destroyImage(texture);
+    }
     DestroyFrameBuffers();
     DestroyAllImageTextures();
     pipelineManager.Destroy();
@@ -896,6 +899,7 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     }
     destroyBuffer(resources.vertexBuffer);
     destroyBuffer(resources.indexBuffer);
+    destroyBuffer(resources.uniformBuffer);
 }
 
 
