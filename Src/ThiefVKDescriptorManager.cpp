@@ -64,10 +64,10 @@ ThiefVKDescriptorSet ThiefVKDescriptorManager::createDescriptorSet(const ThiefVK
 			allocInfo.setDescriptorSetCount(1);
 			allocInfo.setPSetLayouts(&layout);
 
+			std::vector<vk::Sampler> samplers{};
 			try {
 				auto descriptorSet = mDev.getLogicalDevice()->allocateDescriptorSets(allocInfo);
 
-				std::vector<vk::Sampler> samplers{};
 				for(const auto& desc : description) {
 					if(desc.mDescriptor.mDescType == vk::DescriptorType::eCombinedImageSampler)
 						samplers.push_back(mDev.createSampler());
@@ -77,6 +77,10 @@ ThiefVKDescriptorSet ThiefVKDescriptorManager::createDescriptorSet(const ThiefVK
 			}
 			catch (...) {
 				std::cerr << "pool exhausted trying next descriptor pool \n";
+
+				for(auto& sampler : samplers) {
+					mDev.destroySampler(sampler);
+				}
 			}
 		}
 		vk::DescriptorPool newPool = allocateNewPool();
