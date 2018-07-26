@@ -14,6 +14,7 @@ layout (push_constant) uniform pushConstants {
 } lights;
 
 layout(location = 0) out vec4 frameBuffer;
+layout(location = 1) in vec2 texCoords;
 
 void main() {
 	frameBuffer = vec4(1.0, 0.0, 0.0, 1.0);

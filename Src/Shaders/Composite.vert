@@ -6,11 +6,10 @@ out gl_PerVertex {
     vec4 gl_Position;
 };
 
+layout(location = 1) out vec2 texCoord;
 
 void main()
 {
-	// Pass through the coordinates for a full screen triangle.
-    float x = -1.0 + float((gl_VertexIndex & 1) << 2);
-    float y = -1.0 + float((gl_VertexIndex & 2) << 1);
-    gl_Position = vec4(x, y, 0, 1);
+	texCoord = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(texCoord * 2.0f + -1.0f, 0.0f, 1.0f);
 }
