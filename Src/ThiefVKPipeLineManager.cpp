@@ -89,7 +89,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     rastInfo.setPolygonMode(vk::PolygonMode::eFill); // output filled in fragments
     rastInfo.setLineWidth(1.0f);
     rastInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back
-    rastInfo.setFrontFace(vk::FrontFace::eCounterClockwise);
+    rastInfo.setFrontFace(vk::FrontFace::eClockwise);
     rastInfo.setDepthBiasEnable(false);
 
     vk::PipelineMultisampleStateCreateInfo multiSampInfo{};
@@ -145,7 +145,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
 
     if(description.vertexShader == ShaderName::DepthVertex || description.vertexShader == ShaderName::CompositeVertex) { // we need to specify ou rdepth stencil state
         vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
-        depthStencilInfo.setDepthTestEnable(true);
+        depthStencilInfo.setDepthTestEnable(false);
         depthStencilInfo.setDepthWriteEnable(true);
         depthStencilInfo.setDepthCompareOp(vk::CompareOp::eLess);
         depthStencilInfo.setDepthBoundsTestEnable(false);
