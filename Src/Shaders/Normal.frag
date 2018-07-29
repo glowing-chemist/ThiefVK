@@ -3,9 +3,9 @@
 
 layout(location = 0) in flat vec3 Norm;
 
-layout(location = 0) out ivec4 outColor;
+layout(location = 0) out vec4 outColor;
 
 
 void main() {
-    outColor = ivec4(Norm, 0);
+    outColor = ivec4(Norm, 1);
 }
