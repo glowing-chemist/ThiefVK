@@ -425,7 +425,7 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
-        auto [normalsImage, normalsMemory] = createImage(vk::Format::eR8G8B8A8Sint,
+        auto [normalsImage, normalsMemory] = createImage(vk::Format::eR8G8B8A8Srgb,
                                                          vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
@@ -448,7 +448,7 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
         vk::ImageViewCreateInfo normalsViewInfo{};
         normalsViewInfo.setImage(normalsImage);
         normalsViewInfo.setViewType(vk::ImageViewType::e2D);
-        normalsViewInfo.setFormat(vk::Format::eR8G8B8A8Sint);
+        normalsViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
         normalsViewInfo.setComponents(vk::ComponentMapping());
         normalsViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
@@ -498,7 +498,7 @@ void ThiefVKDevice::createRenderPasses() {
     depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
     vk::AttachmentDescription normalsPassAttachment{};
-    normalsPassAttachment.setFormat(vk::Format::eR8G8B8A8Sint);
+    normalsPassAttachment.setFormat(vk::Format::eR8G8B8A8Srgb);
     normalsPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare);
     normalsPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
     normalsPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
