@@ -14,14 +14,14 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(ThiefVKDevice& dev)
     :dev{dev} {
 
     // Load up the shader spir-v from disk and create shader modules.
-    shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransVert.spv");
-    shaderModules[ShaderName::BasicColourFragment]  = createShaderModule("./Shaders/BasicFragment.spv");
-    shaderModules[ShaderName::DepthVertex]        = createShaderModule("./Shaders/DepthVertex.spv");
-    shaderModules[ShaderName::DepthFragment]        = createShaderModule("./Shaders/DepthFragment.spv");
-    shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/NormalVertex.spv");
-    shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/NormalFragment.spv");
-    shaderModules[ShaderName::CompositeVertex]      = createShaderModule("./Shaders/CompositeVertex.spv");
-    shaderModules[ShaderName::CompositeFragment]    = createShaderModule("./Shaders/CompositeFragment.spv");
+    shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransform.vert.spv");
+    shaderModules[ShaderName::BasicColourFragment]  = createShaderModule("./Shaders/Colour.frag.spv");
+    shaderModules[ShaderName::DepthVertex]        = createShaderModule("./Shaders/Depth.vert.spv");
+    shaderModules[ShaderName::DepthFragment]        = createShaderModule("./Shaders/Depth.frag.spv");
+    shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/Normal.vert.spv");
+    shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/Normal.frag.spv");
+    shaderModules[ShaderName::CompositeVertex]      = createShaderModule("./Shaders/Composite.vert.spv");
+    shaderModules[ShaderName::CompositeFragment]    = createShaderModule("./Shaders/Composite.frag.spv");
 }
 
 
