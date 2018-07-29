@@ -894,6 +894,10 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     mDevice.destroySemaphore(resources.swapChainImageAvailable);
     mDevice.destroySemaphore(resources.imageRendered);
 
+	for (auto& descSet : resources.DescSets) {
+		DescriptorManager.destroyDescriptorSet(descSet);
+	}
+
     for(auto& buffer : resources.stagingBuffers)  {
         destroyBuffer(buffer);
     }
