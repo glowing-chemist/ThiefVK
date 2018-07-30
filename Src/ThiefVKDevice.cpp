@@ -479,7 +479,7 @@ void ThiefVKDevice::createRenderPasses() {
     // Specify all attachments used in all subrenderpasses
     vk::AttachmentDescription colourPassAttachment{}; 
     colourPassAttachment.setFormat(vk::Format::eR8G8B8A8Srgb);
-    colourPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
+    colourPassAttachment.setLoadOp(vk::AttachmentLoadOp::eClear); // we are going to overwrite all pixles
     colourPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
     colourPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     colourPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
@@ -490,16 +490,14 @@ void ThiefVKDevice::createRenderPasses() {
     depthPassAttachment.setFormat(vk::Format::eD32Sfloat); // store in each pixel a 32bit depth value
     depthPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
     depthPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
-    depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
-    depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-    depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eClear);
     depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     depthPassAttachment.setInitialLayout(vk::ImageLayout::eUndefined); // write in a subpass then read in a subsequent one
     depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
     vk::AttachmentDescription normalsPassAttachment{};
     normalsPassAttachment.setFormat(vk::Format::eR8G8B8A8Srgb);
-    normalsPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare);
+    normalsPassAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
     normalsPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
     normalsPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     normalsPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
