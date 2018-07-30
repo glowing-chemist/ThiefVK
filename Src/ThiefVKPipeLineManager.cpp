@@ -175,10 +175,20 @@ vk::ShaderModule ThiefVKPipelineManager::createShaderModule(std::string path) co
 }
 
 
-vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSetLayout& descLayouts, ShaderName)  const {
+vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSetLayout& descLayouts, ShaderName name)  const {
     vk::PipelineLayoutCreateInfo pipelinelayoutinfo{};
     pipelinelayoutinfo.setPSetLayouts(&descLayouts);
     pipelinelayoutinfo.setSetLayoutCount(1);
+
+    vk::PushConstantRange range{};
+    if(name == ShaderName::CompositeFragment) {
+        range.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+        range.setOffset(0);
+        range.setSize(sizeof(uint32_t));
+
+        pipelinelayoutinfo.setPushConstantRangeCount(1);
+        pipelinelayoutinfo.setPPushConstantRanges(&range);
+    }
 
     return dev.getLogicalDevice()->createPipelineLayout(pipelinelayoutinfo);
 }
