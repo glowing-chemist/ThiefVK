@@ -106,7 +106,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     blendStateInfo.setPAttachments(&colorAttachState);
 
 	vk::DescriptorSetLayout descSetLayouts = getDescriptorSetLayout(description.fragmentShader);
-    vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.vertexShader);
+    vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.fragmentShader);
 
     const uint32_t subpassIndex = [&description]() {
         switch (description.vertexShader) {

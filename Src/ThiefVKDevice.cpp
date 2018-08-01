@@ -20,6 +20,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 	MemoryManager{&mPhysDev, &mDevice},
 	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
 	mVertexBufferManager{*this, vk::BufferUsageFlagBits::eVertexBuffer},
+    mSpotLightBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
 	DescriptorManager{*this},
 	mWindowSurface{surface}, 
 	mWindow{window}, 
@@ -122,6 +123,9 @@ void ThiefVKDevice::startFrame() {
         destroyBuffer(resources.vertexBuffer);
         destroyBuffer(resources.indexBuffer);
         destroyBuffer(resources.uniformBuffer);
+        destroyBuffer(resources.spotLightBuffer);
+
+        resources.textureImages.clear();
     }
 
     vk::CommandBufferBeginInfo beginInfo{};
@@ -138,10 +142,15 @@ void ThiefVKDevice::endFrame() {
     const std::vector<entryInfo> uniformBufferOffsets = mUniformBufferManager.getBufferOffsets();
     auto [uniformBuffer, uniformStagingBuffer] = mUniformBufferManager.flushBufferUploads();
 
+    const std::vector<entryInfo> spotLIghtOffsets = mSpotLightBufferManager.getBufferOffsets();
+    auto [spotLightBuffer, spotLightStagingBuffer] = mSpotLightBufferManager.flushBufferUploads();
+
     resources.stagingBuffers.push_back(vertexStagingBuffer);
     resources.vertexBuffer = vertexBuffer;
     resources.stagingBuffers.push_back(uniformStagingBuffer);
     resources.uniformBuffer = uniformBuffer;
+    resources.stagingBuffers.push_back(spotLightStagingBuffer);
+    resources.spotLightBuffer = spotLightBuffer;
 
     // Get all of the descriptor sets needed for this frame.
     ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription(ShaderName::BasicColourFragment);
@@ -179,6 +188,8 @@ void ThiefVKDevice::endFrame() {
 		resources.normalsCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 	}
 
+    uint32_t numberOfLights = spotLIghtOffsets.size();
+    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(uint32_t), &numberOfLights);
     resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), 0, compositeDescriptor.getHandle(), {} );
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
@@ -229,6 +240,11 @@ void ThiefVKDevice::draw(const geometry& geom) {
     viewInfo.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
     frameResources[currentFrameBufferIndex].textureImageViews.push_back(mDevice.createImageView(viewInfo));
+}
+
+
+void ThiefVKDevice::addSpotLight(glm::mat4& view) {
+    mSpotLightBufferManager.addBufferElements({view});
 }
 
 
@@ -930,6 +946,7 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     destroyBuffer(resources.vertexBuffer);
     destroyBuffer(resources.indexBuffer);
     destroyBuffer(resources.uniformBuffer);
+    destroyBuffer(resources.spotLightBuffer);
 }
 
 
@@ -954,7 +971,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
     uboDescriptorLayout.mDescriptor.mBinding = 0;
     uboDescriptorLayout.mDescriptor.mDescType = shader == ShaderName::CompositeFragment ? vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eUniformBufferDynamic;
     uboDescriptorLayout.mDescriptor.mShaderStage  = shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
-    uboDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].uniformBuffer.mBuffer;
+    uboDescriptorLayout.mResource = shader == ShaderName::CompositeFragment ? &frameResources[currentFrameBufferIndex].spotLightBuffer.mBuffer : &frameResources[currentFrameBufferIndex].uniformBuffer.mBuffer;
 
     descSets.push_back(uboDescriptorLayout);
 

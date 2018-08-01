@@ -67,10 +67,10 @@ struct perFrameResources {
     vk::CommandBuffer compositeCmdBuffer;
 
     ThiefVKBuffer vertexBuffer;
-
     ThiefVKBuffer indexBuffer;
-
     ThiefVKBuffer uniformBuffer;
+    ThiefVKBuffer spotLightBuffer; 
+
     std::vector<ThiefVKDescriptorSet> DescSets;
 };
 
@@ -177,6 +177,7 @@ private:
 
 	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
 	ThiefVKBufferManager<Vertex>	mVertexBufferManager;
+    ThiefVKBufferManager<glm::mat4> mSpotLightBufferManager;
 
 	ThiefVKDescriptorManager DescriptorManager;
 
