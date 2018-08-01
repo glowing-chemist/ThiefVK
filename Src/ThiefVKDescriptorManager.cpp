@@ -17,6 +17,7 @@ ThiefVKDescriptorManager::ThiefVKDescriptorManager(ThiefVKDevice& device) : mDev
 
 void ThiefVKDescriptorManager::Destroy() {
 	for(auto& [key, descriptorSet] : mFreeCache) {
+		mDev.getLogicalDevice()->destroyDescriptorSetLayout(descriptorSet.first);
 		for(auto& descriptor : descriptorSet.second) {
 			for(auto& sampler : descriptor.mSamplers) {
 				mDev.destroySampler(sampler);
