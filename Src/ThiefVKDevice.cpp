@@ -9,6 +9,7 @@
 #include <limits>
 
 
+
 // ThiefVKDeviceMemberFunctions
 
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
@@ -90,17 +91,38 @@ void ThiefVKDevice::startFrame() {
         frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
 
     } else { // Otherwise just reset them
-        frameResources[currentFrameBufferIndex].primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
-        frameResources[currentFrameBufferIndex].flushCommandBuffer.reset(vk::CommandBufferResetFlags());
-        frameResources[currentFrameBufferIndex].colourCmdBuffer.reset(vk::CommandBufferResetFlags());
-        frameResources[currentFrameBufferIndex].depthCmdBuffer.reset(vk::CommandBufferResetFlags());
-        frameResources[currentFrameBufferIndex].normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
+        auto& resources = frameResources[currentFrameBufferIndex];
 
-        for(uint32_t i = 0; i < frameResources[currentFrameBufferIndex].DescSets.size(); ++i) {
+        resources.primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
+        resources.flushCommandBuffer.reset(vk::CommandBufferResetFlags());
+        resources.colourCmdBuffer.reset(vk::CommandBufferResetFlags());
+        resources.depthCmdBuffer.reset(vk::CommandBufferResetFlags());
+        resources.normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
+
+        for(uint32_t i = 0; i < resources.DescSets.size(); ++i) {
             const auto descriptorSet = frameResources[currentFrameBufferIndex].DescSets.back();
             frameResources[currentFrameBufferIndex].DescSets.pop_back();
             DescriptorManager.destroyDescriptorSet(descriptorSet);
         }
+
+
+        for (uint32_t i = 0; i < resources.DescSets.size(); ++i) {
+            DescriptorManager.destroyDescriptorSet(resources.DescSets.back());
+            resources.DescSets.pop_back();
+        }
+
+        for(uint32_t i = 0; i < resources.stagingBuffers.size(); ++i)  {
+            destroyBuffer(resources.stagingBuffers.back());
+            resources.stagingBuffers.pop_back();
+        }
+
+        for(uint32_t i = 0; i < resources.textureImageViews.size(); ++i) {
+            mDevice.destroyImageView(resources.textureImageViews.back());
+            resources.textureImageViews.pop_back();
+        }   
+        destroyBuffer(resources.vertexBuffer);
+        destroyBuffer(resources.indexBuffer);
+        destroyBuffer(resources.uniformBuffer);
     }
 
     vk::CommandBufferBeginInfo beginInfo{};
@@ -309,8 +331,8 @@ ThiefVKBuffer ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, cons
 												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eTransferSrc));
 
 	MemoryManager.BindBuffer(buffer, bufferMem);
-
-	return {buffer, bufferMem};
+	
+    return {buffer, bufferMem};
 }
 
 
@@ -892,12 +914,19 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     mDevice.destroySemaphore(resources.swapChainImageAvailable);
     mDevice.destroySemaphore(resources.imageRendered);
 
-	for (auto& descSet : resources.DescSets) {
-		DescriptorManager.destroyDescriptorSet(descSet);
+	for (uint32_t i = 0; i < resources.DescSets.size(); ++i) {
+		DescriptorManager.destroyDescriptorSet(resources.DescSets.back());
+        resources.DescSets.pop_back();
 	}
 
-    for(auto& buffer : resources.stagingBuffers)  {
-        destroyBuffer(buffer);
+    for(uint32_t i = 0; i < resources.stagingBuffers.size(); ++i)  {
+        destroyBuffer(resources.stagingBuffers.back());
+        resources.stagingBuffers.pop_back();
+    }
+
+    for(uint32_t i = 0; i < resources.textureImageViews.size(); ++i) {
+        mDevice.destroyImageView(resources.textureImageViews.back());
+        resources.textureImageViews.pop_back();
     }
     destroyBuffer(resources.vertexBuffer);
     destroyBuffer(resources.indexBuffer);
