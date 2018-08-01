@@ -100,9 +100,8 @@ void ThiefVKDevice::startFrame() {
         resources.normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
 
         for(uint32_t i = 0; i < resources.DescSets.size(); ++i) {
-            const auto descriptorSet = frameResources[currentFrameBufferIndex].DescSets.back();
-            frameResources[currentFrameBufferIndex].DescSets.pop_back();
-            DescriptorManager.destroyDescriptorSet(descriptorSet);
+            DescriptorManager.destroyDescriptorSet(resources.DescSets.back());
+            resources.DescSets.pop_back();
         }
 
 
