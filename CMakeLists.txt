@@ -20,6 +20,8 @@ add_library(${PROJECT_NAME} ${SOURCE})
 
 add_subdirectory("Src/Shaders")
 
+add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+
 if(WIN32)
 	target_link_libraries(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/VulkanSDK1.0.65.0/Lib/vulkan-1.lib")
 else()
