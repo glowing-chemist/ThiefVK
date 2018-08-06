@@ -112,12 +112,10 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
         switch (description.vertexShader) {
             case ShaderName::BasicTransformVertex:
                 return 0u;
-            case ShaderName::DepthVertex:
-                return 1u;
             case ShaderName::NormalVertex:
-                return  2u;
+                return  1u;
             case ShaderName::CompositeVertex:
-                return 3u;
+                return 2u;
             default:
                 return std::numeric_limits<uint32_t>::max();
         }
@@ -143,15 +141,12 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     pipeLineCreateInfo.setRenderPass(description.renderPass);
     pipeLineCreateInfo.setSubpass(subpassIndex); // index for subpass that this pipeline will be used in
 
-    if(description.vertexShader == ShaderName::DepthVertex || description.vertexShader == ShaderName::CompositeVertex) { // we need to specify ou rdepth stencil state
-        vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
-        depthStencilInfo.setDepthTestEnable(false);
-        depthStencilInfo.setDepthWriteEnable(true);
-        depthStencilInfo.setDepthCompareOp(vk::CompareOp::eLess);
-        depthStencilInfo.setDepthBoundsTestEnable(false);
-
-        pipeLineCreateInfo.setPDepthStencilState(&depthStencilInfo);
-    }
+    vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
+    depthStencilInfo.setDepthTestEnable(true);
+    depthStencilInfo.setDepthWriteEnable(true);
+    depthStencilInfo.setDepthCompareOp(vk::CompareOp::eLessOrEqual);
+    depthStencilInfo.setDepthBoundsTestEnable(false);
+    pipeLineCreateInfo.setPDepthStencilState(&depthStencilInfo);
 
     vk::Pipeline pipeline = dev.getLogicalDevice()->createGraphicsPipeline(nullptr, pipeLineCreateInfo);
 

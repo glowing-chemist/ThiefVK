@@ -39,7 +39,6 @@ struct ThiefVKImageTextutres {
 struct ThiefVKRenderPasses{
     std::vector<vk::AttachmentDescription> attatchments;
     vk::SubpassDescription colourPass;
-    vk::SubpassDescription depthPass;
     vk::SubpassDescription normalsPass;
     vk::SubpassDescription compositePass;
 

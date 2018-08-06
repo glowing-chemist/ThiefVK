@@ -179,9 +179,9 @@ void ThiefVKDevice::endFrame() {
         resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), static_cast<uint32_t>(bufferOffset));
 		resources.colourCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 		
-		resources.depthCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
-        resources.depthCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::DepthFragment), 0, depthDescriptor.getHandle(), bufferOffset );
-		resources.depthCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+		//resources.depthCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+        //resources.depthCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::DepthFragment), 0, depthDescriptor.getHandle(), bufferOffset );
+		//resources.depthCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
         resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), bufferOffset);
@@ -208,7 +208,7 @@ void ThiefVKDevice::startFrameInternal() {
 	vk::RenderPassBeginInfo renderPassBegin{};
 	renderPassBegin.framebuffer = frameBuffers[currentFrameBufferIndex];
 	renderPassBegin.renderPass = mRenderPasses.RenderPass;
-	vk::ClearValue colour[4]  = {vk::ClearValue{0.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}};
+	vk::ClearValue colour[4]  = {vk::ClearValue{0.0f}, vk::ClearValue{1.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}};
     renderPassBegin.setClearValueCount(4);
 	renderPassBegin.setPClearValues(colour);
 	renderPassBegin.setRenderArea(vk::Rect2D{ { 0, 0 },
@@ -218,7 +218,7 @@ void ThiefVKDevice::startFrameInternal() {
 	frameResources[currentFrameBufferIndex].primaryCmdBuffer.beginRenderPass(renderPassBegin, vk::SubpassContents::eSecondaryCommandBuffers);
 
 	startRecordingColourCmdBuffer();
-	startRecordingDepthCmdBuffer();
+	//startRecordingDepthCmdBuffer();
 	startRecordingNormalsCmdBuffer();
     startRecordingCompositeCmdBuffer();
 }
@@ -256,14 +256,12 @@ void ThiefVKDevice::endFrameInternal() {
 
 	// end recording in to these as we're
 	resources.colourCmdBuffer.end();
-	resources.depthCmdBuffer.end();
+	//resources.depthCmdBuffer.end();
 	resources.normalsCmdBuffer.end();
     resources.compositeCmdBuffer.end();
 
 	// Execute the secondary cmd buffers in the primary
 	primaryCmdBuffer.executeCommands(1, &resources.colourCmdBuffer);
-	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
-	primaryCmdBuffer.executeCommands(1, &resources.depthCmdBuffer);
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
 	primaryCmdBuffer.executeCommands(1, &resources.normalsCmdBuffer);
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
@@ -273,7 +271,7 @@ void ThiefVKDevice::endFrameInternal() {
 	primaryCmdBuffer.end();
 
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].colourImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
-    transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+    transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR);
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].normalsImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     transitionImageLayout(mSwapChain.getImage(currentFrameBufferIndex), vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
@@ -525,9 +523,9 @@ void ThiefVKDevice::createRenderPasses() {
 
     vk::AttachmentDescription depthPassAttachment{};
     depthPassAttachment.setFormat(vk::Format::eD32Sfloat); // store in each pixel a 32bit depth value
-    depthPassAttachment.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
+    depthPassAttachment.setLoadOp(vk::AttachmentLoadOp::eClear); // we are going to overwrite all pixles
     depthPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
-    depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eClear);
+    depthPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     depthPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     depthPassAttachment.setInitialLayout(vk::ImageLayout::eUndefined); // write in a subpass then read in a subsequent one
     depthPassAttachment.setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
@@ -558,21 +556,19 @@ void ThiefVKDevice::createRenderPasses() {
                                                                 vk::AttachmentReference{2, vk::ImageLayout::eColorAttachmentOptimal}, 
                                                                 vk::AttachmentReference{3, vk::ImageLayout::eColorAttachmentOptimal}};
 
-    vk::AttachmentReference depthRef = {1, vk::ImageLayout::eDepthStencilReadOnlyOptimal};
+    vk::AttachmentReference depthRef = {1, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR};
 
     vk::SubpassDescription colourPassDesc{};
     colourPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
     colourPassDesc.setColorAttachmentCount(1);
     colourPassDesc.setPColorAttachments(&colourAttatchmentRefs[0]);
-
-    vk::SubpassDescription depthPassDesc{};
-    depthPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-    depthPassDesc.setPDepthStencilAttachment(&depthRef);
+    colourPassDesc.setPDepthStencilAttachment(&depthRef);
 
     vk::SubpassDescription normalsPassDesc{};
     normalsPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
     normalsPassDesc.setColorAttachmentCount(1);
     normalsPassDesc.setPColorAttachments(&colourAttatchmentRefs[1]);
+    normalsPassDesc.setPDepthStencilAttachment(&depthRef);
 
     std::array<vk::AttachmentReference, 2> inputAttachments{vk::AttachmentReference{0, vk::ImageLayout::eShaderReadOnlyOptimal}, 
                                                             vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal}};
@@ -589,7 +585,6 @@ void ThiefVKDevice::createRenderPasses() {
     compositPassDesc.setPColorAttachments(&swapChainAttachment);
 
     mRenderPasses.colourPass    = colourPassDesc;
-    mRenderPasses.depthPass     = depthPassDesc;
     mRenderPasses.normalsPass   = normalsPassDesc;
 
 
@@ -617,26 +612,17 @@ void ThiefVKDevice::createRenderPasses() {
     colourToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
     colourToCompositeDepen.setDependencyFlags(vk::DependencyFlagBits::eByRegion);
 
-    vk::SubpassDependency depthToCompositeDepen{};
-    depthToCompositeDepen.setSrcSubpass(1);
-    depthToCompositeDepen.setDstSubpass(2);
-    depthToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    depthToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
-    depthToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-    depthToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-    depthToCompositeDepen.setDependencyFlags(vk::DependencyFlagBits::eByRegion);
-
     vk::SubpassDependency normalsToCompositeDepen{};
-    normalsToCompositeDepen.setSrcSubpass(2);
-    normalsToCompositeDepen.setDstSubpass(3);
+    normalsToCompositeDepen.setSrcSubpass(1);
+    normalsToCompositeDepen.setDstSubpass(2);
     normalsToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     normalsToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
     normalsToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
     normalsToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
     normalsToCompositeDepen.setDependencyFlags(vk::DependencyFlagBits::eByRegion);
 
-    std::array<vk::SubpassDescription, 4> allSubpasses{colourPassDesc, depthPassDesc, normalsPassDesc, compositPassDesc};
-    std::array<vk::SubpassDependency, 4>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, depthToCompositeDepen, normalsToCompositeDepen};
+    std::array<vk::SubpassDescription, 3> allSubpasses{colourPassDesc, normalsPassDesc, compositPassDesc};
+    std::array<vk::SubpassDependency, 3>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, normalsToCompositeDepen};
 
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.setAttachmentCount(allAttachments.size());
@@ -768,7 +754,7 @@ void ThiefVKDevice::transitionImageLayout(vk::Image& image, vk::ImageLayout oldL
 
     memBarrier.setImage(image);
 
-    if(newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+    if(newLayout == vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR) {
         memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
     } else {
         memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
@@ -870,7 +856,7 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 
     vk::CommandBufferInheritanceInfo inheritanceInfo{};
     inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
-    inheritanceInfo.setSubpass(2);
+    inheritanceInfo.setSubpass(1);
     inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
 
 	vk::CommandBufferBeginInfo beginInfo{};
@@ -900,7 +886,7 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
 
     vk::CommandBufferInheritanceInfo inheritanceInfo{};
     inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
-    inheritanceInfo.setSubpass(3);
+    inheritanceInfo.setSubpass(2);
     inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
 
     vk::CommandBufferBeginInfo beginInfo{};
