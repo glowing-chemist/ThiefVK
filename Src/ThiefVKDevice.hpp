@@ -34,12 +34,17 @@ struct ThiefVKImageTextutres {
     vk::Image normalsImage;
     vk::ImageView normalsImageView;
     Allocation normalsImageMemory;
+
+    vk::Image albedoImage;
+    vk::ImageView albedoImageView;
+    Allocation albedoImageMemory;
 };
 
 struct ThiefVKRenderPasses{
     std::vector<vk::AttachmentDescription> attatchments;
     vk::SubpassDescription colourPass;
     vk::SubpassDescription normalsPass;
+    vk::SubpassDescription albedoPass;
     vk::SubpassDescription compositePass;
 
     vk::RenderPass RenderPass;
@@ -61,7 +66,7 @@ struct perFrameResources {
 
 	vk::CommandBuffer primaryCmdBuffer;
 	vk::CommandBuffer colourCmdBuffer;
-	vk::CommandBuffer depthCmdBuffer;
+	vk::CommandBuffer albedoCmdBuffer;
 	vk::CommandBuffer normalsCmdBuffer;
     vk::CommandBuffer compositeCmdBuffer;
 
@@ -153,7 +158,7 @@ private:
     void              endSingleUseGraphicsCommandBuffer(vk::CommandBuffer);
 
 	vk::CommandBuffer&  startRecordingColourCmdBuffer();
-	vk::CommandBuffer&  startRecordingDepthCmdBuffer();
+	vk::CommandBuffer&  startRecordingAlbedoCmdBuffer();
 	vk::CommandBuffer&  startRecordingNormalsCmdBuffer();
 	vk::CommandBuffer&  startRecordingCompositeCmdBuffer();
 

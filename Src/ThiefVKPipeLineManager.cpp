@@ -16,8 +16,8 @@ ThiefVKPipelineManager::ThiefVKPipelineManager(ThiefVKDevice& dev)
     // Load up the shader spir-v from disk and create shader modules.
     shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransform.vert.spv");
     shaderModules[ShaderName::BasicColourFragment]  = createShaderModule("./Shaders/Colour.frag.spv");
-    shaderModules[ShaderName::DepthVertex]        = createShaderModule("./Shaders/Depth.vert.spv");
-    shaderModules[ShaderName::DepthFragment]        = createShaderModule("./Shaders/Depth.frag.spv");
+    shaderModules[ShaderName::AlbedoVertex]        = createShaderModule("./Shaders/Albedo.vert.spv");
+    shaderModules[ShaderName::AlbedoFragment]        = createShaderModule("./Shaders/Albedo.frag.spv");
     shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/Normal.vert.spv");
     shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/Normal.frag.spv");
     shaderModules[ShaderName::CompositeVertex]      = createShaderModule("./Shaders/Composite.vert.spv");
@@ -114,8 +114,10 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
                 return 0u;
             case ShaderName::NormalVertex:
                 return  1u;
+            case ShaderName::AlbedoVertex:
+                return  2u;
             case ShaderName::CompositeVertex:
-                return 2u;
+                return 3u;
             default:
                 return std::numeric_limits<uint32_t>::max();
         }

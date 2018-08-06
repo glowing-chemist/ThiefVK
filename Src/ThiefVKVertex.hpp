@@ -10,10 +10,11 @@ struct Vertex { // vertex struct representing vertex positions and texture coord
 	glm::vec3 pos;
 	glm::vec3 norm;
 	glm::vec2 tex;
+	float	  albedo;
 
     static vk::VertexInputBindingDescription getBindingDesc();
 
-	static std::array<vk::VertexInputAttributeDescription, 3> getAttribDesc();
+	static std::array<vk::VertexInputAttributeDescription, 4> getAttribDesc();
 };
 
 

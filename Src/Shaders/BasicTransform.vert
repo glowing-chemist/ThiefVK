@@ -8,8 +8,9 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout(location = 0) in vec3 fragPos;
-layout(location = 2) in vec3 normal;
 layout(location = 1) in vec2 inText;
+layout(location = 2) in vec3 normal;
+layout(location = 3) in float albedo;
 
 layout(location = 0) out vec2 texCoord;
 

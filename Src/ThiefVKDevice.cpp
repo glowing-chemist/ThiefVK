@@ -87,7 +87,7 @@ void ThiefVKDevice::startFrame() {
         frameResources[currentFrameBufferIndex].primaryCmdBuffer            = primaryCmdBuffers[0];
         frameResources[currentFrameBufferIndex].flushCommandBuffer       = primaryCmdBuffers[1];
         frameResources[currentFrameBufferIndex].colourCmdBuffer         = secondaryCmdBuffers[0];
-        frameResources[currentFrameBufferIndex].depthCmdBuffer          = secondaryCmdBuffers[1];
+        frameResources[currentFrameBufferIndex].albedoCmdBuffer          = secondaryCmdBuffers[1];
         frameResources[currentFrameBufferIndex].normalsCmdBuffer            = secondaryCmdBuffers[2];
         frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
 
@@ -97,7 +97,7 @@ void ThiefVKDevice::startFrame() {
         resources.primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
         resources.flushCommandBuffer.reset(vk::CommandBufferResetFlags());
         resources.colourCmdBuffer.reset(vk::CommandBufferResetFlags());
-        resources.depthCmdBuffer.reset(vk::CommandBufferResetFlags());
+        resources.albedoCmdBuffer.reset(vk::CommandBufferResetFlags());
         resources.normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
 
         for(uint32_t i = 0; i < resources.DescSets.size(); ++i) {
@@ -156,8 +156,8 @@ void ThiefVKDevice::endFrame() {
     ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription(ShaderName::BasicColourFragment);
     ThiefVKDescriptorSet basicColourDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
 
-    ThiefVKDescriptorSetDescription depthDesc = getDescriptorSetDescription(ShaderName::DepthFragment);
-    ThiefVKDescriptorSet depthDescriptor = DescriptorManager.getDescriptorSet(depthDesc);
+    ThiefVKDescriptorSetDescription albedoDesc = getDescriptorSetDescription(ShaderName::AlbedoFragment);
+    ThiefVKDescriptorSet albedoDescriptor = DescriptorManager.getDescriptorSet(albedoDesc);
 
     ThiefVKDescriptorSetDescription normalsDesc = getDescriptorSetDescription(ShaderName::NormalFragment);
     ThiefVKDescriptorSet normalsDescriptor = DescriptorManager.getDescriptorSet(normalsDesc);
@@ -166,7 +166,7 @@ void ThiefVKDevice::endFrame() {
     ThiefVKDescriptorSet compositeDescriptor = DescriptorManager.getDescriptorSet(compositeDesc);
 
     frameResources[currentFrameBufferIndex].DescSets.push_back(basicColourDescriptor);
-    frameResources[currentFrameBufferIndex].DescSets.push_back(depthDescriptor);
+    frameResources[currentFrameBufferIndex].DescSets.push_back(albedoDescriptor);
     frameResources[currentFrameBufferIndex].DescSets.push_back(normalsDescriptor);
     frameResources[currentFrameBufferIndex].DescSets.push_back(compositeDescriptor);
 	
@@ -178,14 +178,14 @@ void ThiefVKDevice::endFrame() {
 		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
         resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), static_cast<uint32_t>(bufferOffset));
 		resources.colourCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
-		
-		//resources.depthCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
-        //resources.depthCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::DepthFragment), 0, depthDescriptor.getHandle(), bufferOffset );
-		//resources.depthCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
         resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), bufferOffset);
 		resources.normalsCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+
+        resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+        resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), bufferOffset );
+        resources.albedoCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 	}
 
     uint32_t numberOfLights = spotLIghtOffsets.size();
@@ -208,8 +208,8 @@ void ThiefVKDevice::startFrameInternal() {
 	vk::RenderPassBeginInfo renderPassBegin{};
 	renderPassBegin.framebuffer = frameBuffers[currentFrameBufferIndex];
 	renderPassBegin.renderPass = mRenderPasses.RenderPass;
-	vk::ClearValue colour[4]  = {vk::ClearValue{0.0f}, vk::ClearValue{1.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}};
-    renderPassBegin.setClearValueCount(4);
+	vk::ClearValue colour[5]  = {vk::ClearValue{0.0f}, vk::ClearValue{1.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}};
+    renderPassBegin.setClearValueCount(5);
 	renderPassBegin.setPClearValues(colour);
 	renderPassBegin.setRenderArea(vk::Rect2D{ { 0, 0 },
 		{ static_cast<uint32_t>(mSwapChain.getSwapChainImageHeight()), static_cast<uint32_t>(mSwapChain.getSwapChainImageWidth()) } });
@@ -218,7 +218,7 @@ void ThiefVKDevice::startFrameInternal() {
 	frameResources[currentFrameBufferIndex].primaryCmdBuffer.beginRenderPass(renderPassBegin, vk::SubpassContents::eSecondaryCommandBuffers);
 
 	startRecordingColourCmdBuffer();
-	//startRecordingDepthCmdBuffer();
+	startRecordingAlbedoCmdBuffer();
 	startRecordingNormalsCmdBuffer();
     startRecordingCompositeCmdBuffer();
 }
@@ -256,7 +256,7 @@ void ThiefVKDevice::endFrameInternal() {
 
 	// end recording in to these as we're
 	resources.colourCmdBuffer.end();
-	//resources.depthCmdBuffer.end();
+	resources.albedoCmdBuffer.end();
 	resources.normalsCmdBuffer.end();
     resources.compositeCmdBuffer.end();
 
@@ -264,6 +264,8 @@ void ThiefVKDevice::endFrameInternal() {
 	primaryCmdBuffer.executeCommands(1, &resources.colourCmdBuffer);
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
 	primaryCmdBuffer.executeCommands(1, &resources.normalsCmdBuffer);
+    primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
+    primaryCmdBuffer.executeCommands(1, &resources.albedoCmdBuffer);
 	primaryCmdBuffer.nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
     primaryCmdBuffer.executeCommands(1, &resources.compositeCmdBuffer);
 
@@ -273,6 +275,7 @@ void ThiefVKDevice::endFrameInternal() {
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].colourImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR);
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].normalsImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+    transitionImageLayout(deferedTextures[currentFrameBufferIndex].albedoImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     transitionImageLayout(mSwapChain.getImage(currentFrameBufferIndex), vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
     resources.flushCommandBuffer.end();
@@ -375,6 +378,8 @@ void ThiefVKDevice::DestroyAllImageTextures() {
         DestroyImage(images.depthImage, images.depthImageMemory);
         DestroyImageView(images.normalsImageView);
         DestroyImage(images.normalsImage, images.normalsImageMemory);
+        DestroyImageView(images.albedoImageView);
+        DestroyImage(images.albedoImage, images.albedoImageMemory);
     }
 }
 
@@ -464,6 +469,10 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
                                                          vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
+        auto [albedoImage, albedoMemory] =  createImage(vk::Format::eR8Unorm,
+                                                         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
+                                                         mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
+
 
                 
         vk::ImageViewCreateInfo colourViewInfo{};
@@ -487,10 +496,18 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
         normalsViewInfo.setComponents(vk::ComponentMapping());
         normalsViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
+        vk::ImageViewCreateInfo albedoViewInfo{};
+        albedoViewInfo.setImage(albedoImage);
+        albedoViewInfo.setViewType(vk::ImageViewType::e2D);
+        albedoViewInfo.setFormat(vk::Format::eR8Unorm);
+        albedoViewInfo.setComponents(vk::ComponentMapping());
+        albedoViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
 
         vk::ImageView colourImageView  = mDevice.createImageView(colourViewInfo);
         vk::ImageView depthImageView   = mDevice.createImageView(depthViewInfo);
         vk::ImageView normalsImageView = mDevice.createImageView(normalsViewInfo);
+        vk::ImageView albedoImageView  = mDevice.createImageView(albedoViewInfo);
 
         Result.colourImage          = colourImage;
         Result.colourImageView      = colourImageView;
@@ -503,6 +520,10 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
         Result.normalsImage         = normalsImage;
         Result.normalsImageView     = normalsImageView;
         Result.normalsImageMemory   = normalsMemory;
+
+        Result.albedoImage          = albedoImage;
+        Result.albedoImageView      = albedoImageView;
+        Result.albedoImageMemory         = albedoMemory;
 
         deferedTextures.push_back(Result);
     }
@@ -539,6 +560,15 @@ void ThiefVKDevice::createRenderPasses() {
     normalsPassAttachment.setInitialLayout(vk::ImageLayout::eUndefined);
     normalsPassAttachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal); // these will be used in the subsqeuent light renderpass
 
+    vk::AttachmentDescription albedoPassAttachment{};
+    albedoPassAttachment.setFormat(vk::Format::eR8Unorm);
+    albedoPassAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
+    albedoPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
+    albedoPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
+    albedoPassAttachment.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
+    albedoPassAttachment.setInitialLayout(vk::ImageLayout::eUndefined);
+    albedoPassAttachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal); // these will be used in the subsqeuent light renderpass
+
     // composite subPasses
     vk::AttachmentDescription swapChainImageAttachment{};
     swapChainImageAttachment.setFormat(mSwapChain.getSwapChainImageFormat());
@@ -552,9 +582,10 @@ void ThiefVKDevice::createRenderPasses() {
 
 
     // specify the subpass descriptions
-    std::array<vk::AttachmentReference, 3> colourAttatchmentRefs{vk::AttachmentReference{0, vk::ImageLayout::eColorAttachmentOptimal}, 
+    std::array<vk::AttachmentReference, 4> colourAttatchmentRefs{vk::AttachmentReference{0, vk::ImageLayout::eColorAttachmentOptimal}, 
                                                                 vk::AttachmentReference{2, vk::ImageLayout::eColorAttachmentOptimal}, 
-                                                                vk::AttachmentReference{3, vk::ImageLayout::eColorAttachmentOptimal}};
+                                                                vk::AttachmentReference{3, vk::ImageLayout::eColorAttachmentOptimal},
+                                                                vk::AttachmentReference{4, vk::ImageLayout::eColorAttachmentOptimal}};
 
     vk::AttachmentReference depthRef = {1, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR};
 
@@ -570,11 +601,18 @@ void ThiefVKDevice::createRenderPasses() {
     normalsPassDesc.setPColorAttachments(&colourAttatchmentRefs[1]);
     normalsPassDesc.setPDepthStencilAttachment(&depthRef);
 
-    std::array<vk::AttachmentReference, 2> inputAttachments{vk::AttachmentReference{0, vk::ImageLayout::eShaderReadOnlyOptimal}, 
-                                                            vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal}};
+    vk::SubpassDescription albedoPassDesc{};
+    albedoPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    albedoPassDesc.setColorAttachmentCount(1);
+    albedoPassDesc.setPColorAttachments(&colourAttatchmentRefs[2]);
+    albedoPassDesc.setPDepthStencilAttachment(&depthRef);
+
+    std::array<vk::AttachmentReference, 3> inputAttachments{vk::AttachmentReference{0, vk::ImageLayout::eShaderReadOnlyOptimal}, 
+                                                            vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal},
+                                                            vk::AttachmentReference{3, vk::ImageLayout::eShaderReadOnlyOptimal}};
 
     vk::AttachmentReference inputDepthAttatchment{1, vk::ImageLayout::eDepthStencilReadOnlyOptimal};
-    vk::AttachmentReference swapChainAttachment{3, vk::ImageLayout::eColorAttachmentOptimal};
+    vk::AttachmentReference swapChainAttachment{4, vk::ImageLayout::eColorAttachmentOptimal};
 
     vk::SubpassDescription compositPassDesc{};
     compositPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
@@ -586,9 +624,10 @@ void ThiefVKDevice::createRenderPasses() {
 
     mRenderPasses.colourPass    = colourPassDesc;
     mRenderPasses.normalsPass   = normalsPassDesc;
+    mRenderPasses.albedoPass    = albedoPassDesc;
 
 
-    std::vector<vk::AttachmentDescription> allAttachments{colourPassAttachment, depthPassAttachment, normalsPassAttachment, swapChainImageAttachment};
+    std::vector<vk::AttachmentDescription> allAttachments{colourPassAttachment, depthPassAttachment, normalsPassAttachment, albedoPassAttachment, swapChainImageAttachment};
 
     mRenderPasses.attatchments = allAttachments;
 
@@ -621,8 +660,17 @@ void ThiefVKDevice::createRenderPasses() {
     normalsToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
     normalsToCompositeDepen.setDependencyFlags(vk::DependencyFlagBits::eByRegion);
 
-    std::array<vk::SubpassDescription, 3> allSubpasses{colourPassDesc, normalsPassDesc, compositPassDesc};
-    std::array<vk::SubpassDependency, 3>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, normalsToCompositeDepen};
+    vk::SubpassDependency albedoToCompositeDepen{};
+    albedoToCompositeDepen.setSrcSubpass(2);
+    albedoToCompositeDepen.setDstSubpass(3);
+    albedoToCompositeDepen.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    albedoToCompositeDepen.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader);
+    albedoToCompositeDepen.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+    albedoToCompositeDepen.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+    albedoToCompositeDepen.setDependencyFlags(vk::DependencyFlagBits::eByRegion);
+
+    std::array<vk::SubpassDescription, 4> allSubpasses{colourPassDesc, normalsPassDesc, albedoPassDesc, compositPassDesc};
+    std::array<vk::SubpassDependency, 4>  allSubpassDependancies{implicitFirstDepen, colourToCompositeDepen, albedoToCompositeDepen, normalsToCompositeDepen};
 
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.setAttachmentCount(allAttachments.size());
@@ -642,9 +690,10 @@ void ThiefVKDevice::createFrameBuffers() {
     for(uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); i++) {
         const vk::ImageView& swapChainImage = mSwapChain.getImageView(i);
 
-        std::array<vk::ImageView, 4> frameBufferAttatchments{deferedTextures[i].colourImageView
+        std::array<vk::ImageView, 5> frameBufferAttatchments{deferedTextures[i].colourImageView
                                                           , deferedTextures[i].depthImageView
                                                           , deferedTextures[i].normalsImageView
+                                                          , deferedTextures[i].albedoImageView
                                                           , swapChainImage };
 
 
@@ -820,12 +869,12 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 }
 
 
-vk::CommandBuffer& ThiefVKDevice::startRecordingDepthCmdBuffer() {
-	vk::CommandBuffer& depthCmdBuffer = frameResources[currentFrameBufferIndex].depthCmdBuffer;
+vk::CommandBuffer& ThiefVKDevice::startRecordingAlbedoCmdBuffer() {
+	vk::CommandBuffer& depthCmdBuffer = frameResources[currentFrameBufferIndex].albedoCmdBuffer;
 
     vk::CommandBufferInheritanceInfo inheritanceInfo{};
     inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
-    inheritanceInfo.setSubpass(1);
+    inheritanceInfo.setSubpass(2);
     inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
 
 	vk::CommandBufferBeginInfo beginInfo{};
@@ -836,8 +885,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingDepthCmdBuffer() {
 	depthCmdBuffer.begin(beginInfo);
 
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.vertexShader		 = ShaderName::DepthVertex;
-	pipelineDesc.fragmentShader		 = ShaderName::DepthFragment;
+	pipelineDesc.vertexShader		 = ShaderName::AlbedoVertex;
+	pipelineDesc.fragmentShader		 = ShaderName::AlbedoFragment;
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
@@ -886,7 +935,7 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
 
     vk::CommandBufferInheritanceInfo inheritanceInfo{};
     inheritanceInfo.setRenderPass(mRenderPasses.RenderPass);
-    inheritanceInfo.setSubpass(2);
+    inheritanceInfo.setSubpass(3);
     inheritanceInfo.setFramebuffer(frameBuffers[currentFrameBufferIndex]);
 
     vk::CommandBufferBeginInfo beginInfo{};
@@ -970,7 +1019,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
 
         descSets.push_back(imageSamplerDescriptorLayout);
     } else if(shader == ShaderName::CompositeFragment) {
-        for(unsigned int i = 1; i < 4; ++i) {
+        for(unsigned int i = 1; i < 5; ++i) {
             ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
             imageSamplerDescriptorLayout.mDescriptor.mBinding = i;
             imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
@@ -983,6 +1032,8 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
                         return &this->deferedTextures[currentFrameBufferIndex].depthImageView;
                     case 3:
                         return &this->deferedTextures[currentFrameBufferIndex].normalsImageView;
+                    case 4:
+                        return &this->deferedTextures[currentFrameBufferIndex].albedoImageView;
                 }
                 return nullptr;
             }();

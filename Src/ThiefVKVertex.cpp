@@ -11,7 +11,7 @@ vk::VertexInputBindingDescription Vertex::getBindingDesc() {
     return desc;
 }
 
-std::array<vk::VertexInputAttributeDescription, 3> Vertex::getAttribDesc() {
+std::array<vk::VertexInputAttributeDescription, 4> Vertex::getAttribDesc() {
 
     vk::VertexInputAttributeDescription atribDescPos{};
     atribDescPos.setBinding(0);
@@ -32,7 +32,13 @@ std::array<vk::VertexInputAttributeDescription, 3> Vertex::getAttribDesc() {
 	atribDescNormal.setFormat(vk::Format::eR32G32B32Sfloat);
 	atribDescNormal.setOffset(offsetof(Vertex, norm));
 
-	return {atribDescPos, atribDescTex, atribDescNormal};
+    vk::VertexInputAttributeDescription atribDescAlbedo{};
+    atribDescAlbedo.setBinding(0);
+    atribDescAlbedo.setLocation(3);
+    atribDescAlbedo.setFormat(vk::Format::eR32Sfloat);
+    atribDescAlbedo.setOffset(offsetof(Vertex, albedo));
+
+	return {atribDescPos, atribDescTex, atribDescNormal, atribDescAlbedo};
 }
 
 

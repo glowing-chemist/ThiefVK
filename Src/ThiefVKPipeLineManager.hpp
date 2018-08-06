@@ -13,8 +13,8 @@ class ThiefVKDevice;
 enum class ShaderName {
     BasicTransformVertex,
     BasicColourFragment,
-    DepthVertex,
-    DepthFragment,
+    AlbedoVertex,
+    AlbedoFragment,
     NormalVertex,
     NormalFragment,
     CompositeVertex,

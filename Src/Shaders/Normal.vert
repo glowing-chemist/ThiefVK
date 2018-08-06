@@ -10,6 +10,7 @@ layout(binding = 0) uniform UniformBufferObject {
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec2 inText;
 layout(location = 2) in vec3 inNorm;
+layout(location = 3) in float albedo;
 
 layout(location = 0) out vec3 Norms;
 
