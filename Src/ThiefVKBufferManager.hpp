@@ -30,7 +30,7 @@ public:
 	bool bufferHasChanged() const;
 
 private:
-	std::pair<ThiefVKBuffer, ThiefVKBuffer> uploadBuffer(vk::Buffer& buffer, Allocation alloc);
+	std::pair<ThiefVKBuffer, ThiefVKBuffer> uploadBuffer(ThiefVKBuffer&);
 
 	ThiefVKDevice& mDevice;
 
