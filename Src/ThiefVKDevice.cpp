@@ -9,7 +9,6 @@
 #include <limits>
 
 
-
 // ThiefVKDeviceMemberFunctions
 
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
@@ -175,15 +174,15 @@ void ThiefVKDevice::endFrame() {
 	for (uint32_t i = 0; i < vertexBufferOffsets.size(); ++i) {
 		const vk::DeviceSize bufferOffset = vertexBufferOffsets[i].offset;
 		
-		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), static_cast<uint32_t>(bufferOffset));
 		resources.colourCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 
-		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), bufferOffset);
 		resources.normalsCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 
-        resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &vertexBuffer.mBuffer, &bufferOffset);
+        resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), bufferOffset );
         resources.albedoCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
 	}
@@ -347,15 +346,20 @@ ThiefVKBuffer ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, cons
 												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eTransferSrc));
 
 	MemoryManager.BindBuffer(buffer, bufferMem);
-	
+
     return {buffer, bufferMem};
 }
 
 
 void ThiefVKDevice::destroyBuffer(ThiefVKBuffer& buffer) {
+    if(buffer.mBuffer == vk::Buffer(nullptr)) {
+        return;
+    }
+
 	MemoryManager.Free(buffer.mBufferMemory);
 
 	mDevice.destroyBuffer(buffer.mBuffer);
+    buffer.mBuffer = vk::Buffer(nullptr);
 }
 
 
@@ -964,20 +968,21 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
     mDevice.destroySemaphore(resources.swapChainImageAvailable);
     mDevice.destroySemaphore(resources.imageRendered);
 
-	for (uint32_t i = 0; i < resources.DescSets.size(); ++i) {
-		DescriptorManager.destroyDescriptorSet(resources.DescSets.back());
-        resources.DescSets.pop_back();
+	for (auto& descSet : resources.DescSets) {
+		DescriptorManager.destroyDescriptorSet(descSet);
 	}
+    resources.DescSets.clear();
 
-    for(uint32_t i = 0; i < resources.stagingBuffers.size(); ++i)  {
-        destroyBuffer(resources.stagingBuffers.back());
-        resources.stagingBuffers.pop_back();
+    for(auto& buffer : resources.stagingBuffers)  {
+        destroyBuffer(buffer);;
     }
+    resources.stagingBuffers.clear();
 
-    for(uint32_t i = 0; i < resources.textureImageViews.size(); ++i) {
-        mDevice.destroyImageView(resources.textureImageViews.back());
-        resources.textureImageViews.pop_back();
+    for(auto& imageView : resources.textureImageViews) {
+        mDevice.destroyImageView(imageView);
     }
+    resources.textureImageViews.clear();
+
     destroyBuffer(resources.vertexBuffer);
     destroyBuffer(resources.indexBuffer);
     destroyBuffer(resources.uniformBuffer);
