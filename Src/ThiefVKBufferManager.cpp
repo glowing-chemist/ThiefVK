@@ -26,23 +26,13 @@ template<typename T>
 std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(ThiefVKBuffer& buffer) {
 	ThiefVKBuffer stagingBuffer{};
 
-	if (mUsage & vk::BufferUsageFlagBits::eUniformBuffer) { // Take a synchronous buffer update path if we will be doing it frequently with little data.
-		void* memory = mDevice.getMemoryManager()->MapAllocation(buffer.mBufferMemory);
+	stagingBuffer = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferSrc, mBuffer.size() * sizeof(T));
 
-		memcpy(memory, mBuffer.data(), mBuffer.size() * sizeof(T));
+	void* memory = mDevice.getMemoryManager()->MapAllocation(stagingBuffer.mBufferMemory);
+	memcpy(memory, mBuffer.data(), mBuffer.size() * sizeof(T));
+	mDevice.getMemoryManager()->UnMapAllocation(stagingBuffer.mBufferMemory);
 
-		mDevice.getMemoryManager()->UnMapAllocation(buffer.mBufferMemory);
-	}
-	else { // Else record the commands in to the flush buffer to copy the buffer to device local memory
-
-		stagingBuffer = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferSrc, mBuffer.size() * sizeof(T));
-
-		void* memory = mDevice.getMemoryManager()->MapAllocation(stagingBuffer.mBufferMemory);
-		memcpy(memory, mBuffer.data(), mBuffer.size() * sizeof(T));
-		mDevice.getMemoryManager()->UnMapAllocation(stagingBuffer.mBufferMemory);
-
-		mDevice.copyBuffers(stagingBuffer.mBuffer, buffer.mBuffer, mBuffer.size() * sizeof(T));
-	}
+	mDevice.copyBuffers(stagingBuffer.mBuffer, buffer.mBuffer, mBuffer.size() * sizeof(T));
 
 	mPreviousBuffer = mBuffer;
 	mBuffer.clear();
