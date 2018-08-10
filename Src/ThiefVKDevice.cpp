@@ -19,6 +19,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 	MemoryManager{&mPhysDev, &mDevice},
 	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
 	mVertexBufferManager{*this, vk::BufferUsageFlagBits::eVertexBuffer},
+    mIndexBufferManager{*this, vk::BufferUsageFlagBits::eIndexBuffer},
     mSpotLightBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
 	DescriptorManager{*this},
 	mWindowSurface{surface}, 
@@ -144,12 +145,17 @@ void ThiefVKDevice::endFrame() {
     const std::vector<entryInfo> spotLIghtOffsets = mSpotLightBufferManager.getBufferOffsets();
     auto [spotLightBuffer, spotLightStagingBuffer] = mSpotLightBufferManager.flushBufferUploads();
 
+    const std::vector<entryInfo> indexBufferOffsets = mIndexBufferManager.getBufferOffsets();
+    auto [indexBuffer, indexStagingBuffer]          = mIndexBufferManager.flushBufferUploads();
+
     resources.stagingBuffers.push_back(vertexStagingBuffer);
     resources.vertexBuffer = vertexBuffer;
     resources.stagingBuffers.push_back(uniformStagingBuffer);
     resources.uniformBuffer = uniformBuffer;
     resources.stagingBuffers.push_back(spotLightStagingBuffer);
     resources.spotLightBuffer = spotLightBuffer;
+    resources.stagingBuffers.push_back(indexStagingBuffer);
+    resources.indexBuffer = indexBuffer;
 
     // Get all of the descriptor sets needed for this frame.
     ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription(ShaderName::BasicColourFragment);
@@ -173,18 +179,22 @@ void ThiefVKDevice::endFrame() {
 
 	for (uint32_t i = 0; i < vertexBufferOffsets.size(); ++i) {
 		const vk::DeviceSize bufferOffset = vertexBufferOffsets[i].offset;
+        const vk::DeviceSize indexOffset  = indexBufferOffsets[i].offset;
 		
 		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
+        resources.colourCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
         resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), static_cast<uint32_t>(bufferOffset));
-		resources.colourCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+		resources.colourCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
+        resources.normalsCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
         resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), bufferOffset);
-		resources.normalsCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+		resources.normalsCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
         resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
+        resources.albedoCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
         resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), bufferOffset );
-        resources.albedoCmdBuffer.draw(vertexBufferOffsets[i].numberOfEntries, 1, 0, 0);
+        resources.albedoCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 	}
 
     uint32_t numberOfLights = spotLIghtOffsets.size();
@@ -227,6 +237,7 @@ void ThiefVKDevice::startFrameInternal() {
 void ThiefVKDevice::draw(const geometry& geom) {
     mVertexBufferManager.addBufferElements(geom.verticies);
     mUniformBufferManager.addBufferElements({geom.object, geom.camera, geom.world});
+    mIndexBufferManager.addBufferElements(geom.indicies);
 
     auto image = createTexture(geom.texturePath); 
     frameResources[currentFrameBufferIndex].textureImages.push_back(image);

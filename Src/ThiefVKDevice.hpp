@@ -81,6 +81,7 @@ struct perFrameResources {
 
 struct geometry {
 	std::vector<Vertex> verticies;
+    std::vector<uint32_t> indicies;
 
 	glm::mat4 object; // These will be pushed to a uniform buffer
 	glm::mat4 camera;
@@ -181,6 +182,7 @@ private:
 
 	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
 	ThiefVKBufferManager<Vertex>	mVertexBufferManager;
+    ThiefVKBufferManager<uint32_t>  mIndexBufferManager;
     ThiefVKBufferManager<glm::mat4> mSpotLightBufferManager;
 
 	ThiefVKDescriptorManager DescriptorManager;

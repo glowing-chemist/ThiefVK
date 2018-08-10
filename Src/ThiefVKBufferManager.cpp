@@ -71,3 +71,6 @@ template class ThiefVKBufferManager<glm::mat4>;
 
 // For the vertex buffer
 template class ThiefVKBufferManager<Vertex>;
+
+// For the index buffer
+template class ThiefVKBufferManager<uint32_t>;
