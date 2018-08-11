@@ -31,6 +31,8 @@ struct ThiefVKPipelineDescription {
     uint32_t renderTargetHeight;
     int32_t renderTargetOffsetX;
     int32_t renderTargetOffsetY;
+    bool    useDepthTest;
+    bool    useBackFaceCulling;
 };
 
 bool operator<(const ThiefVKPipelineDescription&, const ThiefVKPipelineDescription&);

@@ -88,8 +88,12 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     rastInfo.setDepthBiasClamp(false);
     rastInfo.setPolygonMode(vk::PolygonMode::eFill); // output filled in fragments
     rastInfo.setLineWidth(1.0f);
-    rastInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back
-    rastInfo.setFrontFace(vk::FrontFace::eClockwise);
+    if(description.useBackFaceCulling){
+        rastInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back
+        rastInfo.setFrontFace(vk::FrontFace::eClockwise);
+    } else {
+        rastInfo.setCullMode(vk::CullModeFlagBits::eNone);
+    }
     rastInfo.setDepthBiasEnable(false);
 
     vk::PipelineMultisampleStateCreateInfo multiSampInfo{};
@@ -144,7 +148,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     pipeLineCreateInfo.setSubpass(subpassIndex); // index for subpass that this pipeline will be used in
 
     vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
-    depthStencilInfo.setDepthTestEnable(true);
+    depthStencilInfo.setDepthTestEnable(description.useDepthTest);
     depthStencilInfo.setDepthWriteEnable(true);
     depthStencilInfo.setDepthCompareOp(vk::CompareOp::eLessOrEqual);
     depthStencilInfo.setDepthBoundsTestEnable(false);

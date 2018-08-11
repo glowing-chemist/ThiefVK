@@ -877,6 +877,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 	pipelineDesc.renderTargetOffsetY = 0;
 	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
 	pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+    pipelineDesc.useDepthTest        = true;
+    pipelineDesc.useBackFaceCulling  = true;
 
 	colourCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
 
@@ -907,6 +909,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingAlbedoCmdBuffer() {
 	pipelineDesc.renderTargetOffsetY = 0;
 	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
 	pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+    pipelineDesc.useDepthTest        = true;
+    pipelineDesc.useBackFaceCulling  = true;
 
 	depthCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
 
@@ -938,6 +942,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 	pipelineDesc.renderTargetOffsetY = 0;
 	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
 	pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+    pipelineDesc.useDepthTest        = true;
+    pipelineDesc.useBackFaceCulling  = true;
 
 	normalsCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
 
@@ -967,6 +973,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
     pipelineDesc.renderTargetOffsetY = 0;
     pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
     pipelineDesc.renderTargetWidth   = mSwapChain.getSwapChainImageWidth();
+    pipelineDesc.useDepthTest        = false;
+    pipelineDesc.useBackFaceCulling  = false;
 
     compositeCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipeLine(pipelineDesc));
 
