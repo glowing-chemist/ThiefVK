@@ -12,9 +12,10 @@ set(SOURCE
     "Src/ThiefVKBufferManager.cpp"
 	"Src/ThiefVKDescriptorManager.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image/stb_image.cpp"	
+	"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/tinyObjectLoader/tiny_obj_loader.cpp"
 	)
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image" "${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/tinyObjectLoader")
 
 add_library(${PROJECT_NAME} ${SOURCE})
 
