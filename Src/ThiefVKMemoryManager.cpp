@@ -292,14 +292,11 @@ void ThiefVKMemoryManager::Free(Allocation alloc) {
     auto& pools = alloc.hostMappable ? hostMappablePools : deviceLocalPools ;
     auto& pool  = pools[alloc.pool];
 
-    bool ableTOfree = false;
     for(auto& frag : pool) {
         if(alloc.fragOffset == frag.offset)  {
             frag.free = true;
-            ableTOfree = true;
         }
     }
-    if(!ableTOfree) __asm("int3");
 }
 
 
