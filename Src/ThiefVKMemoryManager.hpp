@@ -6,6 +6,8 @@
 #include <vector>
 #include <list>
 
+#define MEMORY_LOGGING 0
+
 struct PoolFragment {
     friend class ThiefVKMemoryManager; // to allow this to be an opaque handle that only the memory manager can use
     friend bool operator==(const PoolFragment&, const PoolFragment&);
@@ -61,7 +63,7 @@ public:
 
     void       Destroy();
 
-#ifndef NDEBUG
+#if MEMORY_LOGGING
     void dumpPools() const;
 #endif
 

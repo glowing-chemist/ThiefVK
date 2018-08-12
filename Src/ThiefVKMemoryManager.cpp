@@ -39,7 +39,7 @@ void ThiefVKMemoryManager::Destroy() {
 }
 
 
-#ifndef NDEBUG
+#if MEMORY_LOGGING
     void ThiefVKMemoryManager::dumpPools() const {
         std::cout << "Device local pools: \n";
         for(auto& pool : deviceLocalPools) {
@@ -175,7 +175,7 @@ void ThiefVKMemoryManager::MergeFreePools() {
 void ThiefVKMemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { // this is expensive on a a list so only call when really needed
     for(auto& pool : pools) {
         // loop forwards through all the fragments and mark any free fragments ajasent to a free fragment as can be merged
-#ifndef NDEBUG
+#if MEMORY_LOGGING
         const auto freeFragmentsPre = std::count_if(pool.begin(), pool.end(), [](auto& fragment){ return fragment.free; });
         std::cout << "number of free fragments pre merge: " << freeFragmentsPre << '\n';
 #endif
@@ -217,7 +217,7 @@ void ThiefVKMemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pool
                 fragmentMerged = true;
             }
         }
-#ifndef NDEBUG
+#if MEMORY_LOGGING
         const auto freeFragmentsPost = std::count_if(pool.begin(), pool.end(), [](auto& fragment){ return fragment.free; });
         std::cout << "number of free fragments post merge: " << freeFragmentsPost << '\n';
 #endif
@@ -261,10 +261,7 @@ Allocation ThiefVKMemoryManager::AttemptToAllocate(uint64_t size, unsigned int a
         }
         ++poolNum;
     }
-#ifndef NDEBUG
-    std::cout << "ALLOCATION FAILED!!!!!!!! This should never reasonably happen \n"
-              << "Alocation size: " << size / 1000000 << " MB \n";
-#endif
+
     Allocation alloc;
     alloc.size = 0; // signify that the allocation failed
     return alloc;
