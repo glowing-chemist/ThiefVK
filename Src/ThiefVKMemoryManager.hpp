@@ -23,6 +23,7 @@ struct Allocation {
     friend class ThiefVKMemoryManager;
 private:
     uint64_t size;
+    uint64_t fragOffset;
     uint64_t offset;
     uint32_t pool; // for if we end up allocating more than one pool
     bool deviceLocal;

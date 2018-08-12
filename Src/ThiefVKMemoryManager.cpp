@@ -240,6 +240,7 @@ Allocation ThiefVKMemoryManager::AttemptToAllocate(uint64_t size, unsigned int a
                 }
                 Allocation alloc;
                 alloc.offset = frag.offset + allignedoffset;
+                alloc.fragOffset = frag.offset;
                 alloc.hostMappable = hostMappable;
                 alloc.deviceLocal = true;
                 alloc.pool = poolNum;
@@ -291,9 +292,14 @@ void ThiefVKMemoryManager::Free(Allocation alloc) {
     auto& pools = alloc.hostMappable ? hostMappablePools : deviceLocalPools ;
     auto& pool  = pools[alloc.pool];
 
+    bool ableTOfree = false;
     for(auto& frag : pool) {
-        if(alloc.offset == frag.offset) frag.free = true;
+        if(alloc.fragOffset == frag.offset)  {
+            frag.free = true;
+            ableTOfree = true;
+        }
     }
+    if(!ableTOfree) __asm("int3");
 }
 
 
