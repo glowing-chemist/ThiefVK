@@ -101,26 +101,21 @@ void ThiefVKDevice::startFrame() {
         resources.albedoCmdBuffer.reset(vk::CommandBufferResetFlags());
         resources.normalsCmdBuffer.reset(vk::CommandBufferResetFlags());
 
-        for(uint32_t i = 0; i < resources.DescSets.size(); ++i) {
-            DescriptorManager.destroyDescriptorSet(resources.DescSets.back());
-            resources.DescSets.pop_back();
+        for(auto& descSet : resources.DescSets) {
+            DescriptorManager.destroyDescriptorSet(descSet);
         }
+        resources.DescSets.clear();
 
-
-        for (uint32_t i = 0; i < resources.DescSets.size(); ++i) {
-            DescriptorManager.destroyDescriptorSet(resources.DescSets.back());
-            resources.DescSets.pop_back();
+        for(auto& stagingBuffer : resources.stagingBuffers)  {
+            destroyBuffer(stagingBuffer);
         }
+        resources.stagingBuffers.clear();
 
-        for(uint32_t i = 0; i < resources.stagingBuffers.size(); ++i)  {
-            destroyBuffer(resources.stagingBuffers.back());
-            resources.stagingBuffers.pop_back();
-        }
-
-        for(uint32_t i = 0; i < resources.textureImageViews.size(); ++i) {
-            mDevice.destroyImageView(resources.textureImageViews.back());
-            resources.textureImageViews.pop_back();
+        for(auto& imageView : resources.textureImageViews) {
+            mDevice.destroyImageView(imageView);
         }   
+        resources.textureImageViews.clear();
+
         destroyBuffer(resources.vertexBuffer);
         destroyBuffer(resources.indexBuffer);
         destroyBuffer(resources.uniformBuffer);
