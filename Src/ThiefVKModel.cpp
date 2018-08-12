@@ -13,7 +13,7 @@ ThiefVKModel::ThiefVKModel(const std::string& objectFileName, const std::string&
 
 	tinyobj::LoadObj(&attrib, &shapes, &materials, nullptr, objectFileName.c_str());
 
-	std::map<Vertex, uint32_t> uniqueVertices{};
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
 	for (const auto& shape : shapes) {
 	    for (const auto& index : shape.mesh.indices) {
