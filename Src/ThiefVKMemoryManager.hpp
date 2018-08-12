@@ -14,6 +14,7 @@ private:
     uint64_t size;
     bool DeviceLocal;
     bool free;
+    bool canBeMerged = false;
 };
 
 struct Allocation {
@@ -59,6 +60,10 @@ public:
 	void	   UnMapAllocation(Allocation alloc);
 
     void       Destroy();
+
+#ifndef NDEBUG
+    void dumpPools() const;
+#endif
 
 private:
     void MergeFreePools();
