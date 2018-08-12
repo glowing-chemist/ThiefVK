@@ -78,23 +78,7 @@ struct perFrameResources {
     std::vector<ThiefVKDescriptorSet> DescSets;
 };
 
-
-struct geometry {
-	std::vector<Vertex> verticies;
-    std::vector<uint32_t> indicies;
-
-	glm::mat4 object; // These will be pushed to a uniform buffer
-	glm::mat4 camera;
-	glm::mat4 world;
-
-	std::string texturePath;
-};
-
-struct SceneInfo {
-	std::vector<Vertex> vertexData;
-
-	std::vector<geometry> geometries;
-};
+struct geometry;
 
 class ThiefVKDevice {
 public:
@@ -104,8 +88,6 @@ public:
     std::pair<vk::PhysicalDevice*, vk::Device*> getDeviceHandles();
 	vk::PhysicalDevice* getPhysicalDevice() { return &mPhysDev;  }
 	vk::Device* getLogicalDevice() { return &mDevice; }
-
-	void drawScene(SceneInfo&);
 
     void addSpotLight(glm::mat4&);
 

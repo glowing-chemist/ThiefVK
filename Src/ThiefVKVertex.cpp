@@ -45,3 +45,10 @@ std::array<vk::VertexInputAttributeDescription, 4> Vertex::getAttribDesc() {
 bool operator==(const Vertex& lhs, const Vertex& rhs) {
     return lhs.pos == rhs.pos && lhs.norm == rhs.norm && lhs.tex == rhs.tex;
 }
+
+
+bool operator<(const Vertex& lhs, const Vertex& rhs) {
+    return lhs.pos.x < rhs.pos.x && lhs.pos.y < rhs.pos.y && lhs.pos.z < rhs.pos.z &&
+            lhs.tex.x < rhs.tex.x && lhs.tex.y < rhs.tex.y && lhs.norm.x < rhs.norm.x &&
+            lhs.norm.y < rhs.norm.y && lhs.norm.z < rhs.norm.z && lhs.albedo < rhs.albedo;
+}

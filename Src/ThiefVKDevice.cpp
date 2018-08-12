@@ -1,6 +1,7 @@
 #include "ThiefVKDevice.hpp"
 #include "ThiefVKInstance.hpp"
 #include "ThiefVKDescriptorManager.hpp"
+#include "ThiefVKModel.hpp"
 
 #include "stb_image.h"
 
@@ -353,7 +354,6 @@ ThiefVKBuffer ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, cons
 
 
 	Allocation bufferMem = MemoryManager.Allocate(size, bufferMemReqs.alignment,
-												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eUniformBuffer) ||
 												  static_cast<uint32_t>(usage) & static_cast<uint32_t>(vk::BufferUsageFlagBits::eTransferSrc));
 
 	MemoryManager.BindBuffer(buffer, bufferMem);

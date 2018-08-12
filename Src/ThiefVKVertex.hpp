@@ -20,4 +20,6 @@ struct Vertex { // vertex struct representing vertex positions and texture coord
 
 bool operator==(const Vertex& lhs, const Vertex& rhs);
 
+bool operator<(const Vertex& lhs, const Vertex& rhs);
+
 #endif
