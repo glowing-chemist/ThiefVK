@@ -8,6 +8,7 @@ layout(binding = 0) uniform UniformBufferObject {
 layout(binding = 1) uniform sampler2D colourTexture;
 layout(binding = 2) uniform sampler2D depthTexture;
 layout(binding = 3) uniform sampler2D normalstexture;
+layout(binding = 4) uniform sampler2D aledoTexture;
 
 layout (push_constant) uniform pushConstants {
 	int numberOfLights;
