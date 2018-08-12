@@ -188,7 +188,7 @@ Allocation ThiefVKMemoryManager::AttemptToAllocate(uint64_t size, unsigned int a
                     fragToInsert.offset = frag.offset + size + allignedoffset;
                     fragToInsert.size = frag.size - size - allignedoffset;
 
-                    frag.size = size;
+                    fragIter->size = size + allignedoffset;
                     pool.insert(fragIter, fragToInsert);
                 }
 
