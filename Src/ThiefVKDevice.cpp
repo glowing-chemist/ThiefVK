@@ -279,7 +279,7 @@ void ThiefVKDevice::endFrameInternal() {
 	primaryCmdBuffer.end();
 
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].colourImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
-    transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR);
+    transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].normalsImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].albedoImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     transitionImageLayout(mSwapChain.getImage(currentFrameBufferIndex), vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
@@ -597,7 +597,7 @@ void ThiefVKDevice::createRenderPasses() {
                                                                 vk::AttachmentReference{3, vk::ImageLayout::eColorAttachmentOptimal},
                                                                 vk::AttachmentReference{4, vk::ImageLayout::eColorAttachmentOptimal}};
 
-    vk::AttachmentReference depthRef = {1, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR};
+    vk::AttachmentReference depthRef = {1, vk::ImageLayout::eDepthStencilAttachmentOptimal };
 
     vk::SubpassDescription colourPassDesc{};
     colourPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
@@ -813,7 +813,7 @@ void ThiefVKDevice::transitionImageLayout(vk::Image& image, vk::ImageLayout oldL
 
     memBarrier.setImage(image);
 
-    if(newLayout == vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR) {
+    if(newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
         memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
     } else {
         memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
