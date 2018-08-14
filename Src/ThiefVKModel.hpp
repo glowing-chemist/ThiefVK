@@ -17,10 +17,12 @@ struct geometry {
 	std::string texturePath;
 };
 
+
 class ThiefVKModel {
 
 public:
 	ThiefVKModel(const std::string& objectFilePath, const std::string& textureFilePath);
+	ThiefVKModel(const std::string& binaryVertexFilePath, const std::string& binaryIndexFilePath, const std::string& textureFilePath);
 	const geometry& getGeometry() const;
 
 	void setObjectMatrix(const glm::mat4&);
@@ -31,6 +33,9 @@ public:
 	void addVertexShaderOverride(const std::string shaderName);
 
 private:
+	void dumpBinaryVerticies(const std::string& filePath) const;
+	void dumpBinaryIndicies(const std::string& filePath) const;
+
 	geometry mGeometry;
 };
 
