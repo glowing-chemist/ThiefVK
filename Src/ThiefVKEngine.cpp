@@ -6,12 +6,13 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-ThiefVKEngine::ThiefVKEngine() : Instance{ThiefVKInstance()},
-                                 Device{ThiefVKDevice(Instance.findSuitableDevices(
+ThiefVKEngine::ThiefVKEngine() :mWindow{glfwCreateWindow(500, 500, "Necromancer", nullptr, nullptr)}, 
+                                mInstance{ThiefVKInstance(mWindow)},
+                                mDevice{ThiefVKDevice(mInstance.findSuitableDevices(
                                                                                    ThiefDeviceFeaturesFlags::Discrete
                                                                                    | ThiefDeviceFeaturesFlags::Geometry
 																				   | ThiefDeviceFeaturesFlags::Compute)
-                                                      , Instance.getSurface(), Instance.getWindow())} {}
+                                                      , mInstance.getSurface(), mInstance.getWindow())} {}
 
 
 ThiefVKEngine::~ThiefVKEngine() {
@@ -20,11 +21,11 @@ ThiefVKEngine::~ThiefVKEngine() {
 
 
 void ThiefVKEngine::Init() {
-  Device.createRenderPasses();
-  Device.createDeferedRenderTargetImageViews();
-  Device.createFrameBuffers();
-	Device.createCommandPools();
-  Device.createSemaphores();
+  mDevice.createRenderPasses();
+  mDevice.createDeferedRenderTargetImageViews();
+  mDevice.createFrameBuffers();
+	mDevice.createCommandPools();
+  mDevice.createSemaphores();
 
   auto view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
   auto proj = glm::perspective(glm::radians(45.0f), 500 / (float) 500, 0.1f, 10.0f);
@@ -40,13 +41,13 @@ void ThiefVKEngine::Init() {
 
     chaletModel.setObjectMatrix(model);
 
-    Device.startFrame();
+    mDevice.startFrame();
 
 
-    Device.draw(chaletModel.getGeometry());
-    Device.addSpotLight(proj);
+    mDevice.draw(chaletModel.getGeometry());
+    mDevice.addSpotLight(proj);
 
-    Device.endFrame();
-    Device.swap();
+    mDevice.endFrame();
+    mDevice.swap();
   }
 }

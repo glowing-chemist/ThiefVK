@@ -51,13 +51,9 @@ const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::Physica
 }
 
 
-ThiefVKInstance::ThiefVKInstance() {
+ThiefVKInstance::ThiefVKInstance(GLFWwindow* window) {
 
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); // only resize explicitly
-
-    mWindow = glfwCreateWindow(500, 500, "Necromancer", nullptr, nullptr);
+    mWindow = window;
 
     vk::ApplicationInfo appInfo{};
     appInfo.setPApplicationName("ThiefQuango");

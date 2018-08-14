@@ -4,6 +4,7 @@
 #include "ThiefVKInstance.hpp"
 #include "ThiefVKDevice.hpp"
 #include "ThiefVKMemoryManager.hpp"
+#include "ThiefVKModel.hpp"
 
 class ThiefVKEngine {
 
@@ -13,9 +14,15 @@ public:
 
     void Init();
 
+    void addModelToScene(ThiefVKModel&);
+    void addLightToScene(glm::mat4&);
+    void renderScene();
+
 private:
-    ThiefVKInstance Instance;
-    ThiefVKDevice Device;
+	GLFWwindow* mWindow;
+    ThiefVKInstance mInstance;
+    ThiefVKDevice mDevice;
+    std::vector<ThiefVKModel> mModels;
 };
 
 
