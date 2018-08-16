@@ -9,7 +9,7 @@
 class ThiefVKEngine {
 
 public:
-    ThiefVKEngine();
+    ThiefVKEngine(GLFWwindow*);
     ~ThiefVKEngine();
 
     void Init();
