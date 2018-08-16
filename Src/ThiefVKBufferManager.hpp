@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <tuple>
+#include <memory>
 
 #include "ThiefVKMemoryManager.hpp"
 
@@ -20,7 +21,7 @@ template<typename T>
 class ThiefVKBufferManager {
 public:
 
-	ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage);
+	ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage, int allignment = 1);
 
 	void addBufferElements(const std::vector<T>& elements);
 
@@ -35,11 +36,24 @@ private:
 	ThiefVKDevice& mDevice;
 
 	vk::BufferUsageFlags mUsage;
+	int mAllignment;
 
 	std::vector<T> mBuffer;
 	std::vector<entryInfo> mEntries;
 
 	std::vector<T> mPreviousBuffer;
 };
+
+
+template<typename T>
+class AllignedBuffer {
+public:
+	AllignedBuffer(std::vector<T>&, int allignment);
+	char* data();
+
+private:
+	std::unique_ptr<char[]> mAllignedData;
+};
+
 
 #endif
