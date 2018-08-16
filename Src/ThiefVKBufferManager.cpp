@@ -6,17 +6,20 @@
 #include "ThiefVKVertex.hpp"
 
 #include <iostream>
-
+#include <numeric>
 
 template<typename T>
-ThiefVKBufferManager<T>::ThiefVKBufferManager(ThiefVKDevice &Device, vk::BufferUsageFlags usage, int allignment) : mDevice{Device}, mUsage{usage}, 
-	mAllignment{int(std::ceil(float(sizeof(T)) / float(allignment))) * allignment} {}
+ThiefVKBufferManager<T>::ThiefVKBufferManager(ThiefVKDevice &Device, vk::BufferUsageFlags usage, uint64_t allignment) : mDevice{Device}, mUsage{usage}, mAllignment{allignment}, mCurrentOffset{0ul} {}
 
 
 template<typename T>
 void ThiefVKBufferManager<T>::addBufferElements(const std::vector<T> &elements) {
-	uint32_t offset = mBuffer.size() * mAllignment;
-	mEntries.push_back({offset, elements.size()});
+	mRealAllignment = std::ceil(float(sizeof(T) * elements.size()) / float(mAllignment)) * mAllignment;
+
+	uint32_t offset = mCurrentOffset;
+	mEntries.push_back({offset, elements.size(), mRealAllignment});
+
+	mCurrentOffset += mRealAllignment;
 
 	mBuffer.insert(mBuffer.end(), elements.begin(), elements.end());
 
@@ -24,19 +27,28 @@ void ThiefVKBufferManager<T>::addBufferElements(const std::vector<T> &elements) 
 
 
 template<typename T>
-std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(ThiefVKBuffer& buffer) {
+std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(ThiefVKBuffer& buffer, const uint64_t bufferSize) {
 	ThiefVKBuffer stagingBuffer{};
 
-	stagingBuffer = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferSrc, mBuffer.size() * mAllignment);
+	stagingBuffer = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferSrc, bufferSize);
+
+	std::unique_ptr<char[]> allignedData(new char[bufferSize]);
+	uint64_t bufferPos = 0;
+	for(unsigned int i = 0; i < mEntries.size(); ++i) {
+		std::memmove(allignedData.get() + mEntries[i].offset, &mBuffer[bufferPos], mEntries[i].entrySize);
+		bufferPos += mEntries[i].numberOfEntries;
+	}
 
 	void* memory = mDevice.getMemoryManager()->MapAllocation(stagingBuffer.mBufferMemory);
-	memcpy(memory, AllignedBuffer(mBuffer, mAllignment).data(), mBuffer.size() * mAllignment);
+	memcpy(memory, allignedData.get(), bufferSize);
 	mDevice.getMemoryManager()->UnMapAllocation(stagingBuffer.mBufferMemory);
 
-	mDevice.copyBuffers(stagingBuffer.mBuffer, buffer.mBuffer, mBuffer.size() * mAllignment);
+	mDevice.copyBuffers(stagingBuffer.mBuffer, buffer.mBuffer, bufferSize);
 
 	mPreviousBuffer = mBuffer;
 	mBuffer.clear();
+	mEntries.clear();
+	mCurrentOffset = 0;
 
 	return {buffer, stagingBuffer};
 }
@@ -44,19 +56,18 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(Th
 
 template<typename T>
 std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::flushBufferUploads() {
-	ThiefVKBuffer buffer = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferDst | mUsage, mBuffer.size() * sizeof(T));
+	const uint64_t bufferSize = std::accumulate(mEntries.begin(), mEntries.end(), 0, [](const int& lhs, const entryInfo& rhs) { return lhs + rhs.entrySize; } );
+
+	ThiefVKBuffer buffer = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferDst | mUsage, bufferSize);
 
 	// Upload the current buffer
-	return uploadBuffer(buffer);
+	return uploadBuffer(buffer, bufferSize);
 }
 
 
 template<typename T>
 std::vector<entryInfo> ThiefVKBufferManager<T>::getBufferOffsets() {
-	std::vector<entryInfo > offsets = mEntries;
-	mEntries.clear();
-
-	return offsets;
+	return mEntries;
 }
 
 
@@ -75,21 +86,3 @@ template class ThiefVKBufferManager<Vertex>;
 
 // For the index buffer
 template class ThiefVKBufferManager<uint32_t>;
-
-
-// Alligned buffer helper class
-template<typename T>
-AllignedBuffer<T>::AllignedBuffer(std::vector<T>& buffer, int allignment) {
-	char* memory = new char[allignment * buffer.size()];
-	for(unsigned int i = 0; i < buffer.size(); ++i) {
-		std::memmove(memory + (allignment * i), &buffer[i], sizeof(T));
-	}
-
-	mAllignedData.reset(memory);
-}
-	
-
-template<typename T>
-char* AllignedBuffer<T>::data() {
-	return mAllignedData.get();
-}

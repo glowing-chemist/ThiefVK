@@ -14,11 +14,12 @@
 
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
     mPhysDev{std::get<0>(Devices)}, 
-	mDevice{std::get<1>(Devices)}, 
+	mDevice{std::get<1>(Devices)},
+    mLimits{mPhysDev.getProperties().limits}, 
     currentFrameBufferIndex{0},
 	pipelineManager{*this},
 	MemoryManager{&mPhysDev, &mDevice},
-	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
+	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer, mLimits.minUniformBufferOffsetAlignment},
 	mVertexBufferManager{*this, vk::BufferUsageFlagBits::eVertexBuffer},
     mIndexBufferManager{*this, vk::BufferUsageFlagBits::eIndexBuffer},
     mSpotLightBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
@@ -174,22 +175,23 @@ void ThiefVKDevice::endFrame() {
     startFrameInternal();
 
 	for (uint32_t i = 0; i < vertexBufferOffsets.size(); ++i) {
-		const vk::DeviceSize bufferOffset = vertexBufferOffsets[i].offset;
-        const vk::DeviceSize indexOffset  = indexBufferOffsets[i].offset;
+		const vk::DeviceSize bufferOffset   = vertexBufferOffsets[i].offset;
+        const vk::DeviceSize indexOffset    = indexBufferOffsets[i].offset;
+        const vk::DeviceSize uniformOffset  = uniformBufferOffsets[i].offset;
 		
 		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.colourCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), static_cast<uint32_t>(bufferOffset));
+        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), uniformOffset);
 		resources.colourCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.normalsCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), bufferOffset);
+        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), uniformOffset);
 		resources.normalsCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
         resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.albedoCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), bufferOffset );
+        resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), uniformOffset );
         resources.albedoCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 	}
 

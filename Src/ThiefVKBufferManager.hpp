@@ -15,13 +15,14 @@ class ThiefVKDevice;
 struct entryInfo {
 	uint32_t offset;
 	uint64_t numberOfEntries;
+	uint64_t entrySize;
 };
 
 template<typename T>
 class ThiefVKBufferManager {
 public:
 
-	ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage, int allignment = 1);
+	ThiefVKBufferManager(ThiefVKDevice& Device, vk::BufferUsageFlags usage, uint64_t allignment = 1);
 
 	void addBufferElements(const std::vector<T>& elements);
 
@@ -31,29 +32,19 @@ public:
 	bool bufferHasChanged() const;
 
 private:
-	std::pair<ThiefVKBuffer, ThiefVKBuffer> uploadBuffer(ThiefVKBuffer&);
+	std::pair<ThiefVKBuffer, ThiefVKBuffer> uploadBuffer(ThiefVKBuffer&, const uint64_t);
 
 	ThiefVKDevice& mDevice;
 
 	vk::BufferUsageFlags mUsage;
-	int mAllignment;
+	uint64_t mAllignment;
+	uint64_t mRealAllignment;
 
 	std::vector<T> mBuffer;
 	std::vector<entryInfo> mEntries;
+	uint64_t mCurrentOffset;
 
 	std::vector<T> mPreviousBuffer;
 };
-
-
-template<typename T>
-class AllignedBuffer {
-public:
-	AllignedBuffer(std::vector<T>&, int allignment);
-	char* data();
-
-private:
-	std::unique_ptr<char[]> mAllignedData;
-};
-
 
 #endif

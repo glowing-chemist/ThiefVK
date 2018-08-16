@@ -154,6 +154,7 @@ private:
     // private variables
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
+    vk::PhysicalDeviceLimits mLimits;
     size_t finishedSubmissionID; // to keep track of resources such as staging buffers and command buffers that are no
                                  // longer needed and can be freed.
     size_t currentFrameBufferIndex;
