@@ -21,5 +21,5 @@ out gl_PerVertex {
 
 void main() {
         gl_Position = ubo.proj * ubo.view * ubo.model * vec4(fragPos, 1.0);
-        Norms = (ubo.proj * ubo.view * ubo.model * vec4(inNorm, 1.0)).xyz;
+        Norms = (ubo.proj * ubo.view * ubo.model * vec4(inNorm, 0.0)).xyz;
 }
