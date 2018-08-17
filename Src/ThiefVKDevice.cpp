@@ -215,7 +215,11 @@ void ThiefVKDevice::startFrameInternal() {
 	vk::RenderPassBeginInfo renderPassBegin{};
 	renderPassBegin.framebuffer = frameBuffers[currentFrameBufferIndex];
 	renderPassBegin.renderPass = mRenderPasses.RenderPass;
-	vk::ClearValue colour[5]  = {vk::ClearValue{0.0f}, vk::ClearValue{1.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}};
+	vk::ClearValue colour[5]  = {vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}) 
+                                ,vk::ClearValue(std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f}) 
+                                ,vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}) 
+                                ,vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})
+                                ,vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
     renderPassBegin.setClearValueCount(5);
 	renderPassBegin.setPClearValues(colour);
 	renderPassBegin.setRenderArea(vk::Rect2D{ { 0, 0 },
