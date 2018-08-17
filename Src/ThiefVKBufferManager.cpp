@@ -35,7 +35,7 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(Th
 	std::unique_ptr<char[]> allignedData(new char[bufferSize]);
 	uint64_t bufferPos = 0;
 	for(unsigned int i = 0; i < mEntries.size(); ++i) {
-		std::memmove(allignedData.get() + mEntries[i].offset, &mBuffer[bufferPos], mEntries[i].entrySize);
+		std::memmove(allignedData.get() + mEntries[i].offset, &mBuffer[bufferPos], mEntries[i].numberOfEntries * sizeof(T));
 		bufferPos += mEntries[i].numberOfEntries;
 	}
 
