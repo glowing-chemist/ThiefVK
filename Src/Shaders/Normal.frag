@@ -7,5 +7,5 @@ layout(location = 0) out vec4 outColor;
 
 
 void main() {
-    outColor = ivec4(Norm, 1);
+    outColor = vec4(Norm, 1);
 }
