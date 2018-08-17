@@ -34,11 +34,11 @@ ThiefVKModel::ThiefVKModel(const std::string& objectFileName, const std::string&
 	            1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
 	        };
 
-	        /*vertex.norm = {
+	        vertex.norm = {
 	        	attrib.normals[3 * index.normal_index],
 	        	attrib.normals[3 * index.normal_index + 1],
 	        	attrib.normals[3 * index.normal_index] + 2,
-	        };*/
+	        };
 
 	        // albedo isn't currently implemeted to load from object file.
 	        // will need to extract it from materials at some point
