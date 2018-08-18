@@ -7,5 +7,7 @@ layout(location = 0) out vec4 outColor;
 
 
 void main() {
-    outColor = normalize(vec4(Norm, 1));
+	// Map from [-1, 1] to [0, 1] so we don't lose precision
+	vec3 mappedNormals = (normalize(Norm) + 1.0) / 2.0; 
+	outColor = vec4(mappedNormals, 1);
 }
