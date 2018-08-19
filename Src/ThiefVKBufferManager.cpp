@@ -4,6 +4,7 @@
 
 #include "ThiefVKDevice.hpp"
 #include "ThiefVKVertex.hpp"
+#include "ThiefVKModel.hpp"
 
 #include <iostream>
 #include <numeric>
@@ -86,3 +87,6 @@ template class ThiefVKBufferManager<Vertex>;
 
 // For the index buffer
 template class ThiefVKBufferManager<uint32_t>;
+
+// For the light buffer
+template class ThiefVKBufferManager<ThiefVKLight>;
