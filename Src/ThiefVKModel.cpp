@@ -29,20 +29,22 @@ ThiefVKModel::ThiefVKModel(const std::string& objectFileName, const std::string&
 	            attrib.vertices[3 * index.vertex_index + 2]
 	        };
 
-	        vertex.tex = {
-	            attrib.texcoords[2 * index.texcoord_index],
-	            1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-	        };
+	        if(!attrib.texcoords.empty())
+		        vertex.tex = {
+		            attrib.texcoords[2 * index.texcoord_index],
+		            1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+		        };
 
-	        vertex.norm = {
-	        	attrib.normals[3 * index.normal_index],
-	        	attrib.normals[3 * index.normal_index + 1],
-	        	attrib.normals[3 * index.normal_index] + 2,
-	        };
+			if(!attrib.normals.empty())  
+				vertex.norm = {
+					attrib.normals[3 * index.normal_index],
+					attrib.normals[3 * index.normal_index + 1],
+					attrib.normals[3 * index.normal_index] + 2,
+				};
 
 	        // albedo isn't currently implemeted to load from object file.
 	        // will need to extract it from materials at some point
-	        vertex.albedo = 0.0f;
+	        vertex.albedo = 60.0f;
 
 	        if (uniqueVertices.count(vertex) == 0) {
 	            uniqueVertices[vertex] = static_cast<uint32_t>(mGeometry.verticies.size());
