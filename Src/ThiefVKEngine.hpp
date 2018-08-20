@@ -15,7 +15,7 @@ public:
     void Init();
 
     void addModelToScene(ThiefVKModel&);
-    void addLightToScene(glm::mat4&);
+    void addLightToScene(ThiefVKLight&);
     void renderScene();
 
 private:
@@ -23,6 +23,7 @@ private:
     ThiefVKInstance mInstance;
     ThiefVKDevice mDevice;
     std::vector<ThiefVKModel> mModels;
+    std::vector<ThiefVKLight> mLights;
 };
 
 

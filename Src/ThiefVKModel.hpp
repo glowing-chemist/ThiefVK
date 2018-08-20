@@ -40,4 +40,13 @@ private:
 };
 
 
+struct ThiefVKLight {
+	glm::vec3 mPosition;
+	glm::vec3 mDirection;
+	glm::vec3 mColour;
+	float mAngle; 
+};
+
+bool operator==(const ThiefVKLight& lhs, const ThiefVKLight& rhs);
+
 #endif

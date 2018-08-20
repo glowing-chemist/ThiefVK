@@ -33,8 +33,8 @@ void ThiefVKEngine::addModelToScene(ThiefVKModel& model) {
 }
 
 
-void ThiefVKEngine::addLightToScene(glm::mat4& light) {
-  mDevice.addSpotLight(light);
+void ThiefVKEngine::addLightToScene(ThiefVKLight& light) {
+  mLights.push_back(light);
 }
 
 
@@ -45,6 +45,9 @@ void ThiefVKEngine::renderScene() {
     mDevice.draw(model.getGeometry());
   }
   mModels.clear();
+
+  mDevice.addSpotLights(mLights);
+  mLights.clear();
 
   mDevice.endFrame();
   mDevice.swap();

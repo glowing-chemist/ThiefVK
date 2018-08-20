@@ -14,6 +14,7 @@
 #include "ThiefVKBufferManager.hpp"
 #include "ThiefVKDescriptorManager.hpp"
 #include "ThiefVKVertex.hpp"
+#include "ThiefVKModel.hpp"
 
 // std library includes
 #include <array>
@@ -89,7 +90,7 @@ public:
 	vk::PhysicalDevice* getPhysicalDevice() { return &mPhysDev;  }
 	vk::Device* getLogicalDevice() { return &mDevice; }
 
-    void addSpotLight(glm::mat4&);
+    void addSpotLights(std::vector<ThiefVKLight>&);
 
 	void transitionImageLayout(vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 	void CopybufferToImage(vk::Buffer& srcBuffer, vk::Image& dstImage, uint32_t width, uint32_t height);
@@ -166,7 +167,7 @@ private:
 	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
 	ThiefVKBufferManager<Vertex>	mVertexBufferManager;
     ThiefVKBufferManager<uint32_t>  mIndexBufferManager;
-    ThiefVKBufferManager<glm::mat4> mSpotLightBufferManager;
+    ThiefVKBufferManager<ThiefVKLight> mSpotLightBufferManager;
 
 	ThiefVKDescriptorManager DescriptorManager;
 

@@ -255,8 +255,8 @@ void ThiefVKDevice::draw(const geometry& geom) {
 }
 
 
-void ThiefVKDevice::addSpotLight(glm::mat4& view) {
-    mSpotLightBufferManager.addBufferElements({view});
+void ThiefVKDevice::addSpotLights(std::vector<ThiefVKLight>& lights) {
+    mSpotLightBufferManager.addBufferElements(lights);
 }
 
 
