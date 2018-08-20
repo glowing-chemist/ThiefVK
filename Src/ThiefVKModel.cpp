@@ -140,6 +140,5 @@ void ThiefVKModel::dumpBinaryIndicies(const std::string& filePath) const {
 bool operator==(const ThiefVKLight& lhs, const ThiefVKLight& rhs) {
 	return lhs.mPosition == rhs.mPosition &&
 		   lhs.mDirection == rhs.mDirection &&
-		   lhs.mColour == rhs.mColour &&
-		   lhs.mAngle == rhs.mAngle;
+		   lhs.mColourAndAngle == rhs.mColourAndAngle;
 }
