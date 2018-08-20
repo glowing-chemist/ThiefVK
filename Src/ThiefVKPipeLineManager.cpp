@@ -185,7 +185,7 @@ vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSe
     if(name == ShaderName::CompositeFragment) {
         range.setStageFlags(vk::ShaderStageFlagBits::eFragment);
         range.setOffset(0);
-        range.setSize(sizeof(uint32_t));
+        range.setSize(sizeof(uint32_t) + sizeof(glm::mat4));
 
         pipelinelayoutinfo.setPushConstantRangeCount(1);
         pipelinelayoutinfo.setPPushConstantRanges(&range);

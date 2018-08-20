@@ -130,6 +130,9 @@ public:
 
     ThiefVKDescriptorSetDescription getDescriptorSetDescription(const ShaderName);
 
+    void setCurrentView(glm::mat4 viewMatrix);
+    glm::mat4 getCurrentView() const ;
+
 private:
     // private funcs
     void DestroyAllImageTextures();
@@ -195,7 +198,7 @@ private:
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
     std::vector<vk::Framebuffer> frameBuffers;
 
-    std::vector<glm::mat4> spotLights;
+    glm::mat4 mCurrentView;
 };
 
 #endif

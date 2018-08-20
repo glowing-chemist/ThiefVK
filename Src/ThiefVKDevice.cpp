@@ -195,8 +195,12 @@ void ThiefVKDevice::endFrame() {
         resources.albedoCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 	}
 
+    char pushConstants[sizeof(uint32_t) + sizeof(glm::mat4)];
     uint32_t numberOfLights = spotLIghtOffsets.size();
-    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(uint32_t), &numberOfLights);
+    std::memmove(&pushConstants[0], &numberOfLights, sizeof(uint32_t));
+    glm::mat currentView = getCurrentView();
+    std::memmove(&pushConstants[4], &currentView, sizeof(glm::mat4));
+    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(uint32_t) + sizeof(glm::mat4), &pushConstants);
     resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), 0, compositeDescriptor.getHandle(), {} );
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
@@ -1070,3 +1074,13 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
 
     return descSets;
 }
+
+
+void ThiefVKDevice::setCurrentView(glm::mat4 viewMatrix) {
+    mCurrentView = viewMatrix;
+}
+
+
+glm::mat4 ThiefVKDevice::getCurrentView() const {
+    return mCurrentView;
+} 
