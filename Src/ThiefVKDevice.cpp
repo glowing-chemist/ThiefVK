@@ -627,18 +627,17 @@ void ThiefVKDevice::createRenderPasses() {
     albedoPassDesc.setPColorAttachments(&colourAttatchmentRefs[2]);
     albedoPassDesc.setPDepthStencilAttachment(&depthRef);
 
-    std::array<vk::AttachmentReference, 3> inputAttachments{vk::AttachmentReference{0, vk::ImageLayout::eShaderReadOnlyOptimal}, 
+    std::array<vk::AttachmentReference, 4> inputAttachments{vk::AttachmentReference{0, vk::ImageLayout::eShaderReadOnlyOptimal},
+                                                            vk::AttachmentReference{1, vk::ImageLayout::eShaderReadOnlyOptimal},
                                                             vk::AttachmentReference{2, vk::ImageLayout::eShaderReadOnlyOptimal},
                                                             vk::AttachmentReference{3, vk::ImageLayout::eShaderReadOnlyOptimal}};
 
-    vk::AttachmentReference inputDepthAttatchment{1, vk::ImageLayout::eDepthStencilReadOnlyOptimal};
     vk::AttachmentReference swapChainAttachment{4, vk::ImageLayout::eColorAttachmentOptimal};
 
     vk::SubpassDescription compositPassDesc{};
     compositPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
     compositPassDesc.setInputAttachmentCount(inputAttachments.size());
     compositPassDesc.setPInputAttachments(inputAttachments.data());
-    compositPassDesc.setPDepthStencilAttachment(&inputDepthAttatchment);
     compositPassDesc.setColorAttachmentCount(1);
     compositPassDesc.setPColorAttachments(&swapChainAttachment);
 
