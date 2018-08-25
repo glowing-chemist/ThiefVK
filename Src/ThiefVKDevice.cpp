@@ -198,7 +198,7 @@ void ThiefVKDevice::endFrame() {
     char pushConstants[sizeof(uint32_t) + sizeof(glm::mat4)];
     uint32_t numberOfLights = spotLIghtOffsets.size();
     std::memmove(&pushConstants[0], &numberOfLights, sizeof(uint32_t));
-    glm::mat currentView = getCurrentView();
+    glm::mat4 currentView = getCurrentView();
     std::memmove(&pushConstants[4], &currentView, sizeof(glm::mat4));
     resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(uint32_t) + sizeof(glm::mat4), &pushConstants);
     resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), 0, compositeDescriptor.getHandle(), {} );
