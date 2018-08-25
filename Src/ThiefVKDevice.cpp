@@ -14,11 +14,12 @@
 
 ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, vk::SurfaceKHR surface, GLFWwindow * window) :
     mPhysDev{std::get<0>(Devices)}, 
-	mDevice{std::get<1>(Devices)}, 
+	mDevice{std::get<1>(Devices)},
+    mLimits{mPhysDev.getProperties().limits}, 
     currentFrameBufferIndex{0},
 	pipelineManager{*this},
 	MemoryManager{&mPhysDev, &mDevice},
-	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
+	mUniformBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer, mLimits.minUniformBufferOffsetAlignment},
 	mVertexBufferManager{*this, vk::BufferUsageFlagBits::eVertexBuffer},
     mIndexBufferManager{*this, vk::BufferUsageFlagBits::eIndexBuffer},
     mSpotLightBufferManager{*this, vk::BufferUsageFlagBits::eUniformBuffer},
@@ -174,27 +175,32 @@ void ThiefVKDevice::endFrame() {
     startFrameInternal();
 
 	for (uint32_t i = 0; i < vertexBufferOffsets.size(); ++i) {
-		const vk::DeviceSize bufferOffset = vertexBufferOffsets[i].offset;
-        const vk::DeviceSize indexOffset  = indexBufferOffsets[i].offset;
+		const vk::DeviceSize bufferOffset   = vertexBufferOffsets[i].offset;
+        const vk::DeviceSize indexOffset    = indexBufferOffsets[i].offset;
+        const vk::DeviceSize uniformOffset  = uniformBufferOffsets[i].offset;
 		
 		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.colourCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), static_cast<uint32_t>(bufferOffset));
+        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), uniformOffset);
 		resources.colourCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.normalsCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), bufferOffset);
+        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), uniformOffset);
 		resources.normalsCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
         resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.albedoCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), bufferOffset );
+        resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), uniformOffset );
         resources.albedoCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 	}
 
+    char pushConstants[sizeof(uint32_t) + sizeof(glm::mat4)];
     uint32_t numberOfLights = spotLIghtOffsets.size();
-    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(uint32_t), &numberOfLights);
+    std::memmove(&pushConstants[0], &numberOfLights, sizeof(uint32_t));
+    glm::mat currentView = getCurrentView();
+    std::memmove(&pushConstants[4], &currentView, sizeof(glm::mat4));
+    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(uint32_t) + sizeof(glm::mat4), &pushConstants);
     resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), 0, compositeDescriptor.getHandle(), {} );
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
@@ -213,7 +219,11 @@ void ThiefVKDevice::startFrameInternal() {
 	vk::RenderPassBeginInfo renderPassBegin{};
 	renderPassBegin.framebuffer = frameBuffers[currentFrameBufferIndex];
 	renderPassBegin.renderPass = mRenderPasses.RenderPass;
-	vk::ClearValue colour[5]  = {vk::ClearValue{0.0f}, vk::ClearValue{1.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}, vk::ClearValue{0.0f}};
+	vk::ClearValue colour[5]  = {vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}) 
+                                ,vk::ClearValue(std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f}) 
+                                ,vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}) 
+                                ,vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})
+                                ,vk::ClearValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
     renderPassBegin.setClearValueCount(5);
 	renderPassBegin.setPClearValues(colour);
 	renderPassBegin.setRenderArea(vk::Rect2D{ { 0, 0 },
@@ -249,8 +259,8 @@ void ThiefVKDevice::draw(const geometry& geom) {
 }
 
 
-void ThiefVKDevice::addSpotLight(glm::mat4& view) {
-    mSpotLightBufferManager.addBufferElements({view});
+void ThiefVKDevice::addSpotLights(std::vector<ThiefVKLight>& lights) {
+    mSpotLightBufferManager.addBufferElements(lights);
 }
 
 
@@ -279,7 +289,7 @@ void ThiefVKDevice::endFrameInternal() {
 	primaryCmdBuffer.end();
 
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].colourImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
-    transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR);
+    transitionImageLayout(deferedTextures[currentFrameBufferIndex].depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].normalsImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     transitionImageLayout(deferedTextures[currentFrameBufferIndex].albedoImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     transitionImageLayout(mSwapChain.getImage(currentFrameBufferIndex), vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
@@ -597,7 +607,7 @@ void ThiefVKDevice::createRenderPasses() {
                                                                 vk::AttachmentReference{3, vk::ImageLayout::eColorAttachmentOptimal},
                                                                 vk::AttachmentReference{4, vk::ImageLayout::eColorAttachmentOptimal}};
 
-    vk::AttachmentReference depthRef = {1, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR};
+    vk::AttachmentReference depthRef = {1, vk::ImageLayout::eDepthStencilAttachmentOptimal };
 
     vk::SubpassDescription colourPassDesc{};
     colourPassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
@@ -813,7 +823,7 @@ void ThiefVKDevice::transitionImageLayout(vk::Image& image, vk::ImageLayout oldL
 
     memBarrier.setImage(image);
 
-    if(newLayout == vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimalKHR) {
+    if(newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
         memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
     } else {
         memBarrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
@@ -1064,3 +1074,13 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
 
     return descSets;
 }
+
+
+void ThiefVKDevice::setCurrentView(glm::mat4 viewMatrix) {
+    mCurrentView = viewMatrix;
+}
+
+
+glm::mat4 ThiefVKDevice::getCurrentView() const {
+    return mCurrentView;
+} 

@@ -196,13 +196,8 @@ void ThiefVKMemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pool
         // Now loop backwards over the list and merge all fragments marked as can be merged
         uint32_t sizeToAdd = 0;
         bool fragmentMerged = false;
-        std::list<PoolFragment>::reverse_iterator fragmentToRemove;
-        bool needToRemoveFragment = false;
+        std::vector<std::list<PoolFragment>::reverse_iterator> fragmentsToRemove;
         for(auto fragment = pool.rbegin(); fragment != pool.rend(); ++fragment) {
-            if(needToRemoveFragment) {
-                pool.remove(*fragmentToRemove);
-                needToRemoveFragment = false;
-            }
 
             if(fragmentMerged) {
                 fragment->size += sizeToAdd;
@@ -212,10 +207,14 @@ void ThiefVKMemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pool
 
             if(fragment->canBeMerged) {
                 sizeToAdd = fragment->size;
-                fragmentToRemove = fragment;
-                needToRemoveFragment = true;
+                fragmentsToRemove.push_back(fragment);
                 fragmentMerged = true;
             }
+        }
+
+        // One final loop over all the fragments to be removed in reverse to avoid a use after free
+        for(auto iter = fragmentsToRemove.rbegin(); iter != fragmentsToRemove.rend(); ++iter) {
+            pool.remove(**iter);
         }
 #if MEMORY_LOGGING
         const auto freeFragmentsPost = std::count_if(pool.begin(), pool.end(), [](auto& fragment){ return fragment.free; });

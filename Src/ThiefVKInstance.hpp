@@ -29,7 +29,7 @@ const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::Physica
 
 class ThiefVKInstance {
 public:
-    ThiefVKInstance();
+    ThiefVKInstance(GLFWwindow*);
     ~ThiefVKInstance();
 
     void addDebugCallback();

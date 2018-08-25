@@ -14,6 +14,7 @@
 #include "ThiefVKBufferManager.hpp"
 #include "ThiefVKDescriptorManager.hpp"
 #include "ThiefVKVertex.hpp"
+#include "ThiefVKModel.hpp"
 
 // std library includes
 #include <array>
@@ -89,7 +90,7 @@ public:
 	vk::PhysicalDevice* getPhysicalDevice() { return &mPhysDev;  }
 	vk::Device* getLogicalDevice() { return &mDevice; }
 
-    void addSpotLight(glm::mat4&);
+    void addSpotLights(std::vector<ThiefVKLight>&);
 
 	void transitionImageLayout(vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 	void CopybufferToImage(vk::Buffer& srcBuffer, vk::Image& dstImage, uint32_t width, uint32_t height);
@@ -129,6 +130,9 @@ public:
 
     ThiefVKDescriptorSetDescription getDescriptorSetDescription(const ShaderName);
 
+    void setCurrentView(glm::mat4 viewMatrix);
+    glm::mat4 getCurrentView() const ;
+
 private:
     // private funcs
     void DestroyAllImageTextures();
@@ -154,6 +158,7 @@ private:
     // private variables
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
+    vk::PhysicalDeviceLimits mLimits;
     size_t finishedSubmissionID; // to keep track of resources such as staging buffers and command buffers that are no
                                  // longer needed and can be freed.
     size_t currentFrameBufferIndex;
@@ -165,7 +170,7 @@ private:
 	ThiefVKBufferManager<glm::mat4> mUniformBufferManager;
 	ThiefVKBufferManager<Vertex>	mVertexBufferManager;
     ThiefVKBufferManager<uint32_t>  mIndexBufferManager;
-    ThiefVKBufferManager<glm::mat4> mSpotLightBufferManager;
+    ThiefVKBufferManager<ThiefVKLight> mSpotLightBufferManager;
 
 	ThiefVKDescriptorManager DescriptorManager;
 
@@ -193,7 +198,7 @@ private:
     std::vector<ThiefVKImageTextutres> deferedTextures; // have one per frameBuffer/swapChain images
     std::vector<vk::Framebuffer> frameBuffers;
 
-    std::vector<glm::mat4> spotLights;
+    glm::mat4 mCurrentView;
 };
 
 #endif
