@@ -10,22 +10,13 @@
 
 class ThiefVKDevice;
 
-enum class ShaderName {
-    BasicTransformVertex,
-    BasicColourFragment,
-    AlbedoVertex,
-    AlbedoFragment,
-    NormalVertex,
-    NormalFragment,
-    CompositeVertex,
-    CompositeFragment
-};
-
 struct ThiefVKPipelineDescription {
-    ShaderName vertexShader;
-    ShaderName fragmentShader;
+    std::string vertexShaderName;
+    std::string geometryShaderName;
+    std::string fragmentShaderName;
 
     vk::RenderPass renderPass; // render pass the pipeline wil be used with
+    uint32_t subpassIndex;
 
     uint32_t renderTargetWidth; // -1 represents sizeof swap chain
     uint32_t renderTargetHeight;
@@ -44,18 +35,18 @@ public:
     void Destroy();
 
     vk::Pipeline getPipeLine(ThiefVKPipelineDescription);
-	vk::DescriptorSetLayout getDescriptorSetLayout(const ShaderName) const;
-    vk::PipelineLayout getPipelineLayout(const ShaderName) const;
+	vk::DescriptorSetLayout getDescriptorSetLayout(const std::string&) const;
+    vk::PipelineLayout getPipelineLayout(const std::string&) const;
 private:
 
     // reference to device for creating shader modules and destroying pipelines
     ThiefVKDevice& dev;
 	vk::DescriptorPool DescPool;
 
-    vk::ShaderModule createShaderModule(std::string path) const;
-    vk::PipelineLayout createPipelineLayout(vk::DescriptorSetLayout& descLayouts, ShaderName shader) const;
+    vk::ShaderModule createShaderModule(std::string& path) const;
+    vk::PipelineLayout createPipelineLayout(vk::DescriptorSetLayout& descLayouts, std::string& shader) const;
 
-    std::map<ShaderName, vk::ShaderModule> shaderModules;
+    std::map<std::string, vk::ShaderModule> shaderModules;
 
     struct PipeLine {
         vk::Pipeline mPipeLine;

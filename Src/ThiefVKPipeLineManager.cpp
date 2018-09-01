@@ -10,19 +10,7 @@
 #include <array>
 
 
-ThiefVKPipelineManager::ThiefVKPipelineManager(ThiefVKDevice& dev)
-    :dev{dev} {
-
-    // Load up the shader spir-v from disk and create shader modules.
-    shaderModules[ShaderName::BasicTransformVertex] = createShaderModule("./Shaders/BasicTransform.vert.spv");
-    shaderModules[ShaderName::BasicColourFragment]  = createShaderModule("./Shaders/Colour.frag.spv");
-    shaderModules[ShaderName::AlbedoVertex]        = createShaderModule("./Shaders/Albedo.vert.spv");
-    shaderModules[ShaderName::AlbedoFragment]        = createShaderModule("./Shaders/Albedo.frag.spv");
-    shaderModules[ShaderName::NormalVertex]        = createShaderModule("./Shaders/Normal.vert.spv");
-    shaderModules[ShaderName::NormalFragment]        = createShaderModule("./Shaders/Normal.frag.spv");
-    shaderModules[ShaderName::CompositeVertex]      = createShaderModule("./Shaders/Composite.vert.spv");
-    shaderModules[ShaderName::CompositeFragment]    = createShaderModule("./Shaders/Composite.frag.spv");
-}
+ThiefVKPipelineManager::ThiefVKPipelineManager(ThiefVKDevice& dev) : dev{dev} {}
 
 
 void ThiefVKPipelineManager::Destroy() {
@@ -43,12 +31,18 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     vk::PipelineShaderStageCreateInfo vertexStage{};
     vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
     vertexStage.setPName("main"); //entry point of the shader
-    vertexStage.setModule(shaderModules[description.vertexShader]);
+    if(shaderModules[description.vertexShaderName] == vk::ShaderModule(nullptr)) {
+        shaderModules[description.vertexShaderName] = createShaderModule(description.vertexShaderName);
+    }
+    vertexStage.setModule(shaderModules[description.vertexShaderName]);
 
     vk::PipelineShaderStageCreateInfo fragStage{};
     fragStage.setStage(vk::ShaderStageFlagBits::eFragment);
     fragStage.setPName("main");
-    fragStage.setModule(shaderModules[description.fragmentShader]);
+    if(shaderModules[description.fragmentShaderName] == vk::ShaderModule(nullptr)) {
+        shaderModules[description.fragmentShaderName] = createShaderModule(description.fragmentShaderName);
+    }
+    fragStage.setModule(shaderModules[description.fragmentShaderName]);
 
     vk::PipelineShaderStageCreateInfo shaderStages[2] = {vertexStage, fragStage};
 
@@ -109,29 +103,14 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     blendStateInfo.setAttachmentCount(1);
     blendStateInfo.setPAttachments(&colorAttachState);
 
-	vk::DescriptorSetLayout descSetLayouts = getDescriptorSetLayout(description.fragmentShader);
-    vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.fragmentShader);
-
-    const uint32_t subpassIndex = [&description]() {
-        switch (description.vertexShader) {
-            case ShaderName::BasicTransformVertex:
-                return 0u;
-            case ShaderName::NormalVertex:
-                return  1u;
-            case ShaderName::AlbedoVertex:
-                return  2u;
-            case ShaderName::CompositeVertex:
-                return 3u;
-            default:
-                return std::numeric_limits<uint32_t>::max();
-        }
-    }();
+	vk::DescriptorSetLayout descSetLayouts = getDescriptorSetLayout(description.fragmentShaderName);
+    vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.fragmentShaderName);
 
     vk::GraphicsPipelineCreateInfo pipeLineCreateInfo{};
     pipeLineCreateInfo.setStageCount(2); // vertex and fragment
     pipeLineCreateInfo.setPStages(shaderStages);
 
-    if(description.fragmentShader != ShaderName::CompositeFragment) { // The composite pass uses a hardcoded full screen triangle so doesn't need a vertex buffer.
+    if(description.fragmentShaderName.find("Composite") == std::string::npos) { // The composite pass uses a hardcoded full screen triangle so doesn't need a vertex buffer.
         pipeLineCreateInfo.setPVertexInputState(&vertexInputInfo);
     } else {
         pipeLineCreateInfo.setPVertexInputState(&compositeVertexInputInfo);
@@ -145,7 +124,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
 
     pipeLineCreateInfo.setLayout(pipelineLayout);
     pipeLineCreateInfo.setRenderPass(description.renderPass);
-    pipeLineCreateInfo.setSubpass(subpassIndex); // index for subpass that this pipeline will be used in
+    pipeLineCreateInfo.setSubpass(description.subpassIndex); // index for subpass that this pipeline will be used in
 
     vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
     depthStencilInfo.setDepthTestEnable(description.useDepthTest);
@@ -163,8 +142,8 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
 }
 
 
-vk::ShaderModule ThiefVKPipelineManager::createShaderModule(std::string path) const {
-    std::ifstream file{path, std::ios::binary};
+vk::ShaderModule ThiefVKPipelineManager::createShaderModule(std::string& path) const {
+    std::ifstream file{"./Shaders/" + path, std::ios::binary};
 
     auto shaderSource = std::vector<char>(std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{});
 
@@ -176,13 +155,13 @@ vk::ShaderModule ThiefVKPipelineManager::createShaderModule(std::string path) co
 }
 
 
-vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSetLayout& descLayouts, ShaderName name)  const {
+vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSetLayout& descLayouts, std::string& name)  const {
     vk::PipelineLayoutCreateInfo pipelinelayoutinfo{};
     pipelinelayoutinfo.setPSetLayouts(&descLayouts);
     pipelinelayoutinfo.setSetLayoutCount(1);
 
     vk::PushConstantRange range{};
-    if(name == ShaderName::CompositeFragment) {
+    if(name.find("Composite") != std::string::npos) {
         range.setStageFlags(vk::ShaderStageFlagBits::eFragment);
         range.setOffset(0);
         range.setSize(sizeof(glm::vec4) * 5);
@@ -195,7 +174,7 @@ vk::PipelineLayout ThiefVKPipelineManager::createPipelineLayout(vk::DescriptorSe
 }
 
 
-vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(const ShaderName shader) const {
+vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(const std::string& shader) const {
 	const ThiefVKDescriptorSetDescription descSetDesc = dev.getDescriptorSetDescription(shader);
 
 	return dev.getDescriptorManager()->getDescriptorSetLayout(descSetDesc);
@@ -203,9 +182,9 @@ vk::DescriptorSetLayout ThiefVKPipelineManager::getDescriptorSetLayout(const Sha
 
 
 // This is a bit hacky, will fix at some point
-vk::PipelineLayout ThiefVKPipelineManager::getPipelineLayout(const ShaderName shader) const {
+vk::PipelineLayout ThiefVKPipelineManager::getPipelineLayout(const std::string& shader) const {
     for(const auto& [key, pipeline] : pipeLineCache) {
-        if( key.fragmentShader == shader) return pipeline.mPipelineLayout;
+        if( key.fragmentShaderName == shader) return pipeline.mPipelineLayout;
     }
 
     return vk::PipelineLayout{nullptr};
@@ -213,5 +192,5 @@ vk::PipelineLayout ThiefVKPipelineManager::getPipelineLayout(const ShaderName sh
 
 
 bool operator<(const ThiefVKPipelineDescription& lhs, const ThiefVKPipelineDescription& rhs) {
-    return static_cast<int>(lhs.fragmentShader) < static_cast<int>(rhs.fragmentShader);
+    return lhs.fragmentShaderName < rhs.fragmentShaderName;
 }

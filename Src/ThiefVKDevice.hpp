@@ -128,7 +128,7 @@ public:
     void createDescriptorPools();
     void createSemaphores();
 
-    ThiefVKDescriptorSetDescription getDescriptorSetDescription(const ShaderName);
+    ThiefVKDescriptorSetDescription getDescriptorSetDescription(const std::string);
 
     void setCurrentView(glm::mat4 viewMatrix);
     glm::mat4 getCurrentView() const ;

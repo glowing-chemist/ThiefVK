@@ -155,16 +155,16 @@ void ThiefVKDevice::endFrame() {
     resources.indexBuffer = indexBuffer;
 
     // Get all of the descriptor sets needed for this frame.
-    ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription(ShaderName::BasicColourFragment);
+    ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription("Colour.frag.spv");
     ThiefVKDescriptorSet basicColourDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
 
-    ThiefVKDescriptorSetDescription albedoDesc = getDescriptorSetDescription(ShaderName::AlbedoFragment);
+    ThiefVKDescriptorSetDescription albedoDesc = getDescriptorSetDescription("Albedo.frag.spv");
     ThiefVKDescriptorSet albedoDescriptor = DescriptorManager.getDescriptorSet(albedoDesc);
 
-    ThiefVKDescriptorSetDescription normalsDesc = getDescriptorSetDescription(ShaderName::NormalFragment);
+    ThiefVKDescriptorSetDescription normalsDesc = getDescriptorSetDescription("Normal.frag.spv");
     ThiefVKDescriptorSet normalsDescriptor = DescriptorManager.getDescriptorSet(normalsDesc);
 
-    ThiefVKDescriptorSetDescription compositeDesc = getDescriptorSetDescription(ShaderName::CompositeFragment);
+    ThiefVKDescriptorSetDescription compositeDesc = getDescriptorSetDescription("Composite.frag.spv");
     ThiefVKDescriptorSet compositeDescriptor = DescriptorManager.getDescriptorSet(compositeDesc);
 
     frameResources[currentFrameBufferIndex].DescSets.push_back(basicColourDescriptor);
@@ -181,17 +181,17 @@ void ThiefVKDevice::endFrame() {
 		
 		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.colourCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::BasicColourFragment), 0, basicColourDescriptor.getHandle(), uniformOffset);
+        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("Colour.frag.spv"), 0, basicColourDescriptor.getHandle(), uniformOffset);
 		resources.colourCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.normalsCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::NormalFragment), 0, normalsDescriptor.getHandle(), uniformOffset);
+        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("Normal.frag.spv"), 0, normalsDescriptor.getHandle(), uniformOffset);
 		resources.normalsCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
         resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.albedoCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::AlbedoFragment), 0, albedoDescriptor.getHandle(), uniformOffset );
+        resources.albedoCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("Albedo.frag.spv"), 0, albedoDescriptor.getHandle(), uniformOffset );
         resources.albedoCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 	}
 
@@ -202,8 +202,8 @@ void ThiefVKDevice::endFrame() {
     pushConstants[2] = currentView[1];
     pushConstants[3] = currentView[2];
     pushConstants[4] = currentView[3];
-    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(glm::vec4) * 5, &pushConstants);
-    resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), 0, compositeDescriptor.getHandle(), {} );
+    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout("Composite.frag.spv"), vk::ShaderStageFlagBits::eFragment, 0, sizeof(glm::vec4) * 5, &pushConstants);
+    resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("Composite.frag.spv"), 0, compositeDescriptor.getHandle(), {} );
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
     endFrameInternal();
@@ -876,8 +876,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 	colourCmdBuffer.begin(beginInfo);
 
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.vertexShader		 = ShaderName::BasicTransformVertex;
-	pipelineDesc.fragmentShader		 = ShaderName::BasicColourFragment;
+	pipelineDesc.vertexShaderName	 = "BasicTransform.vert.spv";
+	pipelineDesc.fragmentShaderName	 = "Colour.frag.spv";
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
@@ -908,8 +908,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingAlbedoCmdBuffer() {
 	depthCmdBuffer.begin(beginInfo);
 
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.vertexShader		 = ShaderName::AlbedoVertex;
-	pipelineDesc.fragmentShader		 = ShaderName::AlbedoFragment;
+	pipelineDesc.vertexShaderName    = "Albedo.vert.spv";
+	pipelineDesc.fragmentShaderName	 = "Albedo.frag.spv";
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
@@ -941,8 +941,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 	normalsCmdBuffer.begin(beginInfo);
 
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.vertexShader		 = ShaderName::NormalVertex;
-	pipelineDesc.fragmentShader		 = ShaderName::NormalFragment;
+	pipelineDesc.vertexShaderName    = "Normal.vert.spv";
+	pipelineDesc.fragmentShaderName	 = "Normal.frag.spv";
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
@@ -972,8 +972,8 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
     compositeCmdBuffer.begin(beginInfo);
 
     ThiefVKPipelineDescription pipelineDesc{};
-    pipelineDesc.vertexShader        = ShaderName::CompositeVertex;
-    pipelineDesc.fragmentShader      = ShaderName::CompositeFragment;
+    pipelineDesc.vertexShaderName    = "Composite.vert.spv";
+    pipelineDesc.fragmentShaderName  = "Composite.frag.spv";
     pipelineDesc.renderPass          = mRenderPasses.RenderPass;
     pipelineDesc.renderTargetOffsetX = 0;
     pipelineDesc.renderTargetOffsetY = 0;
@@ -1029,18 +1029,18 @@ void ThiefVKDevice::createSemaphores() {
 }
 
 
-ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const ShaderName shader) {
+ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const std::string shader) {
     ThiefVKDescriptorSetDescription descSets{};
 
     ThiefVKDescriptorDescription uboDescriptorLayout{};
     uboDescriptorLayout.mDescriptor.mBinding = 0;
-    uboDescriptorLayout.mDescriptor.mDescType = shader == ShaderName::CompositeFragment ? vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eUniformBufferDynamic;
-    uboDescriptorLayout.mDescriptor.mShaderStage  = shader == ShaderName::CompositeFragment ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
-    uboDescriptorLayout.mResource = shader == ShaderName::CompositeFragment ? &frameResources[currentFrameBufferIndex].spotLightBuffer.mBuffer : &frameResources[currentFrameBufferIndex].uniformBuffer.mBuffer;
+    uboDescriptorLayout.mDescriptor.mDescType = shader.find("Composite") != std::string::npos ? vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eUniformBufferDynamic;
+    uboDescriptorLayout.mDescriptor.mShaderStage  = shader.find("Composite") != std::string::npos ? vk::ShaderStageFlagBits::eFragment : vk::ShaderStageFlagBits::eVertex;
+    uboDescriptorLayout.mResource = shader.find("Composite") != std::string::npos ? &frameResources[currentFrameBufferIndex].spotLightBuffer.mBuffer : &frameResources[currentFrameBufferIndex].uniformBuffer.mBuffer;
 
     descSets.push_back(uboDescriptorLayout);
 
-    if(shader == ShaderName::BasicColourFragment) {
+    if(shader.find("Colour") != std::string::npos) {
         ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
         imageSamplerDescriptorLayout.mDescriptor.mBinding = 1;
         imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
@@ -1048,7 +1048,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
         imageSamplerDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].textureImageViews[0];
 
         descSets.push_back(imageSamplerDescriptorLayout);
-    } else if(shader == ShaderName::CompositeFragment) {
+    } else if(shader.find("Composite") != std::string::npos) {
         for(unsigned int i = 1; i < 5; ++i) {
             ThiefVKDescriptorDescription imageSamplerDescriptorLayout{};
             imageSamplerDescriptorLayout.mDescriptor.mBinding = i;
