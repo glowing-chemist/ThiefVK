@@ -17,23 +17,33 @@ layout(binding = 3) uniform sampler2D normalstexture;
 layout(binding = 4) uniform sampler2D aledoTexture;
 
 layout (push_constant) uniform pushConstants {
-	int numberOfLights;
-	mat4 viewMatrix;
-} lights;
+	vec4 LightAndInvView[5];
+} push_constants;
 
 layout(location = 0) out vec4 frameBuffer;
 layout(location = 1) in vec2 texCoords;
+
+vec4 calculatePosition() {
+	float depth = 1.0f - texture(depthTexture, texCoords).x;
+	if(depth == 0.0f) return vec4(0.0f);
+	mat4 inverseView = mat4(push_constants.LightAndInvView[1], push_constants.LightAndInvView[2],
+							push_constants.LightAndInvView[3], push_constants.LightAndInvView[4]);
+
+	vec4 position = inverseView * vec4((texCoords.x * 2.0f) + 1, ((1.0f - texCoords.y) * 2.0f) + 1.0f, depth, 1.0f);
+
+	return position / position.w;
+}
 
 void main() {
 	frameBuffer = texture(colourTexture, texCoords);
 	vec3 normals = vec4((texture(normalstexture, texCoords) * 2.0) - 1.0).xyz; // remap the normals to [-1, 1]
 
-	for(int i = 0; i < lights.numberOfLights; ++i) {
+	for(int i = 0; i < push_constants.LightAndInvView[0].x; ++i) {
 		vec3 lightVector = ubo.spotLights[i].mPosition.xyz;
 		float diffuseTerm = max(0.0, dot(normals, lightVector));
 
 		if(diffuseTerm > 0.0) {
-			vec3 cameraPos = vec4(inverse(lights.viewMatrix)[3]).xyz;
+			vec3 cameraPos = push_constants.LightAndInvView[4].xyz;
 			vec3 halfVector = normalize(cameraPos + lightVector);
 			float shinniness = texture(aledoTexture, texCoords).x;
 			vec3 specularTerm = pow(dot(halfVector, normals), shinniness) * ubo.spotLights[i].mColourAndAngle.xyz;
