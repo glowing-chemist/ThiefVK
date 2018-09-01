@@ -41,7 +41,7 @@ void ThiefVKEngine::addLightToScene(ThiefVKLight& light) {
 void ThiefVKEngine::renderScene() {
   mDevice.startFrame();
 
-  mDevice.setCurrentView(mModels[0].getGeometry().camera * mModels[0].getGeometry().world);
+  mDevice.setCurrentView(glm::inverse(mModels[0].getGeometry().camera * mModels[0].getGeometry().world));
 
   for(auto& model : mModels) {
     mDevice.draw(model.getGeometry());

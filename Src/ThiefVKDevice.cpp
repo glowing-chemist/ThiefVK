@@ -195,12 +195,14 @@ void ThiefVKDevice::endFrame() {
         resources.albedoCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 	}
 
-    char pushConstants[sizeof(uint32_t) + sizeof(glm::mat4)];
-    uint32_t numberOfLights = spotLIghtOffsets.size();
-    std::memmove(&pushConstants[0], &numberOfLights, sizeof(uint32_t));
-    glm::mat currentView = getCurrentView();
-    std::memmove(&pushConstants[4], &currentView, sizeof(glm::mat4));
-    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(uint32_t) + sizeof(glm::mat4), &pushConstants);
+    glm::vec4 pushConstants[5];
+    pushConstants[0] = glm::vec4(spotLIghtOffsets.size(), spotLIghtOffsets.size(), spotLIghtOffsets.size(), spotLIghtOffsets.size());
+    glm::mat4 currentView = getCurrentView();
+    pushConstants[1] = currentView[0];
+    pushConstants[2] = currentView[1];
+    pushConstants[3] = currentView[2];
+    pushConstants[4] = currentView[3];
+    resources.compositeCmdBuffer.pushConstants(pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), vk::ShaderStageFlagBits::eFragment, 0, sizeof(glm::vec4) * 5, &pushConstants);
     resources.compositeCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout(ShaderName::CompositeFragment), 0, compositeDescriptor.getHandle(), {} );
     resources.compositeCmdBuffer.draw(3,1,0,0);
 
