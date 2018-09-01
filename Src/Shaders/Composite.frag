@@ -42,6 +42,7 @@ void main() {
 	for(int i = 0; i < push_constants.LightAndInvView[0].x; ++i) {
 		vec3 lightVector = normalize(ubo.spotLights[i].mPosition.xyz - fragPos.xyz);
 		float diffuseTerm = max(0.0, dot(normals, lightVector));
+		frameBuffer += vec4(diffuseTerm + 0.1f);
 
 		if(diffuseTerm > 0.0) {
 			vec3 cameraPos = push_constants.LightAndInvView[4].xyz;
