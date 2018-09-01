@@ -37,15 +37,16 @@ vec4 calculatePosition() {
 void main() {
 	frameBuffer = texture(colourTexture, texCoords);
 	vec3 normals = vec4((texture(normalstexture, texCoords) * 2.0) - 1.0).xyz; // remap the normals to [-1, 1]
+	vec4 fragPos = calculatePosition();
 
 	for(int i = 0; i < push_constants.LightAndInvView[0].x; ++i) {
-		vec3 lightVector = ubo.spotLights[i].mPosition.xyz;
+		vec3 lightVector = normalize(ubo.spotLights[i].mPosition.xyz - fragPos.xyz);
 		float diffuseTerm = max(0.0, dot(normals, lightVector));
 
 		if(diffuseTerm > 0.0) {
 			vec3 cameraPos = push_constants.LightAndInvView[4].xyz;
 			vec3 halfVector = normalize(cameraPos + lightVector);
-			float shinniness = texture(aledoTexture, texCoords).x;
+			float shinniness = texture(aledoTexture, texCoords).x * 100.0f;
 			vec3 specularTerm = pow(dot(halfVector, normals), shinniness) * ubo.spotLights[i].mColourAndAngle.xyz;
 
 			frameBuffer += vec4(specularTerm, 1.0f);
