@@ -9,6 +9,7 @@
 #include <iostream>
 #include <limits>
 
+#define DEBUG_SHOW_NORMALS 0
 
 // ThiefVKDeviceMemberFunctions
 
@@ -160,8 +161,11 @@ void ThiefVKDevice::endFrame() {
 
     ThiefVKDescriptorSetDescription albedoDesc = getDescriptorSetDescription("Albedo.frag.spv");
     ThiefVKDescriptorSet albedoDescriptor = DescriptorManager.getDescriptorSet(albedoDesc);
-
+#if DEBUG_SHOW_NORMALS
+    ThiefVKDescriptorSetDescription normalsDesc = getDescriptorSetDescription("NormalDebug.frag.spv");
+#else
     ThiefVKDescriptorSetDescription normalsDesc = getDescriptorSetDescription("Normal.frag.spv");
+#endif
     ThiefVKDescriptorSet normalsDescriptor = DescriptorManager.getDescriptorSet(normalsDesc);
 
     ThiefVKDescriptorSetDescription compositeDesc = getDescriptorSetDescription("Composite.frag.spv");
@@ -186,8 +190,12 @@ void ThiefVKDevice::endFrame() {
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.normalsCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
+#if DEBUG_SHOW_NORMALS
+        resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("NormalDebug.frag.spv"), 0, normalsDescriptor.getHandle(), uniformOffset);
+#else
         resources.normalsCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("Normal.frag.spv"), 0, normalsDescriptor.getHandle(), uniformOffset);
-		resources.normalsCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
+#endif
+        resources.normalsCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
         resources.albedoCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.albedoCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
@@ -491,7 +499,7 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
                                                          vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
-        auto [albedoImage, albedoMemory] =  createImage(vk::Format::eR8Unorm,
+        auto [albedoImage, albedoMemory] =  createImage(vk::Format::eR8G8B8A8Srgb,
                                                          vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eSampled,
                                                          mSwapChain.getSwapChainImageWidth(), mSwapChain.getSwapChainImageHeight());
 
@@ -521,7 +529,7 @@ void ThiefVKDevice::createDeferedRenderTargetImageViews() {
         vk::ImageViewCreateInfo albedoViewInfo{};
         albedoViewInfo.setImage(albedoImage);
         albedoViewInfo.setViewType(vk::ImageViewType::e2D);
-        albedoViewInfo.setFormat(vk::Format::eR8Unorm);
+        albedoViewInfo.setFormat(vk::Format::eR8G8B8A8Srgb);
         albedoViewInfo.setComponents(vk::ComponentMapping());
         albedoViewInfo.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
@@ -583,7 +591,7 @@ void ThiefVKDevice::createRenderPasses() {
     normalsPassAttachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal); // these will be used in the subsqeuent light renderpass
 
     vk::AttachmentDescription albedoPassAttachment{};
-    albedoPassAttachment.setFormat(vk::Format::eR8Unorm);
+    albedoPassAttachment.setFormat(vk::Format::eR8G8B8A8Srgb);
     albedoPassAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
     albedoPassAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
     albedoPassAttachment.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
@@ -879,6 +887,7 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingColourCmdBuffer() {
 	pipelineDesc.vertexShaderName	 = "BasicTransform.vert.spv";
 	pipelineDesc.fragmentShaderName	 = "Colour.frag.spv";
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
+    pipelineDesc.subpassIndex        = 0;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
 	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
@@ -911,6 +920,7 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingAlbedoCmdBuffer() {
 	pipelineDesc.vertexShaderName    = "Albedo.vert.spv";
 	pipelineDesc.fragmentShaderName	 = "Albedo.frag.spv";
 	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
+    pipelineDesc.subpassIndex        = 2;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
 	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
@@ -941,9 +951,16 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingNormalsCmdBuffer() {
 	normalsCmdBuffer.begin(beginInfo);
 
 	ThiefVKPipelineDescription pipelineDesc{};
-	pipelineDesc.vertexShaderName    = "Normal.vert.spv";
-	pipelineDesc.fragmentShaderName	 = "Normal.frag.spv";
-	pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
+#if DEBUG_SHOW_NORMALS
+	pipelineDesc.vertexShaderName    = "NormalDebug.vert.spv";
+    pipelineDesc.geometryShaderName  = "NormalDebug.geom.spv";
+	pipelineDesc.fragmentShaderName	 = "NormalDebug.frag.spv";
+#else
+    pipelineDesc.vertexShaderName    = "Normal.vert.spv";
+    pipelineDesc.fragmentShaderName  = "Normal.frag.spv";
+#endif
+    pipelineDesc.renderPass			 = mRenderPasses.RenderPass;
+    pipelineDesc.subpassIndex        = 1;
 	pipelineDesc.renderTargetOffsetX = 0;
 	pipelineDesc.renderTargetOffsetY = 0;
 	pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();
@@ -975,6 +992,7 @@ vk::CommandBuffer& ThiefVKDevice::startRecordingCompositeCmdBuffer() {
     pipelineDesc.vertexShaderName    = "Composite.vert.spv";
     pipelineDesc.fragmentShaderName  = "Composite.frag.spv";
     pipelineDesc.renderPass          = mRenderPasses.RenderPass;
+    pipelineDesc.subpassIndex        = 3;
     pipelineDesc.renderTargetOffsetX = 0;
     pipelineDesc.renderTargetOffsetY = 0;
     pipelineDesc.renderTargetHeight  = mSwapChain.getSwapChainImageHeight();

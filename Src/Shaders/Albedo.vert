@@ -13,6 +13,7 @@ layout(location = 2) in vec3 inNorm;
 layout(location = 3) in float inAlbedo;
 
 layout(location = 0) out float Albedo;
+layout(location = 1) out vec3 Position;
 
 out gl_PerVertex {
     vec4 gl_Position;
@@ -21,5 +22,7 @@ out gl_PerVertex {
 
 void main() {
         gl_Position = ubo.proj * ubo.view * ubo.model * vec4(fragPos, 1.0);
-        Albedo = inAlbedo;
+        Albedo 	 = inAlbedo;
+        vec4 Pos = ubo.proj * ubo.view * ubo.model * vec4(fragPos, 1.0);
+        Position = (((Pos / Pos.w) + 1.0f) / 2.0f).xyz;
 }
