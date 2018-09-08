@@ -44,7 +44,18 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     }
     fragStage.setModule(shaderModules[description.fragmentShaderName]);
 
-    vk::PipelineShaderStageCreateInfo shaderStages[2] = {vertexStage, fragStage};
+    const bool hasGeometryStage = description.geometryShaderName != "";
+    vk::PipelineShaderStageCreateInfo geomStage{};
+    if(hasGeometryStage) {
+        geomStage.setStage(vk::ShaderStageFlagBits::eGeometry);
+        geomStage.setPName("main");
+        if(shaderModules[description.geometryShaderName] == vk::ShaderModule(nullptr)) {
+            shaderModules[description.geometryShaderName] = createShaderModule(description.geometryShaderName);
+        }
+        geomStage.setModule(shaderModules[description.geometryShaderName]);
+    }
+
+    vk::PipelineShaderStageCreateInfo shaderStages[3] = {vertexStage, fragStage, geomStage};
 
     auto bindingDesc = Vertex::getBindingDesc();
     auto attribDesc  = Vertex::getAttribDesc();
@@ -107,7 +118,7 @@ vk::Pipeline ThiefVKPipelineManager::getPipeLine(ThiefVKPipelineDescription desc
     vk::PipelineLayout pipelineLayout = createPipelineLayout(descSetLayouts, description.fragmentShaderName);
 
     vk::GraphicsPipelineCreateInfo pipeLineCreateInfo{};
-    pipeLineCreateInfo.setStageCount(2); // vertex and fragment
+    pipeLineCreateInfo.setStageCount(2 + hasGeometryStage); // vertex and fragment
     pipeLineCreateInfo.setPStages(shaderStages);
 
     if(description.fragmentShaderName.find("Composite") == std::string::npos) { // The composite pass uses a hardcoded full screen triangle so doesn't need a vertex buffer.

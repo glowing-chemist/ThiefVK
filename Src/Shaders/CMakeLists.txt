@@ -3,6 +3,7 @@ set(GLSL_VALIDATOR glslangValidator)
 file(GLOB_RECURSE GLSL_SOURCE_FILES
     "./*.frag"
     "./*.vert"
+    "./*.geom"
     )
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
