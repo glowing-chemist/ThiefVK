@@ -150,6 +150,7 @@ std::pair<vk::PhysicalDevice, vk::Device> ThiefVKInstance::findSuitableDevices(i
     const char* deviceExtensions = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 
     vk::PhysicalDeviceFeatures physicalFeatures{};
+    physicalFeatures.geometryShader = GeometryWanted;
     physicalFeatures.setSamplerAnisotropy(true);
 
     vk::DeviceCreateInfo deviceInfo{};
