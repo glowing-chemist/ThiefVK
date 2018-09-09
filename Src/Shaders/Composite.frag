@@ -27,7 +27,7 @@ layout(location = 1) in vec2 texCoords;
 void main() {
 	frameBuffer = texture(colourTexture, texCoords);
 	vec3 normals = vec4((texture(normalstexture, texCoords) * 2.0) - 1.0).xyz; // remap the normals to [-1, 1]
-	vec4 fragPos = (vec4(texture(aledoTexture, texCoords).xyz, 1.0f) - 1.0f) * 2.0f;
+	vec4 fragPos = (vec4(texture(aledoTexture, texCoords).xyz, 1.0f) * 2.0f) - 1.0f;
 
 	for(int i = 0; i < push_constants.LightAndInvView[0].x; ++i) {
 		vec3 lightVector = normalize(ubo.spotLights[i].mPosition.xyz - fragPos.xyz);
