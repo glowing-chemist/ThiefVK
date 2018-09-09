@@ -14,7 +14,7 @@ layout(binding = 0) uniform UniformBufferObject {
 layout(binding = 1) uniform sampler2D colourTexture;
 layout(binding = 2) uniform sampler2D depthTexture;
 layout(binding = 3) uniform sampler2D normalstexture;
-layout(binding = 4) uniform sampler2D aledoTexture;
+layout(binding = 4) uniform sampler2D albedoTexture;
 
 layout (push_constant) uniform pushConstants {
 	vec4 LightAndInvView[5];
@@ -27,7 +27,7 @@ layout(location = 1) in vec2 texCoords;
 void main() {
 	frameBuffer = texture(colourTexture, texCoords);
 	vec3 normals = vec4((texture(normalstexture, texCoords) * 2.0) - 1.0).xyz; // remap the normals to [-1, 1]
-	vec4 fragPos = (vec4(texture(aledoTexture, texCoords).xyz, 1.0f) * 2.0f) - 1.0f;
+	vec4 fragPos = (vec4(texture(albedoTexture, texCoords).xyz, 1.0f) * 2.0f) - 1.0f;
 
 	for(int i = 0; i < push_constants.LightAndInvView[0].x; ++i) {
 		vec3 lightVector = normalize(ubo.spotLights[i].mPosition.xyz - fragPos.xyz);
@@ -35,9 +35,9 @@ void main() {
 		frameBuffer += vec4(diffuseTerm + 0.1f);
 
 		if(diffuseTerm > 0.0) {
-			vec3 cameraPos = push_constants.LightAndInvView[4].xyz;
-			vec3 halfVector = normalize(cameraPos + lightVector);
-			float shinniness = texture(aledoTexture, texCoords).w * 100.0f;
+			vec3 viewVector = vec3(0.0f) - fragPos.xyz;
+			vec3 halfVector = normalize(viewVector + lightVector);
+			float shinniness = texture(albedoTexture, texCoords).w * 100.0f;
 			vec3 specularTerm = pow(dot(halfVector, normals), shinniness) * ubo.spotLights[i].mColourAndAngle.xyz;
 
 			frameBuffer += vec4(specularTerm, 1.0f);
