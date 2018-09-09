@@ -35,6 +35,8 @@ struct ThiefVKBuffer {
     Allocation mBufferMemory;
 };
 
+bool operator<(const ThiefVKBuffer&, const ThiefVKBuffer&);
+
 struct ThiefVKImage {
     vk::Image mImage;
     Allocation mImageMemory;

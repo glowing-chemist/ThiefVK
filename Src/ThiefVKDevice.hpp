@@ -131,7 +131,7 @@ public:
     ThiefVKDescriptorSetDescription getDescriptorSetDescription(const std::string);
 
     void setCurrentView(glm::mat4 viewMatrix);
-    glm::mat4 getCurrentView() const ;
+    glm::mat4 getCurrentView() const;
 
 private:
     // private funcs

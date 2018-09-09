@@ -7,6 +7,10 @@
 #include <iostream>
 #include <algorithm>
 
+bool operator<(const ThiefVKBuffer& lhs, const ThiefVKBuffer& rhs) {
+    return lhs.mBuffer < rhs.mBuffer;
+}
+
 bool operator==(const ThiefVKImage& lhs, const ThiefVKImage& rhs) {
 	return lhs.mImage == rhs.mImage;
 }

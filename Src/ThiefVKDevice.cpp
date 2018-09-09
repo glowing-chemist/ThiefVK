@@ -6,6 +6,7 @@
 #include "stb_image.h"
 
 #include <array>
+#include <set>
 #include <iostream>
 #include <limits>
 
@@ -40,12 +41,25 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
 ThiefVKDevice::~ThiefVKDevice() {
     mDevice.waitIdle();
 
+    // unique buffers, this is needed as multiple frameResources structs can have handles to the same 
+    // device buffers. This avoids double freeing any of them.
+    std::set<ThiefVKBuffer> uniqueBuffers;
     for(auto& resource : frameResources) {
         destroyPerFrameResources(resource);
+        uniqueBuffers.insert(resource.vertexBuffer);
+        uniqueBuffers.insert(resource.indexBuffer);
+        uniqueBuffers.insert(resource.uniformBuffer);
+        uniqueBuffers.insert(resource.spotLightBuffer);
     }
+
+    for(auto buffer : uniqueBuffers) {
+        destroyBuffer(buffer);
+    }
+
     for(auto& [path, texture] : mTextureCache) {
         destroyImage(texture);
     }
+
     DestroyFrameBuffers();
     DestroyAllImageTextures();
     pipelineManager.Destroy();
@@ -87,12 +101,12 @@ void ThiefVKDevice::startFrame() {
         std::vector<vk::CommandBuffer> secondaryCmdBuffers = mDevice.allocateCommandBuffers(secondaryCmdBufferAllocInfo);
 
         // Set the initial cmd Buffers.
-        frameResources[currentFrameBufferIndex].primaryCmdBuffer            = primaryCmdBuffers[0];
-        frameResources[currentFrameBufferIndex].flushCommandBuffer       = primaryCmdBuffers[1];
+        frameResources[currentFrameBufferIndex].primaryCmdBuffer        = primaryCmdBuffers[0];
+        frameResources[currentFrameBufferIndex].flushCommandBuffer      = primaryCmdBuffers[1];
         frameResources[currentFrameBufferIndex].colourCmdBuffer         = secondaryCmdBuffers[0];
-        frameResources[currentFrameBufferIndex].albedoCmdBuffer          = secondaryCmdBuffers[1];
-        frameResources[currentFrameBufferIndex].normalsCmdBuffer            = secondaryCmdBuffers[2];
-        frameResources[currentFrameBufferIndex].compositeCmdBuffer            = secondaryCmdBuffers[3];
+        frameResources[currentFrameBufferIndex].albedoCmdBuffer         = secondaryCmdBuffers[1];
+        frameResources[currentFrameBufferIndex].normalsCmdBuffer        = secondaryCmdBuffers[2];
+        frameResources[currentFrameBufferIndex].compositeCmdBuffer      = secondaryCmdBuffers[3];
 
     } else { // Otherwise just reset them
         auto& resources = frameResources[currentFrameBufferIndex];
@@ -118,8 +132,6 @@ void ThiefVKDevice::startFrame() {
         }   
         resources.textureImageViews.clear();
 
-        destroyBuffer(resources.vertexBuffer);
-        destroyBuffer(resources.indexBuffer);
         destroyBuffer(resources.uniformBuffer);
         destroyBuffer(resources.spotLightBuffer);
 
@@ -134,17 +146,24 @@ void ThiefVKDevice::startFrame() {
 void ThiefVKDevice::endFrame() {
     auto& resources = frameResources[currentFrameBufferIndex];
 
+    // we defered the buffer destruction to here to we can avoid reuploading the buffer each 
+    // frame if it hasn't changed.
+    if(mVertexBufferManager.bufferHasChanged()) {
+        destroyBuffer(resources.vertexBuffer);
+        destroyBuffer(resources.indexBuffer);
+    }
+
     const std::vector<entryInfo> vertexBufferOffsets = mVertexBufferManager.getBufferOffsets();
     auto [vertexBuffer, vertexStagingBuffer] = mVertexBufferManager.flushBufferUploads();
+
+    const std::vector<entryInfo> indexBufferOffsets = mIndexBufferManager.getBufferOffsets();
+    auto [indexBuffer, indexStagingBuffer]          = mIndexBufferManager.flushBufferUploads();
 
     const std::vector<entryInfo> uniformBufferOffsets = mUniformBufferManager.getBufferOffsets();
     auto [uniformBuffer, uniformStagingBuffer] = mUniformBufferManager.flushBufferUploads();
 
     const std::vector<entryInfo> spotLIghtOffsets = mSpotLightBufferManager.getBufferOffsets();
     auto [spotLightBuffer, spotLightStagingBuffer] = mSpotLightBufferManager.flushBufferUploads();
-
-    const std::vector<entryInfo> indexBufferOffsets = mIndexBufferManager.getBufferOffsets();
-    auto [indexBuffer, indexStagingBuffer]          = mIndexBufferManager.flushBufferUploads();
 
     resources.stagingBuffers.push_back(vertexStagingBuffer);
     resources.vertexBuffer = vertexBuffer;
@@ -1025,11 +1044,6 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
         mDevice.destroyImageView(imageView);
     }
     resources.textureImageViews.clear();
-
-    destroyBuffer(resources.vertexBuffer);
-    destroyBuffer(resources.indexBuffer);
-    destroyBuffer(resources.uniformBuffer);
-    destroyBuffer(resources.spotLightBuffer);
 }
 
 

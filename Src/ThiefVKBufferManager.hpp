@@ -45,6 +45,7 @@ private:
 	uint64_t mCurrentOffset;
 
 	std::vector<T> mPreviousBuffer;
+	ThiefVKBuffer mPreviousDeviceBuffer;
 };
 
 #endif

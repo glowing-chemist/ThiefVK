@@ -47,6 +47,7 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(Th
 	mDevice.copyBuffers(stagingBuffer.mBuffer, buffer.mBuffer, bufferSize);
 
 	mPreviousBuffer = mBuffer;
+	mPreviousDeviceBuffer = buffer;
 	mBuffer.clear();
 	mEntries.clear();
 	mCurrentOffset = 0;
@@ -57,6 +58,13 @@ std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::uploadBuffer(Th
 
 template<typename T>
 std::pair<ThiefVKBuffer, ThiefVKBuffer> ThiefVKBufferManager<T>::flushBufferUploads() {
+	if(!bufferHasChanged()) {
+		mBuffer.clear();
+		mEntries.clear();
+		mCurrentOffset = 0;
+		return {mPreviousDeviceBuffer, ThiefVKBuffer{}};
+	}
+
 	const uint64_t bufferSize = std::accumulate(mEntries.begin(), mEntries.end(), 0, [](const int& lhs, const entryInfo& rhs) { return lhs + rhs.entrySize; } );
 
 	ThiefVKBuffer buffer = mDevice.createBuffer(vk::BufferUsageFlagBits::eTransferDst | mUsage, bufferSize);
@@ -74,7 +82,7 @@ std::vector<entryInfo> ThiefVKBufferManager<T>::getBufferOffsets() {
 
 template<typename T>
 bool ThiefVKBufferManager<T>::bufferHasChanged() const {
-	return mPreviousBuffer == mBuffer;
+	return mPreviousBuffer != mBuffer;
 }
 
 // we need to explicitly instansiate what buffer managers we will be using here
