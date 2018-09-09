@@ -27,8 +27,8 @@ layout(location = 1) in vec2 texCoords;
 void main()
 {             
     // retrieve data from G-buffer
-    vec3 FragPos = texture(albedoTexture, texCoords).xyz;
-    vec3 Normal = texture(normalstexture, texCoords).xyz;
+    vec3 FragPos = (texture(albedoTexture, texCoords).xyz * 2.0f) - 1.0f;
+    vec3 Normal = (texture(normalstexture, texCoords).xyz * 2.0f) - 1.0f;
     vec3 Albedo = vec3(texture(albedoTexture, texCoords).w);
     
     // then calculate lighting as usual
