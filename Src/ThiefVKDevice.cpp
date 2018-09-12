@@ -132,9 +132,6 @@ void ThiefVKDevice::startFrame() {
         }   
         resources.textureImageViews.clear();
 
-        destroyBuffer(resources.uniformBuffer);
-        destroyBuffer(resources.spotLightBuffer);
-
         resources.textureImages.clear();
     }
 
@@ -151,6 +148,12 @@ void ThiefVKDevice::endFrame() {
     if(mVertexBufferManager.bufferHasChanged()) {
         destroyBuffer(resources.vertexBuffer);
         destroyBuffer(resources.indexBuffer);
+    }
+    if(mUniformBufferManager.bufferHasChanged()) {
+        destroyBuffer(resources.uniformBuffer);
+    }
+    if(mSpotLightBufferManager.bufferHasChanged()) {
+        destroyBuffer(resources.spotLightBuffer);
     }
 
     const std::vector<entryInfo> vertexBufferOffsets = mVertexBufferManager.getBufferOffsets();
