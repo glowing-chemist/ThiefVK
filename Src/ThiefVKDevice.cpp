@@ -226,7 +226,7 @@ void ThiefVKDevice::endFrame() {
 	}
 
     glm::vec4 pushConstants[5];
-    pushConstants[0] = glm::vec4(spotLIghtOffsets.size(), spotLIghtOffsets.size(), spotLIghtOffsets.size(), spotLIghtOffsets.size());
+    pushConstants[0] = glm::vec4(spotLIghtOffsets[0].numberOfEntries);
     glm::mat4 currentView = getCurrentView();
     pushConstants[1] = currentView[0];
     pushConstants[2] = currentView[1];
