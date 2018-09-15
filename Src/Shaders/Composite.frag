@@ -26,10 +26,10 @@ layout(location = 1) in vec2 texCoords;
 
 void main()
 {             
-    // retrieve data from G-buffer
     vec3 FragPos = (texture(albedoTexture, texCoords).xyz * 2.0f) - 1.0f;
     vec3 Normal = (texture(normalstexture, texCoords).xyz * 2.0f) - 1.0f;
     vec3 Albedo = vec3(texture(albedoTexture, texCoords).w);
+    frameBuffer = texture(colourTexture, texCoords);
     
     // then calculate lighting as usual
     vec3 lighting = Albedo * 0.1; // hard-coded ambient component
@@ -42,5 +42,5 @@ void main()
         lighting += diffuse;
     }
     
-    frameBuffer = vec4(lighting, 1.0);
+    frameBuffer += vec4(lighting, 1.0);
 } 
