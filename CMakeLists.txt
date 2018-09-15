@@ -3,17 +3,18 @@ project(${PROJECT_NAME})
 
 set(SOURCE
     	"Src/ThiefVKInstance.cpp"
-	"Src/ThiefVKDevice.cpp"
-	"Src/ThiefVKPipeLineManager.cpp"
-	"Src/ThiefVKEngine.cpp"
+		"Src/ThiefVKDevice.cpp"
+		"Src/ThiefVKPipeLineManager.cpp"
+		"Src/ThiefVKEngine.cpp"
     	"Src/ThiefVKSwapChain.cpp"
     	"Src/ThiefVKMemoryManager.cpp"
     	"Src/ThiefVKVertex.cpp"
     	"Src/ThiefVKBufferManager.cpp"
-	"Src/ThiefVKDescriptorManager.cpp"
-	"Src/ThiefVKModel.cpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image/stb_image.cpp"	
-	"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/tinyObjectLoader/tiny_obj_loader.cpp"
+		"Src/ThiefVKDescriptorManager.cpp"
+		"Src/ThiefVKModel.cpp"
+		"Src/ThiefVKCamera.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image/stb_image.cpp"	
+		"${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/tinyObjectLoader/tiny_obj_loader.cpp"
 	)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/stb_image" "${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/tinyObjectLoader")

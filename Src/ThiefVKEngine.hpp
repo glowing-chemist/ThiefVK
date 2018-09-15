@@ -5,6 +5,7 @@
 #include "ThiefVKDevice.hpp"
 #include "ThiefVKMemoryManager.hpp"
 #include "ThiefVKModel.hpp"
+#include "ThiefVKCamera.hpp"
 
 class ThiefVKEngine {
 
