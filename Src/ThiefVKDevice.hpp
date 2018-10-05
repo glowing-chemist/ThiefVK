@@ -139,6 +139,9 @@ private:
     void DestroyImageView(vk::ImageView& view);
     void DestroyImage(vk::Image&, Allocation);
 
+    void DestroyPendingBuffers();
+    void DestroyBufferInternal(ThiefVKBuffer&);
+
     void DestroyFrameBuffers();
 
     vk::CommandBuffer beginSingleUseGraphicsCommandBuffer();
@@ -159,8 +162,11 @@ private:
     vk::PhysicalDevice mPhysDev;
     vk::Device mDevice;
     vk::PhysicalDeviceLimits mLimits;
-    size_t finishedSubmissionID; // to keep track of resources such as staging buffers and command buffers that are no
-                                 // longer needed and can be freed.
+    uint64_t finishedSubmissionID; // to keep track of resources such as staging buffers and command buffers that are no
+    uint64_t currentSubmissionID;   // longer needed and can be freed.
+    
+    std::vector<std::pair<uint64_t, ThiefVKBuffer>> mPendingFreeBuffers;
+
     size_t currentFrameBufferIndex;
 
     ThiefVKPipelineManager pipelineManager;

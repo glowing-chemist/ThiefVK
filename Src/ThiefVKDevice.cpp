@@ -18,6 +18,7 @@ ThiefVKDevice::ThiefVKDevice(std::pair<vk::PhysicalDevice, vk::Device> Devices, 
     mPhysDev{std::get<0>(Devices)}, 
 	mDevice{std::get<1>(Devices)},
     mLimits{mPhysDev.getProperties().limits}, 
+    finishedSubmissionID{0},
     currentFrameBufferIndex{0},
 	pipelineManager{*this},
 	MemoryManager{&mPhysDev, &mDevice},
@@ -53,11 +54,15 @@ ThiefVKDevice::~ThiefVKDevice() {
     }
 
     for(auto buffer : uniqueBuffers) {
-        destroyBuffer(buffer);
+        DestroyBufferInternal(buffer);
     }
 
     for(auto& [path, texture] : mTextureCache) {
         destroyImage(texture);
+    }
+
+    for(auto& [submissionID, buffer] : mPendingFreeBuffers) {
+        DestroyBufferInternal(buffer);
     }
 
     DestroyFrameBuffers();
@@ -80,6 +85,9 @@ std::pair<vk::PhysicalDevice*, vk::Device*> ThiefVKDevice::getDeviceHandles()  {
 
 void ThiefVKDevice::startFrame() {
     currentFrameBufferIndex = mSwapChain.getNextImageIndex(mDevice, frameResources[currentFrameBufferIndex].swapChainImageAvailable);
+    
+    currentSubmissionID++;
+    DestroyPendingBuffers();
 
     mDevice.waitForFences(frameResources[currentFrameBufferIndex].frameFinished, true, std::numeric_limits<uint64_t>::max());
     mDevice.resetFences(1, &frameResources[currentFrameBufferIndex].frameFinished);
@@ -109,6 +117,8 @@ void ThiefVKDevice::startFrame() {
         frameResources[currentFrameBufferIndex].compositeCmdBuffer      = secondaryCmdBuffers[3];
 
     } else { // Otherwise just reset them
+        finishedSubmissionID++;
+
         auto& resources = frameResources[currentFrameBufferIndex];
 
         resources.primaryCmdBuffer.reset(vk::CommandBufferResetFlags());
@@ -242,7 +252,7 @@ void ThiefVKDevice::endFrame() {
 
 void ThiefVKDevice::startFrameInternal() {
 
-	frameResources[currentFrameBufferIndex].submissionID				= finishedSubmissionID; // set the minimum we need to start recording command buffers.
+	frameResources[currentFrameBufferIndex].submissionID				= currentSubmissionID; // set the minimum we need to start recording command buffers.
 
     vk::CommandBufferBeginInfo primaryBeginInfo{};
     frameResources[currentFrameBufferIndex].primaryCmdBuffer.begin(primaryBeginInfo);
@@ -297,8 +307,6 @@ void ThiefVKDevice::addSpotLights(std::vector<ThiefVKLight>& lights) {
 
 
 void ThiefVKDevice::endFrameInternal() {
-	finishedSubmissionID++;
-
 	perFrameResources& resources = frameResources[currentFrameBufferIndex];
 	vk::CommandBuffer& primaryCmdBuffer = resources.primaryCmdBuffer;
 
@@ -400,6 +408,11 @@ ThiefVKBuffer ThiefVKDevice::createBuffer(const vk::BufferUsageFlags usage, cons
 
 
 void ThiefVKDevice::destroyBuffer(ThiefVKBuffer& buffer) {
+    mPendingFreeBuffers.push_back({currentSubmissionID, buffer});
+}
+
+
+void ThiefVKDevice::DestroyBufferInternal(ThiefVKBuffer& buffer) {
     if(buffer.mBuffer == vk::Buffer(nullptr)) {
         return;
     }
@@ -1047,6 +1060,19 @@ void ThiefVKDevice::destroyPerFrameResources(perFrameResources& resources) {
         mDevice.destroyImageView(imageView);
     }
     resources.textureImageViews.clear();
+}
+
+
+void ThiefVKDevice::DestroyPendingBuffers() {
+    for(unsigned int i = 0; i < mPendingFreeBuffers.size(); ++i) {
+        auto& [submissionID, buffer] = mPendingFreeBuffers.back();
+        if(submissionID <= finishedSubmissionID) {
+            DestroyBufferInternal(buffer);
+            mPendingFreeBuffers.pop_back();
+        } else {
+            break;
+        }
+    }
 }
 
 
