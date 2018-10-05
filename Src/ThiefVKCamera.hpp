@@ -12,7 +12,7 @@ public:
 	void rotateLaterally(float degrees);
 	void rotateHorizontally(float degrees);
 
-	void translate(glm::vec3 position) { mPosition += position; }
+	void translate(glm::vec3 position);
 
 	glm::mat4 getProjectionMatrix() const;
 	glm::mat4 getViewMatrix() const;
