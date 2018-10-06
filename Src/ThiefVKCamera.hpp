@@ -12,10 +12,11 @@ public:
 	void rotateLaterally(float degrees);
 	void rotateHorizontally(float degrees);
 
-	void translate(glm::vec3 position);
+	void translate(glm::vec3 position) { mPosition += position; }
 
 	glm::mat4 getProjectionMatrix() const;
 	glm::mat4 getViewMatrix() const;
+	glm::vec3 getDirection() const { return mDirection; }
 
 private:
 

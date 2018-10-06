@@ -1,21 +1,17 @@
 #include "ThiefVKCamera.hpp"
 
+#include <glm/gtx/vector_angle.hpp>
 
 
 void ThiefVKCamera::rotateLaterally(float degrees) {
-	glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), glm::radians(degrees), {0.0f, 1.0f, 0.0f});
+	glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
 	mDirection = mDirection * glm::mat3(rotationMat);
 }
 
 
 void ThiefVKCamera::rotateHorizontally(float degrees) {
-	glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), glm::radians(degrees), {1.0f, 0.0f, 0.0f});
+	glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), glm::radians(degrees), glm::vec3(1.0f, 0.0f, 0.0f));
 	mDirection = mDirection * glm::mat3(rotationMat);
-}
-
-
-void ThiefVKCamera::translate(glm::vec3 position) {
-	mPosition += position;
 }
 
 
