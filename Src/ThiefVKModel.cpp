@@ -46,7 +46,7 @@ ThiefVKModel::ThiefVKModel(const std::string& objectFileName, const std::string&
 
 	        // albedo isn't currently implemeted to load from object file.
 	        // will need to extract it from materials at some point
-	        vertex.albedo = 0.6f;
+			vertex.albedo = 0.2f;
 
 	        if (uniqueVertices.count(vertex) == 0) {
 	            uniqueVertices[vertex] = static_cast<uint32_t>(mGeometry.verticies.size());
