@@ -188,8 +188,14 @@ void ThiefVKDevice::endFrame() {
     resources.indexBuffer = indexBuffer;
 
     // Get all of the descriptor sets needed for this frame.
-    ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription("Colour.frag.spv");
-    ThiefVKDescriptorSet basicColourDescriptor = DescriptorManager.getDescriptorSet(basicColourDesc);
+
+	//Colour potentially needs one desc set per draw call as could bind a different texture per model
+	std::vector<ThiefVKDescriptorSet> colourDescriptorSets{};
+	colourDescriptorSets.reserve(vertexBufferOffsets.size()); // only allocate once.
+	for(uint32_t i = 0; i < vertexBufferOffsets.size(); ++i) {
+		const ThiefVKDescriptorSetDescription basicColourDesc = getDescriptorSetDescription("Colour.frag.spv", i);
+		colourDescriptorSets.push_back(DescriptorManager.getDescriptorSet(basicColourDesc));
+	}
 
     ThiefVKDescriptorSetDescription albedoDesc = getDescriptorSetDescription("Albedo.frag.spv");
     ThiefVKDescriptorSet albedoDescriptor = DescriptorManager.getDescriptorSet(albedoDesc);
@@ -203,7 +209,7 @@ void ThiefVKDevice::endFrame() {
     ThiefVKDescriptorSetDescription compositeDesc = getDescriptorSetDescription("Composite.frag.spv");
     ThiefVKDescriptorSet compositeDescriptor = DescriptorManager.getDescriptorSet(compositeDesc);
 
-    frameResources[currentFrameBufferIndex].DescSets.push_back(basicColourDescriptor);
+	frameResources[currentFrameBufferIndex].DescSets.insert(frameResources[currentFrameBufferIndex].DescSets.end(), colourDescriptorSets.begin(), colourDescriptorSets.end());
     frameResources[currentFrameBufferIndex].DescSets.push_back(albedoDescriptor);
     frameResources[currentFrameBufferIndex].DescSets.push_back(normalsDescriptor);
     frameResources[currentFrameBufferIndex].DescSets.push_back(compositeDescriptor);
@@ -217,7 +223,7 @@ void ThiefVKDevice::endFrame() {
 		
 		resources.colourCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
         resources.colourCmdBuffer.bindIndexBuffer(resources.indexBuffer.mBuffer, indexOffset, vk::IndexType::eUint32);
-        resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("Colour.frag.spv"), 0, basicColourDescriptor.getHandle(), uniformOffset);
+		resources.colourCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineManager.getPipelineLayout("Colour.frag.spv"), 0, colourDescriptorSets[i].getHandle(), uniformOffset);
 		resources.colourCmdBuffer.drawIndexed(indexBufferOffsets[i].numberOfEntries, 1, 0, 0, 0);
 
 		resources.normalsCmdBuffer.bindVertexBuffers(0, 1, &resources.vertexBuffer.mBuffer, &bufferOffset);
@@ -1090,7 +1096,7 @@ void ThiefVKDevice::createSemaphores() {
 }
 
 
-ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const std::string shader) {
+ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const std::string shader,  const uint32_t colourImageViewIndex) {
     ThiefVKDescriptorSetDescription descSets{};
 
     ThiefVKDescriptorDescription uboDescriptorLayout{};
@@ -1106,7 +1112,7 @@ ThiefVKDescriptorSetDescription ThiefVKDevice::getDescriptorSetDescription(const
         imageSamplerDescriptorLayout.mDescriptor.mBinding = 1;
         imageSamplerDescriptorLayout.mDescriptor.mDescType = vk::DescriptorType::eCombinedImageSampler;
         imageSamplerDescriptorLayout.mDescriptor.mShaderStage = vk::ShaderStageFlagBits::eFragment;
-        imageSamplerDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].textureImageViews[0];
+		imageSamplerDescriptorLayout.mResource = &frameResources[currentFrameBufferIndex].textureImageViews[colourImageViewIndex];
 
         descSets.push_back(imageSamplerDescriptorLayout);
     } else if(shader.find("Composite") != std::string::npos) {
