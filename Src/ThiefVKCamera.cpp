@@ -16,7 +16,7 @@ void ThiefVKCamera::rotateHorizontally(float degrees) {
 
 
 glm::mat4 ThiefVKCamera::getProjectionMatrix() const {
-	return glm::perspective(glm::radians(mFieldOfView), 1.0f, 0.1f, 10.0f);
+	return glm::perspective(glm::radians(mFieldOfView), 1.0f, 0.1f, 100.0f);
 }
 
 
